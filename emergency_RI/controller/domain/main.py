@@ -1,8 +1,11 @@
 from node import Node
-
+from factories import FACTORY_MAPPING
 class Domain:
     def __init__(self):
         pass
+
+    def create_child(self, child_type: str):
+        return FACTORY_MAPPING[child_type]().build()
 
     def accept_visitor(self, node: Node, visitor):
         return node.accept_visitor(visitor)
