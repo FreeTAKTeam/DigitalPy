@@ -1,0 +1,446 @@
+{
+    "extension": "linecounter",
+    "version": "0.2.7",
+    "workspace": "c:\\Users\\natha\\Documents\\programmer_stuff\\GIT\\DigitalPy",
+    "linecount": [
+        {
+            "version": "0.2.7",
+            "counttime": "2022-07-08 23:22:17",
+            "filesum": 62,
+            "codesum": 1244,
+            "commentsum": 85,
+            "blanksum": 283,
+            "statistics": {
+                ".py": {
+                    "code": 1057,
+                    "comment": 84,
+                    "blank": 266
+                },
+                "": {
+                    "code": 81,
+                    "comment": 0,
+                    "blank": 15
+                },
+                ".md": {
+                    "code": 2,
+                    "comment": 0,
+                    "blank": 1
+                },
+                ".xsd": {
+                    "code": 42,
+                    "comment": 0,
+                    "blank": 0
+                },
+                ".TAG": {
+                    "code": 4,
+                    "comment": 1,
+                    "blank": 0
+                },
+                ".xml": {
+                    "code": 58,
+                    "comment": 0,
+                    "blank": 1
+                }
+            },
+            "filelist": [
+                {
+                    "blank": 15,
+                    "code": 75,
+                    "comment": 0,
+                    "filename": ".gitignore"
+                },
+                {
+                    "blank": 0,
+                    "code": 2,
+                    "comment": 0,
+                    "filename": ".pytest_cache\\.gitignore"
+                },
+                {
+                    "blank": 0,
+                    "code": 4,
+                    "comment": 1,
+                    "filename": ".pytest_cache\\CACHEDIR.TAG"
+                },
+                {
+                    "blank": 1,
+                    "code": 2,
+                    "comment": 0,
+                    "filename": ".pytest_cache\\README.md"
+                },
+                {
+                    "blank": 0,
+                    "code": 3,
+                    "comment": 0,
+                    "filename": ".pytest_cache\\v\\cache\\lastfailed"
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 0,
+                    "filename": ".pytest_cache\\v\\cache\\stepwise"
+                },
+                {
+                    "filename": "__pycache__\\load_configuration.cpython-37.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "__pycache__\\load_configuration.cpython-38.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "__pycache__\\node.cpython-37.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "__pycache__\\node.cpython-38.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "__pycache__\\persistent_object.cpython-38.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 1,
+                    "code": 58,
+                    "comment": 0,
+                    "filename": "configuration\\Emergency-rdfs.xml"
+                },
+                {
+                    "filename": "configuration\\emergency.json",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 0,
+                    "code": 42,
+                    "comment": 0,
+                    "filename": "configuration\\Emergency.xsd"
+                },
+                {
+                    "blank": 15,
+                    "code": 74,
+                    "comment": 0,
+                    "filename": "default_persistent_object.py"
+                },
+                {
+                    "blank": 2,
+                    "code": 3,
+                    "comment": 0,
+                    "filename": "emergency_RI\\controller\\domain\\__init__.py"
+                },
+                {
+                    "filename": "emergency_RI\\controller\\domain\\__pycache__\\__init__.cpython-37.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "emergency_RI\\controller\\domain\\__pycache__\\__init__.cpython-38.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "emergency_RI\\controller\\domain\\__pycache__\\main.cpython-37.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "emergency_RI\\controller\\domain\\__pycache__\\main.cpython-38.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 8,
+                    "code": 30,
+                    "comment": 0,
+                    "filename": "emergency_RI\\controller\\domain\\factories.py"
+                },
+                {
+                    "blank": 10,
+                    "code": 30,
+                    "comment": 0,
+                    "filename": "emergency_RI\\controller\\domain\\main.py"
+                },
+                {
+                    "blank": 4,
+                    "code": 10,
+                    "comment": 0,
+                    "filename": "emergency_RI\\controller\\emergency\\main.py"
+                },
+                {
+                    "blank": 0,
+                    "code": 6,
+                    "comment": 0,
+                    "filename": "emergency_RI\\model\\__init__.py"
+                },
+                {
+                    "filename": "emergency_RI\\model\\__pycache__\\__init__.cpython-37.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "emergency_RI\\model\\__pycache__\\__init__.cpython-38.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "emergency_RI\\model\\__pycache__\\_contact.cpython-38.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "emergency_RI\\model\\__pycache__\\_detail.cpython-38.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "emergency_RI\\model\\__pycache__\\_emergency.cpython-38.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "emergency_RI\\model\\__pycache__\\_event.cpython-37.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "emergency_RI\\model\\__pycache__\\_event.cpython-38.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "emergency_RI\\model\\__pycache__\\_link.cpython-38.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "emergency_RI\\model\\__pycache__\\_point.cpython-38.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 2,
+                    "code": 15,
+                    "comment": 0,
+                    "filename": "emergency_RI\\model\\_contact.py"
+                },
+                {
+                    "blank": 51,
+                    "code": 101,
+                    "comment": 9,
+                    "filename": "emergency_RI\\model\\_detail.py"
+                },
+                {
+                    "blank": 10,
+                    "code": 25,
+                    "comment": 10,
+                    "filename": "emergency_RI\\model\\_emergency.py"
+                },
+                {
+                    "blank": 39,
+                    "code": 82,
+                    "comment": 41,
+                    "filename": "emergency_RI\\model\\_event.py"
+                },
+                {
+                    "blank": 2,
+                    "code": 14,
+                    "comment": 0,
+                    "filename": "emergency_RI\\model\\_link.py"
+                },
+                {
+                    "blank": 13,
+                    "code": 29,
+                    "comment": 18,
+                    "filename": "emergency_RI\\model\\_point.py"
+                },
+                {
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0,
+                    "filename": "emergency_RI\\model\\model_constants\\__init__.py"
+                },
+                {
+                    "filename": "emergency_RI\\model\\model_constants\\__pycache__\\__init__.cpython-38.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "emergency_RI\\model\\model_constants\\__pycache__\\EmergencyVariables.cpython-38.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "emergency_RI\\model\\model_constants\\__pycache__\\EventVariables.cpython-38.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "emergency_RI\\model\\model_constants\\__pycache__\\PointVariables.cpython-38.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 1,
+                    "code": 3,
+                    "comment": 0,
+                    "filename": "emergency_RI\\model\\model_constants\\DetailVariables.py"
+                },
+                {
+                    "blank": 2,
+                    "code": 17,
+                    "comment": 1,
+                    "filename": "emergency_RI\\model\\model_constants\\EmergencyVariables.py"
+                },
+                {
+                    "blank": 20,
+                    "code": 201,
+                    "comment": 0,
+                    "filename": "emergency_RI\\model\\model_constants\\EventVariables.py"
+                },
+                {
+                    "blank": 0,
+                    "code": 7,
+                    "comment": 0,
+                    "filename": "emergency_RI\\model\\model_constants\\PointVariables.py"
+                },
+                {
+                    "blank": 2,
+                    "code": 3,
+                    "comment": 0,
+                    "filename": "event.py"
+                },
+                {
+                    "blank": 3,
+                    "code": 5,
+                    "comment": 0,
+                    "filename": "factory.py"
+                },
+                {
+                    "blank": 7,
+                    "code": 41,
+                    "comment": 1,
+                    "filename": "load_configuration.py"
+                },
+                {
+                    "blank": 31,
+                    "code": 185,
+                    "comment": 4,
+                    "filename": "node.py"
+                },
+                {
+                    "blank": 2,
+                    "code": 4,
+                    "comment": 0,
+                    "filename": "null_mapper.py"
+                },
+                {
+                    "blank": 5,
+                    "code": 11,
+                    "comment": 0,
+                    "filename": "object_factory.py"
+                },
+                {
+                    "blank": 15,
+                    "code": 64,
+                    "comment": 0,
+                    "filename": "object_id.py"
+                },
+                {
+                    "blank": 2,
+                    "code": 3,
+                    "comment": 0,
+                    "filename": "persistence_mapper.py"
+                },
+                {
+                    "blank": 13,
+                    "code": 69,
+                    "comment": 0,
+                    "filename": "persistent_object.py"
+                },
+                {
+                    "blank": 3,
+                    "code": 6,
+                    "comment": 0,
+                    "filename": "persistent_object_proxy.py"
+                },
+                {
+                    "filename": "tests\\test_domain\\__pycache__\\test_domain.cpython-37-pytest-7.1.2.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "tests\\test_domain\\__pycache__\\test_domain.cpython-38-pytest-7.1.2.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 2,
+                    "code": 10,
+                    "comment": 0,
+                    "filename": "tests\\test_domain\\test_domain.py"
+                },
+                {
+                    "blank": 2,
+                    "code": 9,
+                    "comment": 0,
+                    "filename": "value_change_event.py"
+                }
+            ]
+        }
+    ]
+}

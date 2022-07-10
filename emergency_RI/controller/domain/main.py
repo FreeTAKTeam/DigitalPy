@@ -1,8 +1,10 @@
 from node import Node
-
+import load_configuration
+from . import CONFIGURATION_PATH_TEMPLATE
+from emergency_RI import model
 class Domain:
     def __init__(self):
-        pass
+        self.config_loader = load_configuration.LoadConfiguration(CONFIGURATION_PATH_TEMPLATE)
 
     def accept_visitor(self, node: Node, visitor):
         return node.accept_visitor(visitor)
@@ -10,9 +12,12 @@ class Domain:
     def add_child(self, node: Node, child):
         return node.add_child(child)
 
-    def create_node():
-        pass
-
+    def create_node(self, message_type, object_class_name):
+        configuration = self.config_loader.find_configuration(message_type)
+        object_class = getattr(model, object_class_name)
+        object_class_instance = object_class(configuration, model)
+        return object_class_instance
+        
     def delete_child(self, node: Node, child_id):
         return node.delete_child(child_id)
 

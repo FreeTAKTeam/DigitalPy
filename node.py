@@ -1,27 +1,28 @@
 import uuid
-import json
 import re
+from default_persistent_object import DefaultPersistentObject
+from load_configuration import Configuration
 
 from persistent_object import PersistentObject
+from persistent_object_proxy import PersistentObjectProxy
 
-CONFIG_TYPE = 'json'
-
-class Node(PersistentObject):
-    def __init__(self, node_type, *children) -> None:
-        super(Node, self).__init__(node_type)
+class Node(DefaultPersistentObject):
+    def __init__(self, node_type, configuration: Configuration, model) -> None:
+        #super(Node, self).__init__(node_type)
+        self._type = ''
+        self._id = str(uuid.uuid4())
         self._children: dict[str, Node] = {}
         self._parents: dict[str, Node] = {}
         self._depth = -1
         self._path = ''
-        self._relationship_definitions = []
-        self._instantiate_children(children)
-        
-    def _instantiate_children(self, children):
-        for child in children:
-            self._children[child.get_id()] = child
+        self._relationship_definition = configuration.elements[self.__class__.__name__]
+        self._add_relationships(configuration, model)
 
-    def _add_relationship_definition(self, relationship: dict):
-        self._relationship_definitions.append(relationship)
+    def _add_relationships(self, configuration: Configuration, model) -> None:
+        for relationship_name, relationship_def in self._relationship_definition.relationships.items():
+            child_class = getattr(model, relationship_name)
+            child_instance = child_class(configuration, model)
+            self.add_child(child_instance)
 
     def get_first_child(self, child_type, values, properties, use_regex=True):
         children = self.get_children_ex(None, children_type=child_type, values=values, properties=properties, use_regex=use_regex)
@@ -30,8 +31,43 @@ class Node(PersistentObject):
         else:
             return None
 
-    def get_children_ex(self, id, children_type, values, properties, use_regex=True):
-        return self.filter(self._children, id, children_type, values, properties, use_regex)
+    def get_children(self):
+        return self._children
+        # return self.get_relatives('child')
+
+    def get_relations(self, hirearchy_type='all'):
+        return self.get_mapper().get_relations(hirearchy_type)
+
+    def get_relatives(self, hirearchy_type):
+        relatives = []
+        relations = self.get_relations(hirearchy_type)
+        for relation in relations:
+            cur_relatives = self.parent.get_value(relation.get_other_role())
+            if cur_relatives is None:
+                continue
+            if not isinstance(cur_relatives, list):
+                cur_relatives = [cur_relatives]
+            for cur_relative in cur_relatives:
+                if isinstance(cur_relatives, PersistentObjectProxy):
+                    continue
+                else:
+                    relatives.append(cur_relative) 
+                    
+    def get_children_ex(self, oid=None, role=None, children_type=None, values=None, properties=None, use_regex=True):
+        if role is not None:
+            child_roles = self.get_possible_children()
+            if self.child_roles[role]:
+                raise Exception("No child role defined with name %s" % role)
+            nodes = self.parent.get_value(role)
+            if not isinstance(nodes,list):
+                nodes = [nodes]
+            children = []
+            for cur_node in nodes:
+                if isinstance(cur_node, PersistentObject):
+                    children = cur_node
+            return self.filter(children, oid, children_type, values, properties, use_regex)
+        else:
+            return self.filter(self.get_children(), oid, children_type, values, properties, use_regex)
 
     def get_num_children(self, children_type=None):
         count = 0
@@ -46,17 +82,15 @@ class Node(PersistentObject):
     def add_child(self, child):
         if self.validate_child_addition(child):
             self._children[child.get_id()]=child
-            child.update_parent(self)
+            setattr(self, child.__class__.__name__, child)
         else:
             raise TypeError('child must be an instance of Node')
     
     def validate_child_addition(self, child):
         if isinstance(child, Node):
             child_type = child.get_type()
-            if child_type in self._relationship_definition:
-                relationship_requirements = self._relationship_definition[child_type]
-                if relationship_requirements["aggregation"] == "composite":
-                    return False
+            if child_type in self._relationship_definition.relationships:
+                relationship_requirements = self._relationship_definition.relationships[child_type]
                 children = self.get_children_ex(children_type=child_type)
                 if relationship_requirements["max_occurs"] == len(children):
                     return False
@@ -85,13 +119,13 @@ class Node(PersistentObject):
         else:
             self._parents[parent.get_id()] = parent
 
-    def filter(self, node_list, id, node_type, values, properties, use_regex):
+    def filter(self, node_list, oid, node_type, values, properties, use_regex):
         return_array = []
         for key, node in node_list.items():
-            if isinstance(node, Node):
+            if isinstance(node, PersistentObject):
                 match = True
                 # check id
-                if id != None and node.get_id() != id:
+                if oid != None and node.get_oid() != oid:
                     match = False
                 # check type
                 if node_type != None and node.get_type() != node_type:

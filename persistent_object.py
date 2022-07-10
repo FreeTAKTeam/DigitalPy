@@ -2,7 +2,15 @@ import re
 
 from uuid import uuid4
 
+from abc import abstractmethod
+
 class PersistentObject:
+
+    STATE_CLEAN = 0
+    STATE_DIRTY = 1
+    STATE_NEW = 2
+    STATE_DELETED = 3
+
     def __init__(self, type) -> None:
         self._type = type
         self._id = str(uuid4())
@@ -10,6 +18,10 @@ class PersistentObject:
         self._data = {}
         self._change_listeners = []
         self._relationship_definition = {}
+
+    @abstractmethod
+    def get_oid(self):
+        NotImplementedError("get_oid is not implemented")
 
     def get_property_names(self, type=None):
         names = []
