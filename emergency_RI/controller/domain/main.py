@@ -6,6 +6,9 @@ class Domain:
     def __init__(self):
         self.config_loader = load_configuration.LoadConfiguration(CONFIGURATION_PATH_TEMPLATE)
 
+    def create_child(self, child_type: str):
+        return FACTORY_MAPPING[child_type]().build()
+
     def accept_visitor(self, node: Node, visitor):
         return node.accept_visitor(visitor)
     
