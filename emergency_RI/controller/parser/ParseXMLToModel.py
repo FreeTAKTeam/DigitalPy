@@ -1,3 +1,5 @@
+from re import A
+from attr import attr
 from lxml import etree
 
 class ParseXMLToModel:
@@ -17,17 +19,20 @@ class TargetXMLToModel:
 
     def start(self, tag, attrib):
         if self.current_model.__class__.__name__ != tag:
+            self.parent_model = self.current_model
             self.current_model = getattr(self.current_model, tag)
 
+        for attr_name, attr_val in attrib.items():
+            setattr(self.current_model, attr_name, attr_val)
+
     def end(self, tag):
-        self.events.append("end %s" % tag)
+        pass
 
     def data(self, data):
-        self.events.append("data %r" % data)
+        setattr(self.current_model, 'INTAG', data)
 
     def comment(self, text):
-        self.events.append("comment %s" % text)
+        pass
 
     def close(self):
-        self.events.append("close")
-        return "closed!"
+        return self.model
