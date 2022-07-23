@@ -12,7 +12,7 @@ from emergency_RI.model.model_constants.PointVariables import PointVariables as 
 
 from node import Node
 
-class Point(Node):
+class point(Node):
 
     def __init__(self, configuration, model, le=vars().LE, ce=vars().CE, hae=vars().HAE, lon=vars().LON, lat=vars().LAT):
         super().__init__(self.__class__.__name__, configuration, model)

@@ -83,6 +83,7 @@ class Node(DefaultPersistentObject):
         if self.validate_child_addition(child):
             self._children[child.get_id()]=child
             setattr(self, child.__class__.__name__, child)
+            child.set_parent(self)
         else:
             raise TypeError('child must be an instance of Node')
     
@@ -195,6 +196,10 @@ class Node(DefaultPersistentObject):
         
         return count
     
+    def set_parent(self, parent):
+        if isinstance(parent, Node):
+            self._parents[parent.get_id()] = parent
+
     def get_parent(self):
         if len(self._parents) > 0:
             return list(self._parents.values())[0]

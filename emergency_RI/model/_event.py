@@ -28,9 +28,6 @@ class Event(Node):
         self.uid = None
         self.type = None
         self.how = None
-
-        self.detail = None
-        self.point = None
         self.start = None
 
 

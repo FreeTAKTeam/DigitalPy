@@ -10,7 +10,7 @@
 
 from node import Node
 
-class Detail(Node):
+class detail(Node):
     """An optional element used to hold CoT sub-schema. empty element
     """
     __index = -1

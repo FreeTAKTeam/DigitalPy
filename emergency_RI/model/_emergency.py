@@ -10,7 +10,7 @@
 from emergency_RI.model.model_constants import EmergencyVariables as vars
 from node import Node
 
-class Emergency(Node):
+class emergency(Node):
     """An Emergency beacon the is continually send to all the connected clients until
     deactivated from the original creator
     """

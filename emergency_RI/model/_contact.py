@@ -1,17 +1,84 @@
 from node import Node
 
-class Contact(Node):
-    def __init__(self):
-        super(Contact, self).__init__(Contact)
+class contact(Node):
+    def __init__(self, configuration, model):
+        super().__init__(self.__class__.__name__, configuration, model)
+        self.callsign = None 
+        self.endpoint = None
+        self.iconsetpath = None
+        self.uid = None
+        self.name = None
+        self.emailAddress = None
+        self.xmppUsername = None
+        self.sipAddress = None
 
-    def _instantiate_properties(self):
-        self._properties["callsign"] = None
-        self._properties["dsn"] = None
-        self._properties["email"] = None
-        self._properties["endpoint"] = None
-        self._properties["freq"] = None
-        self._properties["hostname"] = None
-        self._properties["iconsetpath"] = None
-        self._properties["modulation"] = None
-        self._properties["phone"] = None
-        self._properties["version"] = None
+    # iconsetpath getter 
+    def geticonsetpath(self): 
+        return self.iconsetpath 
+ 
+    # iconsetpath setter 
+    def seticonsetpath(self, iconsetpath=None):
+        self.iconsetpath=iconsetpath 
+
+    # sipAddress getter
+    def getsipAddress(self):
+        return self.sipAddress
+
+    # sipAddress setter
+    def setsipAddress(self, sipAddress=None):
+        self.sipAddress=sipAddress
+
+    # emailAddress setter
+    def getemailAddress(self):
+        return self.emailAddress
+
+    # emailAddress getter
+    def setemailAddress(self, emailAddress=None):
+        self.emailAddress=emailAddress
+
+    # emailAddress setter
+    def getxmppUsername(self):
+        return self.xmppUsername
+
+    # emailAddress getter
+    def setxmppUsername(self, xmppUsername=None):
+        self.xmppUsername=xmppUsername
+
+    # callsign getter 
+    def getcallsign(self): 
+        return self.callsign 
+ 
+    # callsign setter 
+    def setcallsign(self, callsign=None):
+        self.callsign=callsign 
+ 
+     
+    # endpoint getter 
+    def getendpoint(self): 
+        return self.endpoint 
+ 
+    # endpoint setter 
+    def setendpoint(self, endpoint=None):
+        self.endpoint=endpoint
+
+    def getuid(self):
+        return self.uid
+
+        # uid setter 
+
+    def setuid(self, uid=None):
+        self.uid = uid 
+        
+    def getname(self):
+        return self.name
+
+        # name setter 
+
+    def setname(self, name=None):
+        self.name = name
+
+    def getphone(self):
+        return self.phone
+
+    def setphone(self, phone=None):
+        self.phone = phone

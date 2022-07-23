@@ -1,6 +1,6 @@
 from node import Node
 import load_configuration
-from . import CONFIGURATION_PATH_TEMPLATE
+from emergency_RI.constants import CONFIGURATION_PATH_TEMPLATE
 from emergency_RI import model
 class Domain:
     def __init__(self):
@@ -41,3 +41,6 @@ class Domain:
     
     def get_previous_sibling(self, node: Node):
         return node.get_previous_sibling()
+    
+    def get_parent(self, node: Node):
+        return node.get_parent()
