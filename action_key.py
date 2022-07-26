@@ -83,4 +83,4 @@ class ActionKey:
         
 
         # no key found for requested key
-        return '';
+        return ''

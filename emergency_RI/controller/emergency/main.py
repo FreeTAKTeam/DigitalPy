@@ -1,4 +1,6 @@
-class Emergency:
+from controller import Controller
+
+class Emergency(Controller):
     def __init__(self, ):
         self.emergencies = []
 

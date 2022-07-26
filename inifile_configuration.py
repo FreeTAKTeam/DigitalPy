@@ -29,27 +29,50 @@ class InifileConfiguration(Configuration):
             raise ValueError("Could not find configuration file")
 
         self.__added_files.append(filename)
-        if not self.unserialize(self.__added_files):
-            result = self.process_file(filename, self.config_array, self.contained_files)
-            self.config_array = result['config']
-            self.contained_files = sorted(set(result['files']))
-            if process_values:
-                self.process_values()
+        result = self.process_file(filename, self.config_array, self.contained_files)
+        self.config_array = result['config']
+        self.contained_files = sorted(set(result['files']))
+        if process_values:
+            self.process_values()
 
-            self._build_lookup_table()
+        self._build_lookup_table()
 
-            self.serialize()
+    def process_file(self, filename, config_array={}, parsed_files=[])
+        if filename not in parsed_files:
+            parsed_files.append(filename)
+            content = self.parse_ini_file(filename)
 
-            self.config_changed()
-        else:
-            return
+    def process_values(self):
+        for key, val in self.config_array.items():
 
-    def serialize(self):
-        if not t
 
-    def unserialize(self, parsed_files):
-        if not self.is_modified(parsed_files) and self.file_exists(self.get_serialize_filename(parsed_files)):
-            pass
+    def parse_ini_file(self, filename):
+        if not os.path.exists(filename):
+            raise FileExistsError
+        config_array = []
+        section_name = ''
+        lines = open(filename).readlines()
+        comments_pending = ''
+        for line in lines:
+            line = line.strip()
+            if line == '' or line[0] == ';':
+                comments_pending += line+"\n"
+                continue
+            if line.startswith('[') and line.endswith(']'):
+                section_name = line[1:len(line)-1]
+                config_array[section_name] = []
+                self.comments[line] = comments_pending
+                comments_pending = ''
+            else:
+                parts = line.split('=',1)
+                key = parts[0].strip()
+                value = parts[1].strip()
+                config_array[section_name][key] = value
+
+                self.comments[section_name][key] = comments_pending
+                comments_pending = ""
+        self.comments[';'] = comments_pending
+        return config_array
 
     def get_config_path(self):
         return self.config_path
