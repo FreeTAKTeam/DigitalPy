@@ -34,16 +34,16 @@ class DefaultActionMapper(ActionMapper):
 						ApplicationEvent.BEFORE_ROUTE_ACTION, request))
 		actionKeyProvider = ConfigActionKeyProvider(DefaultActionMapper.configuration, 'actionmapping')
 
-		referrer = request.getSender()
-		context = request.getContext()
-		action = request.getAction()
-		response.setSender(referrer)
-		response.setContext(context)
-		response.setAction(action)
-		response.setFormat(request.getResponseFormat())
+		referrer = request.get_sender()
+		context = request.get_context()
+		action = request.get_action()
+		response.set_sender(referrer)
+		response.set_context(context)
+		response.set_action(action)
+		response.set_format(request.get_response_format())
 
 		# get best matching action key from inifile
-		actionKey = ActionKey.getBestMatch(actionKeyProvider, referrer, context, action)
+		actionKey = ActionKey.get_best_match(actionKeyProvider, referrer, context, action)
 
 		if len(actionKey) == 0 :
 			# return, if action key is not defined
@@ -52,7 +52,7 @@ class DefaultActionMapper(ActionMapper):
 
 		# get next controller
 		controllerClass = None
-		controllerDef = DefaultActionMapper.configuration.getValue(actionKey, 'actionmapping')
+		controllerDef = DefaultActionMapper.configuration.get_value(actionKey, 'actionmapping')
 		if len(controllerDef) == 0:
 			self.logger.error("No controller found for best action key "+actionKey+
 							". Request was referrer?context?action")
@@ -69,7 +69,7 @@ class DefaultActionMapper(ActionMapper):
 			controllerClass = controllerDef
 
 		# instantiate controller
-		controllerObj = ObjectFactory.getInstanceOf(controllerClass)
+		controllerObj = ObjectFactory.get_instance_of(controllerClass)
 
 		# everything is right in place, start processing
 		DefaultActionMapper.formatter.deserialize(request)
@@ -93,8 +93,8 @@ class DefaultActionMapper(ActionMapper):
 		
 
 		# check if an action key exists for the return action
-		nextActionKey = ActionKey.getBestMatch(actionKeyProvider, controllerClass,
-						response.getContext(), response.getAction())
+		nextActionKey = ActionKey.get_best_match(actionKeyProvider, controllerClass,
+						response.get_context(), response.get_action())
 
 		# terminate
 		# - if there is no next action key or
@@ -107,12 +107,12 @@ class DefaultActionMapper(ActionMapper):
 			return None
 
 		# set the request based on the result
-		nextRequest = ObjectFactory.getNewInstance('request')
-		nextRequest.setSender(controllerClass)
-		nextRequest.setContext(response.getContext())
-		nextRequest.setAction(response.getAction())
-		nextRequest.setFormat(response.getFormat())
-		nextRequest.setValues(response.getValues())
-		nextRequest.setErrors(response.getErrors())
-		nextRequest.setResponseFormat(request.getResponseFormat())
+		nextRequest = ObjectFactory.get_new_instance('request')
+		nextRequest.set_sender(controllerClass)
+		nextRequest.set_context(response.get_context())
+		nextRequest.set_action(response.get_action())
+		nextRequest.set_format(response.get_format())
+		nextRequest.set_values(response.get_values())
+		nextRequest.set_errors(response.get_errors())
+		nextRequest.set_response_format(request.get_response_format())
 		DefaultActionMapper.processAction(nextRequest, response)
