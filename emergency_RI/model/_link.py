@@ -1,4 +1,4 @@
-from node import Node
+from model.node import Node
 
 class link(Node):
     def __init__(self, configuration, model):

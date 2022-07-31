@@ -1,4 +1,9 @@
 from abc import ABC
+from routing.action_mapper import ActionMapper
+from config.configuration import Configuration
+
+from request import Request
+from response import Response
 
 class Controller(ABC):
     request = None
@@ -14,8 +19,7 @@ class Controller(ABC):
 
     started_transaction = False
 
-    def __init__(self, request: Request, response: Response, action_mapper: ActionMapper,
-                localization: Localization, message: Message, configuration: Configuration):
+    def __init__(self, request: Request, response: Response, action_mapper: ActionMapper, configuration: Configuration):
         pass
 
     def initialize(self, request: Request, response: Response):

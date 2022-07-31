@@ -190,12 +190,20 @@
 			<xs:element name="point" minOccurs="1" maxOccurs="1" type="point"/>
 		</xs:sequence>
 	</xs:complexType>
+	<xs:complexType name="contact">
+		<xs:annotation>
+			<xs:documentation>This is a Cursor On Target Class representing communications parameters for contacting a friendly element for human-to-human communications. The objective of this Class is to carry the essential information needed to contact this entity by a variety of means.   Multiple ways of establishing contact can be specified;</xs:documentation>
+			<xs:documentation>noThe attributes  callsign, phone, and email should be self-explanatory.  particular mode of contact is required. Other attributes, freq, dsn, modulation, and hostname, are also available.</xs:documentation>
+		</xs:annotation>
+	</xs:complexType>
 	<xs:complexType name="detail">
 		<xs:annotation>
 			<xs:documentation>An optional element used to hold CoT sub-schema. Detail has no special properties</xs:documentation>
 		</xs:annotation>
 		<xs:sequence>
+			<xs:element name="contact" minOccurs="0" maxOccurs="1" type="contact"/>
 			<xs:element name="emergency" minOccurs="0" maxOccurs="1" type="emergency"/>
+			<xs:element name="link" minOccurs="0" maxOccurs="1" type="link"/>
 		</xs:sequence>
 	</xs:complexType>
 	<xs:complexType name="emergency">
@@ -214,6 +222,36 @@
 					<xs:documentation>default constructor  def __init__(self):</xs:documentation>
 				</xs:annotation>
 			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="link">
+		<xs:annotation>
+			<xs:documentation>This is a Cursor On Target Class for linking to either another CoT event or an arbitrary Internet resource. The objective of this class is to provide an abstract way to express a relationship between a CoT object and other object.  This allows, for example, a sensor point of interest to be linked back to its source, or a PPLI from a wingman to be associated with his flight lead.  Linkages are always unidirectional.  </xs:documentation>
+			<xs:documentation>One entity may have multiple links (i.e., it may be related to multiples other entities).  For processing simplicity, it is required that the relationship graphs will directed and acyclic (no cycles).  The link, itself, names the relationship (using a hierarchy similar to the CoT type), the UID of the related object (whether CoT or not), possibly provides a URL for retrieving that object.</xs:documentation>
+			<xs:documentation>links are used for example in routes.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="production_time" minOccurs="1" maxOccurs="1" type="xs:integer">
+				<xs:annotation>
+					<xs:documentation>the time in which this link has been produced (e.g. "2020-11-26T14:19:02Z")</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="relation" minOccurs="1" maxOccurs="1" type="xs:string">
+				<xs:annotation>
+					<xs:documentation>The type of relationship (e.g, subject, object, indirect object) that this link describes.  This is a hierarchy much like the event type field.</xs:documentation>
+					<xs:documentation>Common values: "c"</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="type" minOccurs="1" maxOccurs="1" type="xs:string">
+				<xs:annotation>
+					<xs:documentation>The CoT type of the referenced MIL 2525 object.  This is included because it is generally the key item needed in a tasking. Common types are:</xs:documentation>
+					<xs:documentation>&lt;ul&gt;</xs:documentation>
+					<xs:documentation>	&lt;li&gt;&lt;b&gt;Control Point:&lt;/b&gt; "b-m-p-c" &lt;/li&gt;</xs:documentation>
+					<xs:documentation>	&lt;li&gt;  &lt;b&gt;Waypoint&lt;/b&gt;: "b-m-p-w" &lt;/li&gt;</xs:documentation>
+					<xs:documentation>&lt;/ul&gt;</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="uid" minOccurs="1" maxOccurs="1" type="xs:integer"/>
 		</xs:sequence>
 	</xs:complexType>
 	<xs:complexType name="point">

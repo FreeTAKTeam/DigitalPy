@@ -10,7 +10,7 @@
 # Latitude referred to the WGS 84 ellipsoid in degrees
 from emergency_RI.model.model_constants.PointVariables import PointVariables as vars
 
-from node import Node
+from model.node import Node
 
 class point(Node):
 

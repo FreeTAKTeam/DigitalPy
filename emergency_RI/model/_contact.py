@@ -1,4 +1,4 @@
-from node import Node
+from model.node import Node
 
 class contact(Node):
     def __init__(self, configuration, model):

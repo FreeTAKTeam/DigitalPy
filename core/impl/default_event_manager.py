@@ -1,8 +1,10 @@
 from multiprocessing import Event
 from typing import Callable
 
+from core.event_manager import EventManager
 
-class DefaultEventManager:
+
+class DefaultEventManager(EventManager):
     __listeners = []
 
     def add_listener(self, event_name, callback: Callable):

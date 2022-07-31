@@ -3,7 +3,7 @@ import os
 import re
 from tkinter import N
 
-from configuration import Configuration
+from config.configuration import Configuration
 
 
 class InifileConfiguration(Configuration):
@@ -11,8 +11,10 @@ class InifileConfiguration(Configuration):
         self.__added_files = []
         self.config_path = config_path
         self.cache_path = cache_path
+        self.config_array = {}
+        self.contained_files = []
 
-    def add_configuration(self, name, process_values=True):
+    def add_configuration(self, name):
         filename = self.config_path+name
 
         num_parsed_files = len(self.__added_files)
@@ -32,46 +34,38 @@ class InifileConfiguration(Configuration):
         result = self.process_file(filename, self.config_array, self.contained_files)
         self.config_array = result['config']
         self.contained_files = sorted(set(result['files']))
-        if process_values:
-            self.process_values()
 
         self._build_lookup_table()
 
-    def process_file(self, filename, config_array={}, parsed_files=[])
+    def process_file(self, filename, config_array={}, parsed_files=[]):
         if filename not in parsed_files:
             parsed_files.append(filename)
             content = self.parse_ini_file(filename)
+            return {'config': content, 'files': parsed_files}
 
-    def process_values(self):
-        for key, val in self.config_array.items():
-
+    def get_config_includes(self, dictionary):
+        section_matches = None
+        re.match("/(?:^|,)(config)(?:,|$)/i", dictionary.keys().join(','))
 
     def parse_ini_file(self, filename):
         if not os.path.exists(filename):
             raise FileExistsError
-        config_array = []
+        config_array = {}
         section_name = ''
         lines = open(filename).readlines()
-        comments_pending = ''
         for line in lines:
             line = line.strip()
             if line == '' or line[0] == ';':
-                comments_pending += line+"\n"
                 continue
             if line.startswith('[') and line.endswith(']'):
                 section_name = line[1:len(line)-1]
-                config_array[section_name] = []
-                self.comments[line] = comments_pending
-                comments_pending = ''
+                config_array[section_name] = {}
             else:
                 parts = line.split('=',1)
                 key = parts[0].strip()
                 value = parts[1].strip()
                 config_array[section_name][key] = value
 
-                self.comments[section_name][key] = comments_pending
-                comments_pending = ""
-        self.comments[';'] = comments_pending
         return config_array
 
     def get_config_path(self):
@@ -126,7 +120,7 @@ class InifileConfiguration(Configuration):
             else:
                 return {key: val for key, val in self.config_array[lookup_entry[0]].items() if re.match('/^__/', key)}
 
-    def _lookup(self, section, key=None):
+    def _lookup(self, section, key=""):
         lookup_key = section.lower()+":"+key.lower()
         if lookup_key in self.lookup_table:
             return self.lookup_table[lookup_key]

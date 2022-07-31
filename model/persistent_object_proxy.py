@@ -1,4 +1,4 @@
-from persistent_object import PersistentObject
+from model.persistent_object import PersistentObject
 
 
 class PersistentObjectProxy(PersistentObject):

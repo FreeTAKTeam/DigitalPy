@@ -1,14 +1,14 @@
 from argparse import Action
-from action_key import ActionKey
-from application_event import ApplicationEvent
-from config_action_key_provider import ConfigActionKeyProvider
-from configuration import Configuration
-from event_manager import EventManager
+from config.action_key import ActionKey
+from model.application_event import ApplicationEvent
+from config.impl.config_action_key_provider import ConfigActionKeyProvider
+from config.configuration import Configuration
+from core.event_manager import EventManager
 from request import Request
 from response import Response
-from action_mapper import ActionMapper
+from routing.action_mapper import ActionMapper
 
-from object_factory import ObjectFactory
+from core.object_factory import ObjectFactory
 
 
 class DefaultActionMapper(ActionMapper):
@@ -24,15 +24,16 @@ class DefaultActionMapper(ActionMapper):
 					configuration: Configuration):
 		self.eventManager = event_manager
 		self.configuration = configuration
+		self.is_finished = False
 	
 
 	#
 	#@see ActionMapper.processAction()
 	#
-	def processAction(self, request: Request, response: Response):
-		DefaultActionMapper.eventManager.dispatch(ApplicationEvent.NAME, ApplicationEvent(
+	def process_action(self, request: Request, response: Response):
+		self.eventManager.dispatch(ApplicationEvent.NAME, ApplicationEvent(
 						ApplicationEvent.BEFORE_ROUTE_ACTION, request))
-		actionKeyProvider = ConfigActionKeyProvider(DefaultActionMapper.configuration, 'actionmapping')
+		actionKeyProvider = ConfigActionKeyProvider(self.configuration, 'actionmapping')
 
 		referrer = request.get_sender()
 		context = request.get_context()
@@ -40,7 +41,7 @@ class DefaultActionMapper(ActionMapper):
 		response.set_sender(referrer)
 		response.set_context(context)
 		response.set_action(action)
-		response.set_format(request.get_response_format())
+		#response.set_format(request.get_response_format())
 
 		# get best matching action key from inifile
 		actionKey = ActionKey.get_best_match(actionKeyProvider, referrer, context, action)
@@ -52,7 +53,7 @@ class DefaultActionMapper(ActionMapper):
 
 		# get next controller
 		controllerClass = None
-		controllerDef = DefaultActionMapper.configuration.get_value(actionKey, 'actionmapping')
+		controllerDef = self.configuration.get_value(actionKey, 'actionmapping')
 		if len(controllerDef) == 0:
 			self.logger.error("No controller found for best action key "+actionKey+
 							". Request was referrer?context?action")
@@ -62,9 +63,9 @@ class DefaultActionMapper(ActionMapper):
 		# check if the controller definition contains a method besides the class name
 		controllerMethod = None
 		if '.' in controllerDef:
-			controller_def_list = controllerDef.split('::')
-			controllerClass = controller_def_list[0]
-			controllerMethod = controller_def_list[1]
+			controller_def_list = controllerDef.split('.')
+			controllerClass = '.'.join(controller_def_list[:-1])
+			controllerMethod = controller_def_list[-1]
 		else:
 			controllerClass = controllerDef
 
@@ -72,23 +73,24 @@ class DefaultActionMapper(ActionMapper):
 		controllerObj = ObjectFactory.get_instance_of(controllerClass)
 
 		# everything is right in place, start processing
-		DefaultActionMapper.formatter.deserialize(request)
+		
+  		#self.formatter.deserialize(request)
 
 		# initialize controller
-		DefaultActionMapper.eventManager.dispatch(ApplicationEvent.NAME, ApplicationEvent(
+		self.eventManager.dispatch(ApplicationEvent.NAME, ApplicationEvent(
 						ApplicationEvent.BEFORE_INITIALIZE_CONTROLLER, request, response, controllerObj))
 		controllerObj.initialize(request, response)
 
 		# execute controller
-		DefaultActionMapper.eventManager.dispatch(ApplicationEvent.NAME, ApplicationEvent(
+		self.eventManager.dispatch(ApplicationEvent.NAME, ApplicationEvent(
 						ApplicationEvent.BEFORE_EXECUTE_CONTROLLER, request, response, controllerObj))
 		controllerObj.execute(controllerMethod)
-		DefaultActionMapper.eventManager.dispatch(ApplicationEvent.NAME, ApplicationEvent(
+		self.eventManager.dispatch(ApplicationEvent.NAME, ApplicationEvent(
 						ApplicationEvent.AFTER_EXECUTE_CONTROLLER, request, response, controllerObj))
 
 		# return if we are finished
-		if DefaultActionMapper.isFinished:
-			DefaultActionMapper.formatter.serialize(response)
+		if self.is_finished:
+			#self.formatter.serialize(response)
 			return None
 		
 
@@ -102,8 +104,8 @@ class DefaultActionMapper(ActionMapper):
 		terminate = len(nextActionKey) == 0 or actionKey == nextActionKey
 		if terminate:
 			# stop processing
-			DefaultActionMapper.formatter.serialize(response)
-			DefaultActionMapper.isFinished = True
+			#self.formatter.serialize(response)
+			self.isFinished = True
 			return None
 
 		# set the request based on the result
@@ -111,8 +113,8 @@ class DefaultActionMapper(ActionMapper):
 		nextRequest.set_sender(controllerClass)
 		nextRequest.set_context(response.get_context())
 		nextRequest.set_action(response.get_action())
-		nextRequest.set_format(response.get_format())
+		#nextRequest.set_format(response.get_format())
 		nextRequest.set_values(response.get_values())
-		nextRequest.set_errors(response.get_errors())
-		nextRequest.set_response_format(request.get_response_format())
-		DefaultActionMapper.processAction(nextRequest, response)
+		#nextRequest.set_errors(response.get_errors())
+		#nextRequest.set_response_format(request.get_response_format())
+		self.process_action(nextRequest, response)

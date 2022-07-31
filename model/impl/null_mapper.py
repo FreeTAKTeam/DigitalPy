@@ -1,4 +1,4 @@
-from persistence_mapper import PersistenceMapper
+from model.persistence_mapper import PersistenceMapper
 
 
 class NullMapper(PersistenceMapper):

@@ -1,6 +1,11 @@
-class DefaultRequest(Request, AbstractControllerMessage):
+from routing.controller_message import ControllerMessage
+from request import Request
+
+
+class DefaultRequest(Request):
 
     def __init__(self):
+        super().__init__()
         self.response = None
         self.method = None
         
@@ -15,6 +20,3 @@ class DefaultRequest(Request, AbstractControllerMessage):
     def get_method(self):
         return self.method
     
-    def get_matching_routes(request_path):
-        matching_routes = []
-        default_value_pattern = '([^/]+)'

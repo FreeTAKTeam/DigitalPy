@@ -230,16 +230,34 @@ GeoChat.ANDROID-7C:91:22:E8:6E:4D.DIPPER.44bf77cd-289e-4ea4-8756-ce295de168ca</r
 		<rdfs:comment>Schema version of this event instance (e.g. 2.0)</rdfs:comment>
 		<rdfs:domain rdf:resource="#Event"/>
 	</rdf:Description>
+	<rdf:Description rdf:about="#contact">
+		<rdf:type rdf:resource="http://www.w3.org/2000/01/rdf-schema#Class"/>
+		<rdfs:label>#contact</rdfs:label>
+		<rdfs:comment>This is a Cursor On Target Class representing communications parameters for contacting a friendly element for human-to-human communications. The objective of this Class is to carry the essential information needed to contact this entity by a variety of means.   Multiple ways of establishing contact can be specified;
+noThe attributes  callsign, phone, and email should be self-explanatory.  particular mode of contact is required. Other attributes, freq, dsn, modulation, and hostname, are also available.</rdfs:comment>
+	</rdf:Description>
 	<rdf:Description rdf:about="#detail">
 		<rdf:type rdf:resource="http://www.w3.org/2000/01/rdf-schema#Class"/>
 		<rdfs:label>#detail</rdfs:label>
 		<rdfs:comment>An optional element used to hold CoT sub-schema. Detail has no special properties</rdfs:comment>
+	</rdf:Description>
+	<rdf:Description rdf:about="#detail.contact">
+		<rdf:type rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"/>
+		<rdfs:label>contact</rdfs:label>
+		<rdfs:domain rdf:resource="#detail"/>
+		<rdfs:range rdf:resource="#contact"/>
 	</rdf:Description>
 	<rdf:Description rdf:about="#detail.emergency">
 		<rdf:type rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"/>
 		<rdfs:label>emergency</rdfs:label>
 		<rdfs:domain rdf:resource="#detail"/>
 		<rdfs:range rdf:resource="#emergency"/>
+	</rdf:Description>
+	<rdf:Description rdf:about="#detail.link">
+		<rdf:type rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"/>
+		<rdfs:label>link</rdfs:label>
+		<rdfs:domain rdf:resource="#detail"/>
+		<rdfs:range rdf:resource="#link"/>
 	</rdf:Description>
 	<rdf:Description rdf:about="#emergency">
 		<rdf:type rdf:resource="http://www.w3.org/2000/01/rdf-schema#Class"/>
@@ -265,6 +283,45 @@ GeoChat.ANDROID-7C:91:22:E8:6E:4D.DIPPER.44bf77cd-289e-4ea4-8756-ce295de168ca</r
 		<rdfs:comment>default constructor  def __init__(self):</rdfs:comment>
 		<rdfs:domain rdf:resource="#emergency"/>
 		<rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+	</rdf:Description>
+	<rdf:Description rdf:about="#link">
+		<rdf:type rdf:resource="http://www.w3.org/2000/01/rdf-schema#Class"/>
+		<rdfs:label>#link</rdfs:label>
+		<rdfs:comment>This is a Cursor On Target Class for linking to either another CoT event or an arbitrary Internet resource. The objective of this class is to provide an abstract way to express a relationship between a CoT object and other object.  This allows, for example, a sensor point of interest to be linked back to its source, or a PPLI from a wingman to be associated with his flight lead.  Linkages are always unidirectional.  
+One entity may have multiple links (i.e., it may be related to multiples other entities).  For processing simplicity, it is required that the relationship graphs will directed and acyclic (no cycles).  The link, itself, names the relationship (using a hierarchy similar to the CoT type), the UID of the related object (whether CoT or not), possibly provides a URL for retrieving that object.
+links are used for example in routes.</rdfs:comment>
+	</rdf:Description>
+	<rdf:Description rdf:about="#link.production_time">
+		<rdf:type rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"/>
+		<rdfs:label>production_time</rdfs:label>
+		<rdfs:comment>the time in which this link has been produced (e.g. "2020-11-26T14:19:02Z")</rdfs:comment>
+		<rdfs:domain rdf:resource="#link"/>
+		<rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+	</rdf:Description>
+	<rdf:Description rdf:about="#link.relation">
+		<rdf:type rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"/>
+		<rdfs:label>relation</rdfs:label>
+		<rdfs:comment>The type of relationship (e.g, subject, object, indirect object) that this link describes.  This is a hierarchy much like the event type field.
+Common values: "c"</rdfs:comment>
+		<rdfs:domain rdf:resource="#link"/>
+		<rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+	</rdf:Description>
+	<rdf:Description rdf:about="#link.type">
+		<rdf:type rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"/>
+		<rdfs:label>type</rdfs:label>
+		<rdfs:comment>The CoT type of the referenced MIL 2525 object.  This is included because it is generally the key item needed in a tasking. Common types are:
+&lt;ul&gt;
+	&lt;li&gt;&lt;b&gt;Control Point:&lt;/b&gt; "b-m-p-c" &lt;/li&gt;
+	&lt;li&gt;  &lt;b&gt;Waypoint&lt;/b&gt;: "b-m-p-w" &lt;/li&gt;
+&lt;/ul&gt;</rdfs:comment>
+		<rdfs:domain rdf:resource="#link"/>
+		<rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+	</rdf:Description>
+	<rdf:Description rdf:about="#link.uid">
+		<rdf:type rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"/>
+		<rdfs:label>uid</rdfs:label>
+		<rdfs:domain rdf:resource="#link"/>
+		<rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
 	</rdf:Description>
 	<rdf:Description rdf:about="#point">
 		<rdf:type rdf:resource="http://www.w3.org/2000/01/rdf-schema#Class"/>

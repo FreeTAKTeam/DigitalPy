@@ -1,4 +1,4 @@
-from factory import Factory
+from core.factory import Factory
 
 
 class ObjectFactory:
@@ -23,6 +23,11 @@ class ObjectFactory:
         if ObjectFactory.__factory is None:
             raise Exception("No Factory instance provided. Do this by calling the configure() method.")
 
+    @staticmethod
+    def get_instance_of(class_name, dynamic_configuration={}):
+        ObjectFactory.__check_config()
+        return ObjectFactory.__factory.get_instance_of(class_name, dynamic_configuration)
+    
     @staticmethod
     def register_instance(name, instance):
         ObjectFactory.__check_config()

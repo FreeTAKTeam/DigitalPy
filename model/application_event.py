@@ -1,7 +1,7 @@
-from event import Event
+from core.event import Event
 from request import Request
 from response import Response
-from controller import Controller
+from routing.controller import Controller
 
 class ApplicationEvent(Event):
     NAME = "ApplicationEvent"
@@ -14,7 +14,7 @@ class ApplicationEvent(Event):
 
     AFTER_EXECUTE_CONTROLLER = 'AFTER_EXECUTE_CONTROLLER'
 
-    def __init__(self, stage, request: Request, response: Response, controller: Controller = None) -> None:
+    def __init__(self, stage, request: Request, response: Response = None, controller: Controller = None) -> None:
         self.stage = stage
         self.request = request
         self.response = response

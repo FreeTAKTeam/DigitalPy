@@ -1,5 +1,5 @@
 import re
-from object_factory import ObjectFactory
+from core.object_factory import ObjectFactory
 import uuid
 
 class ObjectId:

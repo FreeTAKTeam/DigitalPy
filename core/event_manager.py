@@ -1,6 +1,6 @@
 from abc import ABC
 
-from event import Event
+from core.event import Event
 
 class EventManager(ABC):
     def add_listener(self, event_name, callback):

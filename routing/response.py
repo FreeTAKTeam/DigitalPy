@@ -1,8 +1,10 @@
-from request import Request
+
+from routing.controller_message import ControllerMessage
+
 
 class Response(ControllerMessage):
 
-    def set_request(self, request: Request):
+    def set_request(self, request):
         raise NotImplementedError
 
     def get_request(self):

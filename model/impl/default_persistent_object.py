@@ -1,8 +1,8 @@
-from null_mapper import NullMapper
-from object_factory import ObjectFactory
-from object_id import ObjectId
-from persistent_object import PersistentObject
-from value_change_event import ValueChangeEvent
+from model.impl.null_mapper import NullMapper
+from core.object_factory import ObjectFactory
+from model.object_id import ObjectId
+from model.persistent_object import PersistentObject
+from model.value_change_event import ValueChangeEvent
 
 
 class DefaultPersistentObject(PersistentObject):

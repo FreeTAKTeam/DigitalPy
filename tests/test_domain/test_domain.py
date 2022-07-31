@@ -3,7 +3,7 @@ from email import message
 from attr import has
 from emergency_RI.controller.domain.main import Domain
 from emergency_RI.controller.parser import parse_xml_to_model
-from node import Node
+from model.node import Node
 
 def test_create_node():
     node = Domain().create_node(message_type='emergency', object_class_name='Event')

@@ -1,5 +1,5 @@
-from action_key_provider import ActionKeyProvider
-from configuration import Configuration
+from config.action_key_provider import ActionKeyProvider
+from config.configuration import Configuration
 
 
 class ConfigActionKeyProvider(ActionKeyProvider):

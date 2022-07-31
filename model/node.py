@@ -1,10 +1,10 @@
 import uuid
 import re
-from default_persistent_object import DefaultPersistentObject
+from model.impl.default_persistent_object import DefaultPersistentObject
 from load_configuration import Configuration
 
-from persistent_object import PersistentObject
-from persistent_object_proxy import PersistentObjectProxy
+from model.persistent_object import PersistentObject
+from model.persistent_object_proxy import PersistentObjectProxy
 
 class Node(DefaultPersistentObject):
     def __init__(self, node_type, configuration: Configuration, model) -> None:
