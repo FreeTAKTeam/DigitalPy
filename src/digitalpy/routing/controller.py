@@ -1,9 +1,9 @@
 from abc import ABC
-from routing.action_mapper import ActionMapper
-from config.configuration import Configuration
+from digitalpy.routing.action_mapper import ActionMapper
+from digitalpy.config.configuration import Configuration
 
-from routing.request import Request
-from routing.response import Response
+from digitalpy.routing.request import Request
+from digitalpy.routing.response import Response
 
 class Controller(ABC):
     request = None

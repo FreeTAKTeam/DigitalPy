@@ -1,4 +1,4 @@
-from routing.controller import Controller
+from digitalpy.routing.controller import Controller
 
 
 class Serializer(Controller):

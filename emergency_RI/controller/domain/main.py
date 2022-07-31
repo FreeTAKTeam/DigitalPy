@@ -1,4 +1,4 @@
-from model.node import Node
+from digitalpy.model.node import Node
 import load_configuration
 from emergency_RI.constants import CONFIGURATION_PATH_TEMPLATE
 from emergency_RI import model

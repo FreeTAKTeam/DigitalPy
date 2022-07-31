@@ -1,14 +1,14 @@
 from argparse import Action
-from config.action_key import ActionKey
-from model.application_event import ApplicationEvent
-from config.impl.config_action_key_provider import ConfigActionKeyProvider
-from config.configuration import Configuration
-from core.event_manager import EventManager
-from routing.request import Request
-from routing.response import Response
-from routing.action_mapper import ActionMapper
+from digitalpy.config.action_key import ActionKey
+from digitalpy.model.application_event import ApplicationEvent
+from digitalpy.config.impl.config_action_key_provider import ConfigActionKeyProvider
+from digitalpy.config.configuration import Configuration
+from digitalpy.core.event_manager import EventManager
+from digitalpy.routing.request import Request
+from digitalpy.routing.response import Response
+from digitalpy.routing.action_mapper import ActionMapper
 
-from core.object_factory import ObjectFactory
+from digitalpy.core.object_factory import ObjectFactory
 
 
 class DefaultActionMapper(ActionMapper):

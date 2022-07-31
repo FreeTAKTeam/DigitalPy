@@ -1,4 +1,4 @@
-from model.persistent_object import PersistentObject
+from digitalpy.model.persistent_object import PersistentObject
 
 
 class PersistentObjectProxy(PersistentObject):

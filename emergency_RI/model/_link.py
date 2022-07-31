@@ -1,4 +1,4 @@
-from model.node import Node
+from digitalpy.model.node import Node
 
 class link(Node):
     def __init__(self, configuration, model):

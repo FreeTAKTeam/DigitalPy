@@ -1,6 +1,6 @@
-from core.impl.default_factory import DefaultFactory
-from config.impl.inifile_configuration import InifileConfiguration
-from core.object_factory import ObjectFactory
+from digitalpy.core.impl.default_factory import DefaultFactory
+from digitalpy.config.impl.inifile_configuration import InifileConfiguration
+from digitalpy.core.object_factory import ObjectFactory
 
 def test_basic_configuration():
     config = InifileConfiguration("")

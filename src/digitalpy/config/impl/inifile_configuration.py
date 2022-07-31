@@ -3,7 +3,7 @@ import os
 import re
 from tkinter import N
 
-from config.configuration import Configuration
+from digitalpy.config.configuration import Configuration
 
 
 class InifileConfiguration(Configuration):

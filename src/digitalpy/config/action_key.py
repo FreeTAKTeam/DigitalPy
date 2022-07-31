@@ -3,7 +3,7 @@ import re
 
 from attr import has
 
-from config.action_key_provider import ActionKeyProvider
+from digitalpy.config.action_key_provider import ActionKeyProvider
 
 
 class ActionKey:

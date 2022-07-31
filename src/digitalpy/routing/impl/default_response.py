@@ -1,5 +1,5 @@
-from routing.response import Response
-from routing.request import Request
+from digitalpy.routing.response import Response
+from digitalpy.routing.request import Request
 
 class DefaultResponse(Response):
     def __init__(self):

@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='digitalpy',
-      version='0.1.2',
+      version='0.1.3',
       description="A python implementation of the aphrodite's framework",
       author='Natha Paquette',
       author_email='natha.paquette@gmail.com',

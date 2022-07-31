@@ -8,7 +8,7 @@
 # 
 #######################################################
 from emergency_RI.model.model_constants import EmergencyVariables as vars
-from model.node import Node
+from digitalpy.model.node import Node
 
 class emergency(Node):
     """An Emergency beacon the is continually send to all the connected clients until

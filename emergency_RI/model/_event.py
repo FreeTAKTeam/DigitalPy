@@ -1,5 +1,5 @@
 from load_configuration import Configuration
-from model.node import Node
+from digitalpy.model.node import Node
 from emergency_RI.model.model_constants import EventVariables as vars
 import uuid
 from datetime import datetime as dt

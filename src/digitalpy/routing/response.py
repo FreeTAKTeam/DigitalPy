@@ -1,5 +1,5 @@
 
-from routing.controller_message import ControllerMessage
+from digitalpy.routing.controller_message import ControllerMessage
 
 
 class Response(ControllerMessage):

@@ -8,7 +8,7 @@
 #
 #######################################################
 
-from model.node import Node
+from digitalpy.model.node import Node
 
 class detail(Node):
     """An optional element used to hold CoT sub-schema. empty element

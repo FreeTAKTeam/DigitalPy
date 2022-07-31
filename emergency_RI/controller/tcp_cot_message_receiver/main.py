@@ -1,6 +1,6 @@
-from routing.controller import Controller
-from routing.request import Request
-from routing.response import Response
+from digitalpy.routing.controller import Controller
+from digitalpy.routing.request import Request
+from digitalpy.routing.response import Response
 
 
 class TCPCoTMessageReceiver(Controller):

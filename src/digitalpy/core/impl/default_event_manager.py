@@ -1,7 +1,7 @@
 from multiprocessing import Event
 from typing import Callable
 
-from core.event_manager import EventManager
+from digitalpy.core.event_manager import EventManager
 
 
 class DefaultEventManager(EventManager):

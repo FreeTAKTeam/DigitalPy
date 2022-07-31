@@ -1,10 +1,10 @@
 import uuid
 import re
-from model.impl.default_persistent_object import DefaultPersistentObject
+from digitalpy.model.impl.default_persistent_object import DefaultPersistentObject
 from load_configuration import Configuration
 
-from model.persistent_object import PersistentObject
-from model.persistent_object_proxy import PersistentObjectProxy
+from digitalpy.model.persistent_object import PersistentObject
+from digitalpy.model.persistent_object_proxy import PersistentObjectProxy
 
 class Node(DefaultPersistentObject):
     def __init__(self, node_type, configuration: Configuration, model) -> None:

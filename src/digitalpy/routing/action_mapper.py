@@ -1,7 +1,7 @@
 from abc import ABC
-from routing.request import Request
+from digitalpy.routing.request import Request
 
-from routing.response import Response
+from digitalpy.routing.response import Response
 
 
 class ActionMapper(ABC):

@@ -1,6 +1,6 @@
 import inspect
-from config.configuration import Configuration
-from core.factory import Factory
+from digitalpy.config.configuration import Configuration
+from digitalpy.core.factory import Factory
 import json
 import importlib
 

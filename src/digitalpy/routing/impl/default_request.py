@@ -1,5 +1,5 @@
-from routing.controller_message import ControllerMessage
-from routing.request import Request
+from digitalpy.routing.controller_message import ControllerMessage
+from digitalpy.routing.request import Request
 
 
 class DefaultRequest(Request):

@@ -1,4 +1,4 @@
-from model import event, detail, link, contact, emergency
+from digitalpy.model import event, detail, link, contact, emergency
 
 class EmergencyOnFactory:
     def __init__(self, relationship_definition):

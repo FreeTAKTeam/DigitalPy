@@ -1,5 +1,5 @@
-from core.event import Event
-from model.persistent_object import PersistentObject
+from digitalpy.core.event import Event
+from digitalpy.model.persistent_object import PersistentObject
 
 class ValueChangeEvent(Event):
     NAME = "ValueChangeEvent"

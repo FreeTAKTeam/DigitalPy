@@ -1,7 +1,7 @@
-from core.event import Event
-from routing.request import Request
-from routing.response import Response
-from routing.controller import Controller
+from digitalpy.core.event import Event
+from digitalpy.routing.request import Request
+from digitalpy.routing.response import Response
+from digitalpy.routing.controller import Controller
 
 class ApplicationEvent(Event):
     NAME = "ApplicationEvent"

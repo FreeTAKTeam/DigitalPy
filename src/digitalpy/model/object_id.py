@@ -1,5 +1,5 @@
 import re
-from core.object_factory import ObjectFactory
+from digitalpy.core.object_factory import ObjectFactory
 import uuid
 
 class ObjectId:
