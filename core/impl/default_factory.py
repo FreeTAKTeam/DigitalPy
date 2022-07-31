@@ -6,7 +6,7 @@ import importlib
 
 class DefaultFactory(Factory):
     required_interfaces = {
-        'event_manager' :          'event_manager.EventManager',
+        'event_manager' :          'core.event_manager.EventManager',
         'logger' :                'logger.Logger',
         'log_manager' :            'log_manager.LogManager',
         'session' :               'session.Session',
@@ -14,9 +14,9 @@ class DefaultFactory(Factory):
         'message' :               'message.Message',
         'persistence_facade' :     'wcmf\lib\persistence\PersistenceFacade',
         'concurrency_manager' :    'concurrency_manager.ConcurrencyManager',
-        'action_mapper' :          'action_mapper.ActionMapper',
-        'request' :               'request.Request',
-        'response' :              'response.Response',
+        'action_mapper' :          'routing.action_mapper.ActionMapper',
+        'request' :               'routing.request.Request',
+        'response' :              'routing.response.Response',
         'list_strategies' :        'list_strategy.ListStrategy',
         'formats' :               'format.Format',
         'formatter' :             'formatter.Formatter',
@@ -120,7 +120,7 @@ class DefaultFactory(Factory):
             if len(class_name_parts)==2:
                 instance_class = getattr(importlib.import_module('.',class_name_parts[0]), class_name_parts[1])
             else:
-                instance_class = getattr(importlib.import_module(".".join(class_name_parts[:-3]),class_name_parts[-2]), class_name_parts[-1])
+                instance_class = getattr(importlib.import_module(".".join(class_name_parts[:-1])), class_name_parts[-1])
 
             return instance_class
         return None

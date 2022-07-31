@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from response import Response
+from routing.response import Response
 
 from routing.controller_message import ControllerMessage
 

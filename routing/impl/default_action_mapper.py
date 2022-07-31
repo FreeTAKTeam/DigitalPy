@@ -4,8 +4,8 @@ from model.application_event import ApplicationEvent
 from config.impl.config_action_key_provider import ConfigActionKeyProvider
 from config.configuration import Configuration
 from core.event_manager import EventManager
-from request import Request
-from response import Response
+from routing.request import Request
+from routing.response import Response
 from routing.action_mapper import ActionMapper
 
 from core.object_factory import ObjectFactory

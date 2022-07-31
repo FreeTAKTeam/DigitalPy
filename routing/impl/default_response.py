@@ -1,5 +1,5 @@
-from response import Response
-from request import Request
+from routing.response import Response
+from routing.request import Request
 
 class DefaultResponse(Response):
     def __init__(self):

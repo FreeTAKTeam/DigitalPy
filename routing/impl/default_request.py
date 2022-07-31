@@ -1,5 +1,5 @@
 from routing.controller_message import ControllerMessage
-from request import Request
+from routing.request import Request
 
 
 class DefaultRequest(Request):

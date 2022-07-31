@@ -1,6 +1,6 @@
 from core.event import Event
-from request import Request
-from response import Response
+from routing.request import Request
+from routing.response import Response
 from routing.controller import Controller
 
 class ApplicationEvent(Event):

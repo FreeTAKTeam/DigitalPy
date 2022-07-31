@@ -2,8 +2,8 @@ from abc import ABC
 from routing.action_mapper import ActionMapper
 from config.configuration import Configuration
 
-from request import Request
-from response import Response
+from routing.request import Request
+from routing.response import Response
 
 class Controller(ABC):
     request = None
