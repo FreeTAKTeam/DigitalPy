@@ -44,6 +44,10 @@ class ControllerMessage(ABC):
     
     def set_values(self, values: dict):
         self.values = values
+    
+    def get_values(self):
+        return self.values
+    
     #
     # Get a value
     # @param name The name of the variable
@@ -76,14 +80,14 @@ class ControllerMessage(ABC):
     # @param name The name of the variable
     #/
     
-    def clear_value(name):
-        raise NotImplementedError
+    def clear_value(self, name):
+        del self.values[name]
     #
     # Remove all values
     #/
     
-    def clear_values():
-        raise NotImplementedError
+    def clear_values(self):
+        self.values = {}
     #
     # Check for existence of a value
     # @param name The name of the variable
