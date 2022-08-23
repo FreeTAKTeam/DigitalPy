@@ -23,7 +23,7 @@ class Controller(ABC):
         pass
 
     def initialize(self, request: Request, response: Response):
-        response.setSender(self)
+        response.set_sender(self)
 
         self.request = request
         self.response = response
