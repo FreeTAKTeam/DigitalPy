@@ -1,7 +1,7 @@
 import uuid
 import re
 from digitalpy.model.impl.default_persistent_object import DefaultPersistentObject
-from load_configuration import Configuration
+from digitalpy.model.load_configuration import Configuration
 
 from digitalpy.model.persistent_object import PersistentObject
 from digitalpy.model.persistent_object_proxy import PersistentObjectProxy
