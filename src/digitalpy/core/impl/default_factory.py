@@ -6,7 +6,7 @@ import importlib
 
 class DefaultFactory(Factory):
     required_interfaces = {
-        'event_manager' :          'core.event_manager.EventManager',
+        'event_manager' :          'digitalpy.core.event_manager.EventManager',
         'logger' :                'logger.Logger',
         'log_manager' :            'log_manager.LogManager',
         'session' :               'session.Session',
@@ -14,9 +14,9 @@ class DefaultFactory(Factory):
         'message' :               'message.Message',
         'persistence_facade' :     'wcmf\lib\persistence\PersistenceFacade',
         'concurrency_manager' :    'concurrency_manager.ConcurrencyManager',
-        'action_mapper' :          'routing.action_mapper.ActionMapper',
-        'request' :               'routing.request.Request',
-        'response' :              'routing.response.Response',
+        'action_mapper' :          'digitalpy.routing.action_mapper.ActionMapper',
+        'request' :               'digitalpy.routing.request.Request',
+        'response' :              'digitalpy.routing.response.Response',
         'list_strategies' :        'list_strategy.ListStrategy',
         'formats' :               'format.Format',
         'formatter' :             'formatter.Formatter',
