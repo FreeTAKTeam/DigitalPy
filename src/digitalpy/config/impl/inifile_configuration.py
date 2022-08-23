@@ -4,6 +4,7 @@ import re
 from tkinter import N
 
 from digitalpy.config.configuration import Configuration
+import collections.abc
 
 
 class InifileConfiguration(Configuration):
@@ -41,8 +42,17 @@ class InifileConfiguration(Configuration):
         if filename not in parsed_files:
             parsed_files.append(filename)
             content = self.parse_ini_file(filename)
-            return {'config': content, 'files': parsed_files}
+            merged = self.merge_dictionaries(content, config_array)
+            return {'config': merged, 'files': parsed_files}
 
+    def merge_dictionaries(self, dict_one, dict_two):
+        for k, v in dict_two.items():
+            if isinstance(v, collections.abc.Mapping):
+                dict_one[k] = self.merge_dictionaries(dict_one.get(k, {}), v)
+            else:
+                dict_one[k] = v
+        return dict_one
+    
     def get_config_includes(self, dictionary):
         section_matches = None
         re.match("/(?:^|,)(config)(?:,|$)/i", dictionary.keys().join(','))
