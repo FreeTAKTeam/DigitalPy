@@ -61,7 +61,7 @@ class DefaultFactory(Factory):
                 for param_name, param_default in instance_class_params.parameters.items():
                     if param_name == "self" or param_name == 'args' or param_name == 'kwargs':
                         continue
-                    param_instance_key = param_name.lower()
+                    param_instance_key = param_name.lower().replace("_", "")
                     if param_instance_key in self.instances:
                         c_params[param_name] = self.instances[param_instance_key]
                     elif param_name in configuration:
@@ -74,7 +74,11 @@ class DefaultFactory(Factory):
                 interface = self.get_interface(name)
                 if interface != None and not isinstance(instance, interface):
                     raise Exception(f'class {instance_class} is required to implement interface {interface}')
-                for key, val in configuration.items():
+                
+                if '__shared' not in configuration or configuration['__shared'] == 'true':
+                    self.register_instance(instance_key, instance)
+                
+                for key, value in configuration.items():
                     if not key.startswith("__") and c_params.get(key, None) != None:
                         value = self.resolve_value(value)
                         setter_name = self.get_setter_name(key)
@@ -135,5 +139,6 @@ class DefaultFactory(Factory):
         return instance
         
     def get_new_instance(self, name, dynamic_configuration={}):
-        instance = self.get_instance(name, dynamic_configuration)
+        configuration = {**dynamic_configuration, '__shared': False}
+        instance = self.get_instance(name, configuration)
         return instance
