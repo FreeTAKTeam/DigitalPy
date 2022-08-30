@@ -1,11 +1,16 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 
 class ActionKeyProvider(ABC):
-    def contains_key(self, action_key):
-        raise NotImplementedError
+    """Implementations of ActionKeyProvider search for action keys."""
     
-    def get_key_value(self, action_key):
-        raise NotImplementedError
+    @abstractmethod
+    def contains_key(self, action_key: str):
+        """Check if the given action key exists."""
     
-    def get_id(self, action_key):
-        raise NotImplementedError
+    @abstractmethod
+    def get_key_value(self, action_key: str):
+        """Get the value of the given action key."""
+    
+    @abstractmethod
+    def get_id(self):
+        """Get a string value that uniquely describes the provider configuration."""
