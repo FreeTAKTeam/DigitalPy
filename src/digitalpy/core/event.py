@@ -1,11 +1,14 @@
 from abc import ABC
 
 class Event(ABC):
-    _is_stopped = False
+    """Event is the base class for all events."""
+    __is_stopped = False
 
     def stop_propagation(self):
-        self._is_stopped = True
+        """Stop further processing of the event"""
+        self.__is_stopped = True
 
-    def is_stopped(self):
-        return self._is_stopped
+    def is_stopped(self) -> bool:
+        """Check if the event is stopped"""
+        return self.__is_stopped
         

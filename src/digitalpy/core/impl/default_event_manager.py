@@ -5,6 +5,8 @@ from digitalpy.core.event_manager import EventManager
 
 
 class DefaultEventManager(EventManager):
+    """DefaultEventManager is a simple EventManager implementation."""
+    
     __listeners = []
 
     def add_listener(self, event_name, callback: Callable):
