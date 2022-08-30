@@ -6,5 +6,7 @@
     "python.testing.pytestEnabled": true,
     "cSpell.words": [
         "emergencys"
-    ]
+    ],
+    "python.linting.pylintEnabled": true,
+    "python.linting.enabled": true
 }

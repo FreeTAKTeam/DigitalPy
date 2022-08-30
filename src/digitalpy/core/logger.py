@@ -1,20 +1,27 @@
-from abc import ABC
+from abc import ABC, abstractmethod
+
 
 class Logger(ABC):
+    @abstractmethod
     def debug(self, message):
-        raise NotImplementedError
-        
+        """record a debug message"""
+
+    @abstractmethod
     def info(self, message):
-        raise NotImplementedError
-        
+        """record a info message"""
+
+    @abstractmethod
     def warn(self, message):
-        raise NotImplementedError
-        
+        """record a warn message"""
+
+    @abstractmethod
     def error(self, message):
-        raise NotImplementedError
-        
+        """record a error message"""
+
+    @abstractmethod
     def fatal(self, message):
-        raise NotImplementedError
-    
+        """record a fatal message"""
+
+    @abstractmethod
     def get_logger(self, name):
-        raise NotImplementedError
+        """Get a Logger instance by name"""

@@ -28,6 +28,12 @@ class DefaultFactory(Factory):
         self.current_stack = []
         self.instances = {}
 
+    def add_interfaces(self, interfaces: dict):
+        raise NotImplementedError("this method has not yet been implemented")
+
+    def clear(self):
+        raise NotImplementedError("this method has not yet been implemented")
+
     def get_instance(self, name, dynamic_configuration={}) -> object:
         instance = None
         self.current_stack.append(name)

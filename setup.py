@@ -6,6 +6,9 @@ setup(name='digitalpy',
       author='Natha Paquette',
       author_email='natha.paquette@gmail.com',
       url='https://www.python.org/sigs/distutils-sig/',
+      requires=[
+            "rule-engine"
+            ],
       package_dir={"": "src"},
       packages=find_packages(exclude=['tests', 'emergency_RI*']),
      )
