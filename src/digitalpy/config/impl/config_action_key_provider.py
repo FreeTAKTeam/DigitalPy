@@ -3,7 +3,7 @@ from digitalpy.config.configuration import Configuration
 
 
 class ConfigActionKeyProvider(ActionKeyProvider):
-    def __init__(self, configuration: Configuration, config_section):
+    def __init__(self, configuration: Configuration, config_section: str):
         self.configuration = configuration
         self.config_section = config_section
         self.id = None
