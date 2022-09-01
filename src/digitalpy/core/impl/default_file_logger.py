@@ -50,16 +50,13 @@ class DefaultFileLogger(Logger):
     def create_logger_instance(
         self, name, config_file, formatter, log_level, logging_path
     ):
-        logging.config.fileConfig(config_file)
+        logging.config.fileConfig(
+            config_file,
+            disable_existing_loggers=False,
+            defaults={"logfilename": logging_path.as_posix()},
+        )
 
         logger = logging.getLogger(name)
-
-        logger.setLevel(log_level)
-
-        handler = logging.FileHandler(logging_path)
-        handler.setFormatter(formatter)
-
-        logger.addHandler(handler)
 
         return logger
 
