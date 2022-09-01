@@ -1,13 +1,20 @@
 from digitalpy.routing.controller import Controller
 from digitalpy.logic.contexts import Contexts
+from digitalpy.core.object_factory import ObjectFactory
 import rule_engine
 from typing import Dict, Callable, List, Union
 import json
 
 
 class DefaultBusinessRuleController(Controller):
-    def __init__(self, business_rules_path: Dict[str, List[Callable]], **kwargs):
+    def __init__(
+        self,
+        business_rules_path: Dict[str, List[Callable]],
+        internal_action_mapper,
+        **kwargs
+    ):
         super().__init__(**kwargs)
+        self.internal_action_mapper = internal_action_mapper
         self.business_rules_path = business_rules_path
         self.reload_business_rules(business_rules_path)
 
@@ -25,7 +32,7 @@ class DefaultBusinessRuleController(Controller):
         self.response.set_values(kwargs)
         if rule_dict is None:
             rule_dict = self.business_rules
-        self._evaluate_callbacks(rule_dict)
+        self._evaluate_actions(rule_dict)
 
         if rule_dict.get("rules", None) is not None:
             matchable = self._get_matchable_object(matchable, rule_dict)
@@ -69,8 +76,14 @@ class DefaultBusinessRuleController(Controller):
             matchable = self.request.get_value(new_matchable)
         return matchable
 
-    def _evaluate_callbacks(self, rule_dict):
-        if "callbacks" in rule_dict:
-            for callback_str in rule_dict["callbacks"]:
-                callback = getattr(self, callback_str)
-                callback(**self.request.get_values())
+    def _evaluate_actions(self, rule_dict):
+        if "actions" in rule_dict:
+            for action in rule_dict["actions"]:
+                cur_request = self.get_request()
+                sub_request = ObjectFactory.get_new_instance("request")
+                sub_request.set_sender(self.__class__.__name__)
+                sub_request.set_context(cur_request.get_context())
+                sub_request.set_action(action)
+                sub_request.set_values(cur_request.get_values())
+                sub_response = ObjectFactory.get_new_instance("response")
+                self.internal_action_mapper.process_action(sub_request, sub_response)
