@@ -9,6 +9,6 @@ setup(name='digitalpy',
       install_requires=[
             "rule-engine"
             ],
-      package_dir={"": "src"},
-      packages=find_packages(exclude=['tests', 'emergency_RI*']),
+      packages=find_packages(include=["digitalpy", "digitalpy.*"])
+      #packages=["digitalpy"]
      )
