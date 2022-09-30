@@ -139,7 +139,7 @@ class DefaultActionMapper(ActionMapper):
         nextRequest.set_sender(controllerClass)
         nextRequest.set_context(response.get_context())
         nextRequest.set_action(response.get_action())
-        # nextRequest.set_format(response.get_format())
+        nextRequest.set_format(response.get_format())
         nextRequest.set_values(response.get_values())
         # nextRequest.set_errors(response.get_errors())
         # nextRequest.set_response_format(request.get_response_format())
