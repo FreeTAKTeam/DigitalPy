@@ -1,7 +1,8 @@
+from digitalpy.routing.impl.abstract_controller_message import AbstractControllerMessage
 from digitalpy.routing.response import Response
 from digitalpy.routing.request import Request
 
-class DefaultResponse(Response):
+class DefaultResponse(Response, AbstractControllerMessage):
     def __init__(self):
         super().__init__()
     

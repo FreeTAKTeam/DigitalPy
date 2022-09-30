@@ -1,8 +1,8 @@
-from digitalpy.routing.controller_message import ControllerMessage
+from digitalpy.routing.impl.abstract_controller_message import AbstractControllerMessage
 from digitalpy.routing.request import Request
+import json
 
-
-class DefaultRequest(Request):
+class DefaultRequest(Request, AbstractControllerMessage):
 
     def __init__(self):
         super().__init__()
