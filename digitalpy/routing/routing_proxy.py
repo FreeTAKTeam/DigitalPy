@@ -32,15 +32,15 @@ class RoutingProxy:
 
     def initiate_sockets(self):
         print("initiate_sockets")
-        context = zmq.Context()
-        self.backend_dealer = context.socket(zmq.DEALER)
+        self.context = zmq.Context()
+        self.backend_dealer = self.context.socket(zmq.DEALER)
         self.backend_dealer.bind(self.backend_address)
 
-        self.frontend_sub = context.socket(zmq.SUB)
+        self.frontend_sub = self.context.socket(zmq.SUB)
         self.frontend_sub.bind(self.frontend_sub_address)
         self.frontend_sub.setsockopt(zmq.SUBSCRIBE, b"")
 
-        self.frontend_pub = context.socket(zmq.PUB)
+        self.frontend_pub = self.context.socket(zmq.PUB)
         self.frontend_pub.bind(self.frontend_pub_address)
 
         self.poller = zmq.Poller()
@@ -50,7 +50,7 @@ class RoutingProxy:
     def begin_routing(self):
         self.initiate_sockets()
         self.start_workers()
-        while True:
+        while True:            
             socks = dict(self.poller.poll())
 
             if socks.get(self.frontend_sub) == zmq.POLLIN:
@@ -69,15 +69,22 @@ class RoutingProxy:
         """delete objects that cannot be pickled or generally serialized"""
         state = self.__dict__.copy()
         if "backend_dealer" in state:
+            self.backend_dealer.close()
             del state["backend_dealer"]
         if "frontend_sub" in state:
+            self.frontend_sub.close()
             del state["frontend_sub"]
         if "frontend_pub" in state:
+            self.frontend_pub.close()
             del state["frontend_pub"]
         if "poller" in state:
+            self.poller.close()
             del state["poller"]
         if "workers" in state:
             del state["workers"]
+        if "context" in state:
+            self.context.term()
+            del state["context"]
         return state
 
     def __setstate__(self, state):
