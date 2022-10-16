@@ -136,7 +136,7 @@ class AsyncActionMapper(ActionMapper):
         else:
             routing_subscriber = None
 
-        threading.Thread(target = self.submit_request, args=(request,).start())
+        threading.Thread(target = self.submit_request, args=(request,), daemon=True).start()
 
         return routing_subscriber
 
