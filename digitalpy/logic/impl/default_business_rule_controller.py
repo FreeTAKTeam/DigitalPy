@@ -72,7 +72,7 @@ class DefaultBusinessRuleController(Controller):
         # instead of the request
         new_matchable = rule_dict.get("matchable", None)
         if new_matchable is None:
-            matchable = self.request.get_value(matchable)
+            matchable = self.request.get_values()
         else:
             matchable = self.request.get_value(new_matchable)
         return matchable
