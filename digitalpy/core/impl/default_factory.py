@@ -41,7 +41,12 @@ class DefaultFactory(Factory):
         if len(dynamic_configuration) == 0:
             instance_key = name.lower()
         else:
-            instance_key = name + json.dumps(dynamic_configuration)
+            try:
+                instance_key = name + json.dumps(dynamic_configuration)
+            # exception caught where the values of dynamic_configuration are not json serializable
+            # but are required to be passed as arguments
+            except TypeError:
+                instance_key = name
         if instance_key in self.instances:
             instance = self.instances[instance_key]
         else:

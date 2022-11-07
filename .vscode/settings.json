@@ -5,7 +5,8 @@
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
     "cSpell.words": [
-        "emergencys"
+        "emergencys",
+        "opentelemetry"
     ],
     "python.linting.pylintEnabled": true,
     "python.linting.enabled": true

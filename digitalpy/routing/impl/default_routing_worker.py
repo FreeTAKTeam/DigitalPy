@@ -1,3 +1,4 @@
+import uuid
 import zmq
 from digitalpy.core.object_factory import ObjectFactory
 from digitalpy.config.action_key import ActionKey
@@ -7,6 +8,7 @@ from digitalpy.routing.action_mapper import ActionMapper
 from digitalpy.config.impl.config_action_key_provider import ConfigActionKeyProvider
 from digitalpy.parsing.formatter import Formatter
 from digitalpy.core.factory import Factory
+from digitalpy.telemetry.impl.opentel_metrics_provider import OpenTelMetricsProvider
 
 
 class DefaultRoutingWorker:
@@ -23,6 +25,7 @@ class DefaultRoutingWorker:
         self.action_mapper = sync_action_mapper
         self.server_address = server_address
         self.formatter = formatter
+        self.worker_id = str(uuid.uuid4())
 
     def initiate_sockets(self):
         context = zmq.Context()
@@ -31,8 +34,33 @@ class DefaultRoutingWorker:
         self.action_mapper = self.action_mapper
         ObjectFactory.configure(self.factory)
 
+    def initialize_metrics(self):
+        """initialize the metrics provider and register it to the factory
+        so it can be used by all called components"""
+        try:
+            self.metrics_provider = self.factory.get_instance(
+                "metricsprovider",
+                dynamic_configuration={"service_name": self.worker_id},
+            )
+            self.factory.register_instance(
+                "metrics_provider_instance", self.metrics_provider
+            )
+        except Exception as e:
+            pass
+
+    def initialize_tracing(self):
+        try:
+            self.tracing_provider = self.factory.get_instance("tracingprovider")
+            self.factory.register_instance(
+                "tracing_provider_instance", self.tracing_provider
+            )
+        except Exception as e:
+            pass
+
     def start(self):
         self.initiate_sockets()
+        self.initialize_metrics()
+        self.initialize_tracing()
         while True:
             try:
                 message = self.sock.recv_multipart()
