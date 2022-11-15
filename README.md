@@ -7,7 +7,8 @@ The aim of the DE is to create a *Digital Twin* of an organization or domain, by
 The products of this knowledge (text documents, code configuration, deployment files, etc.) are generated from the model rather that produced, managed and stored separately.
 
 To be able to transform this abstract model in running code the support of a special class of frameworks is required, this is called Aphodite (Alfa). 
-DigitalPy is a Python framework that implements the  Aphrodite 2.0 specifications. Other Aphrodites Frameworks are maintained under the [Olympos MDA](https://sourceforge.net/projects/olympos/) project, the most notable is the [WCMF](https://wcmf.wemove.com) an Aphrodite framework for PHP.
+DigitalPy is a Python framework that implements the  Aphrodite 2.0 specifications. Other Aphrodites Frameworks and the original specification  are maintained under the [Olympos MDA](https://sourceforge.net/projects/olympos/) project (e.g. VenusSharp a C# implementation). 
+The most notable being the [WCMF](https://wcmf.wemove.com) an Aphrodite framework for PHP.
 
 ## Goal of  DigitalPy
 
@@ -29,7 +30,7 @@ DigitalPy runs with minimal or no configuration. Even if a configurable entity w
 ### (Good) Object Orientation
 DigitalPy follows 
 * Abstraction: Alpha abstraction, supports the KISS principle, by hiding internal implementation and showing only the required features or set of services that are offered. 
-* Encapsulation: Alpha  binds data and attributes or methods and data members in classes
+* Encapsulation: Alpha  binds data and attributes or methods and data members in classes, also implements the Facade structural pattern (see below)
 * Inheritance: Alpha allocates features to super classes that can be  inherited from children classes
 * Polymorphism: Alpha describe objects with polymorphic charatteristics.
 
@@ -38,16 +39,24 @@ provides a  way to describes concepts like “Domain Object”, Services , View 
 ## Model-View-Controller
  is an architectural pattern used in software engineering. Successful use of the pattern isolates business logic from user interface considerations, resulting in an application where it is easier to modify either the visual appearance of the application or the underlying business rules without affecting the other.
  
-the DigitalPy Model classes  support the ability to Create, read, update and delete (CRUD) tree of elements taking in account the model information.
+ ### Model
+An application is usually based on a domain model that represents the real-world concepts of the domain of interest. In object oriented programming this model is implemented using classes. Depending on the application requirements the instances of some of these classes have to be persisted in a storage to keep the contained data. These classes represent the data model. The classes that provide the infrastructure for storing data form the persistence layer.
 
-### Modular design
+
+![image](https://user-images.githubusercontent.com/60719165/201990851-634ce6ed-f980-426d-95be-4367dc24c0c2.png)
+the  dModelclasses  support the ability to Create, read, update and delete (CRUD) tree of elements taking in account the model information.
+DigitalPy defines [PersistentObject](https://github.com/FreeTAKTeam/DigitalPy/blob/main/digitalpy/model/persistent_object.py) as base class for persistent domain classes. It mainly implements an unique identifier for each instance (see [ObjectId](https://github.com/FreeTAKTeam/DigitalPy/blob/main/digitalpy/model/object_id.py)), tracking of the persistent state, methods for setting and getting values as well as callback methods for lifecycle events. For the composition of object graphs the derived class Node is used as base class. It implements relation support for persistent objects.
+
+To retrieve persisted objects [PersistenceFacade](https://github.com/FreeTAKTeam/DigitalPy/blob/main/digitalpy/model/persistence_facade.py) is used. The actual operations for creating, reading, updating and deleting objects (e.g. SQL commands) are defined in classes implementing the [PersistenceMapper](https://github.com/FreeTAKTeam/DigitalPy/blob/main/digitalpy/model/persistence_mapper.py) interface (see Data Mapper Pattern). Although not necessary there usually exists one mapper class for each persistent domain class. Mapper classes are introduced to the persistent facade by configuration.
+
+## Modular design
 Modular design is a generally recognized “Good Thing(tm)” in software engineering. As in science in general, breaking a problem down to smaller, bite-sized pieces makes it easier to solve. It also allows different people to solve different parts of the problem and still have it all work correctly in the end. Each component is then self-contained and, as long as the interface between different components remains constant, can be extended or even gutted and rewritten as needed without causing a chaotic mess. DigitalPy supports this principle with his component Architecture (see below).
 
-## Component Architecture
-Aphrodite 1.0 describes a monolithic architecture, the 2.0 specs introduces the concept of Component Architecture. 
+### Component Architecture
+Aphrodite 1.0 describes a monolithic architecture, to support a better modular design, the 2.0 specs introduces the concept of Component Architecture. 
 
 ### Components features
- * Independent − Components are designed to have minimal dependencies on other components thanks to the DigitalPy routing system.
+ * Independent − Alfa Components are designed to have minimal dependencies on other components thanks to the DigitalPy routing system.
  * Reusability − Alfa Components are designed to be reused in different situations in different applications. However, some components may be designed for a specific task.
  * Replaceable − Alfa Components may be substituted with other similar components.
  * Not context specific − Alfa Components are designed to operate in different environments and contexts and can be deployed anywhere.
@@ -56,21 +65,20 @@ Aphrodite 1.0 describes a monolithic architecture, the 2.0 specs introduces the 
 
 ![image](https://user-images.githubusercontent.com/60719165/201923460-71da92c0-f685-4f44-aa19-8dc53fe0119c.png)
 
- 
-
-## package dependencies
-![image](https://user-images.githubusercontent.com/60719165/201922228-a4a7842c-8425-437f-be1c-884ec8c852d1.png)
-
-## component Architecture
+ ## component Architecture
 
 ![image](https://user-images.githubusercontent.com/60719165/201922624-5bcfbda3-8267-4f07-8200-4198db6b8589.png)
+### Facade
+ each component exposes a Facade, that is inheriting from the framework Facade. All the messages are routed trough the facade to the Component Actionmapper that allocates the action to the proper controller as defined in internalActionMapping.ini.
 
-## Model
-An application is usually based on a domain model that represents the real-world concepts of the domain of interest. In object oriented programming this model is implemented using classes. Depending on the application requirements the instances of some of these classes have to be persisted in a storage to keep the contained data. These classes represent the data model. The classes that provide the infrastructure for storing data form the persistence layer.
+this allows:
+ * Isolation: We can easily isolate our code from the complexity of a subsystem.
+ * Testing Process: Using Facade Method makes the process of testing comparatively easy since it has convenient methods for common testing tasks.
+ * Loose Coupling: Availability of loose coupling between the clients and the Subsystems.
+ 
+ each component exposes a Facade, that is inheriting from the framework Facade. All the messages are routed trough the facade to the Component Actionmapper that allocates the action to the proper controller as defined in internalActionMapping.ini.
 
-![image](https://user-images.githubusercontent.com/60719165/201990851-634ce6ed-f980-426d-95be-4367dc24c0c2.png)
 
-DigitalPy defines [PersistentObject](https://github.com/FreeTAKTeam/DigitalPy/blob/main/digitalpy/model/persistent_object.py) as base class for persistent domain classes. It mainly implements an unique identifier for each instance (see [ObjectId](https://github.com/FreeTAKTeam/DigitalPy/blob/main/digitalpy/model/object_id.py)), tracking of the persistent state, methods for setting and getting values as well as callback methods for lifecycle events. For the composition of object graphs the derived class Node is used as base class. It implements relation support for persistent objects.
-
-To retrieve persisted objects [PersistenceFacade](https://github.com/FreeTAKTeam/DigitalPy/blob/main/digitalpy/model/persistence_facade.py) is used. The actual operations for creating, reading, updating and deleting objects (e.g. SQL commands) are defined in classes implementing the [PersistenceMapper](https://github.com/FreeTAKTeam/DigitalPy/blob/main/digitalpy/model/persistence_mapper.py) interface (see Data Mapper Pattern). Although not necessary there usually exists one mapper class for each persistent domain class. Mapper classes are introduced to the persistent facade by configuration.
+## DigitalPy package dependencies
+![image](https://user-images.githubusercontent.com/60719165/201922228-a4a7842c-8425-437f-be1c-884ec8c852d1.png)
 
