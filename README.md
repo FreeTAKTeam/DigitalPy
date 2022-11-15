@@ -3,7 +3,7 @@ A framework to support digital engineering in the Python language
 
 ## introduction
 The [Digital Architecture Framework](https://github.com/FreeTAKTeam/DigitalArchitectureFramework) (DAF) Metamodel is a modeling language which defines the notation for all elements used in the different stages of an organization life cycle to support the concept of Digital Engineering (DE). from the requirement to the application. DAF isintended to be used within a DE scope.
-The aim of the DE is to create a *Digital Twin* of an organization or domain, by holding the all knowledge of the enterprise in an Authoritate Source of Thruth (ASoT)
+The aim of the DE is to create a *Digital Twin* of an organization or domain, by holding the all knowledge of the enterprise in an Authoritate Source of Truth (ASoT)
 The products of this knowledge (text documents, code configuration, deployment files, etc.) are generated from the model rather that produced, managed and stored separately.
 
 To be able to transform this abstract model in running code the support of a special class of frameworks is required, this is called Aphodite (Alfa). 
