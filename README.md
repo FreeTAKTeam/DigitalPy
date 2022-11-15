@@ -1,19 +1,21 @@
 # DigitalPy
-A framework to support digital engineering in the python language
+A framework to support digital engineering in the Python language
 
 ## introduction
-The Digital Architecture Framework (DAF) Metamodel is a UML profile which defines the notation for all elements used in the different stages of an organization life cycle to support the concept of Digital Engineering (DE). from the requirement to the application. Chronos is made to be used within a Model Driven Enterprise approach (MDE).
+The [Digital Architecture Framework](https://github.com/FreeTAKTeam/DigitalArchitectureFramework) (DAF) Metamodel is a modeling language which defines the notation for all elements used in the different stages of an organization life cycle to support the concept of Digital Engineering (DE). from the requirement to the application. DAF isintended to be used within a DE scope.
 The aim of the DE is to create a *Digital Twin* of an organization or domain, by holding the all knowledge of the enterprise in an Authoritate Source of Thruth (ASoT)
 The products of this knowledge (text documents, code configuration, deployment files, etc.) are generated from the model rather that produced, managed and stored separately.
 
 To be able to transform this abstract model in running code the support of a special class of frameworks is required, this is called Aphodite (Alfa). 
-DigitalPy is a Python framework that implements the  Aphrodite 2.0 specifications.
+DigitalPy is a Python framework that implements the  Aphrodite 2.0 specifications. Other Aphrodites Frameworks are maintained under the [Olympos MDA](https://sourceforge.net/projects/olympos/) project, the most notable is the [WCMF](https://wcmf.wemove.com) an Aphrodite framework for PHP.
 
 ## Goal of  DigitalPy
 
-A software frameworks consists of frozen spots and hot spots. On the one hand, frozen spots define the overall architecture of a software system, that is to say its basic components and the relationships between them. These remain unchanged (frozen) in any instantiation of the application framework. On the other hand, hot spots represent those parts where the programmers using the framework add their own code to add the functionality specific to their own project.
-Source http://en.wikipedia.org/wiki/Software_framework 
+Am Aphrodites  frameworks consists of [frozen spots and hot spots](http://en.wikipedia.org/wiki/Software_framework ). On the one hand, frozen spots define the overall architecture of a software system, that is to say its basic components and the relationships between them. These remain unchanged (frozen) in any instantiation of the application framework. On the other hand, hot spots represent those parts where the programmers using the framework add their own code to add the functionality specific to their own project.
+
 ![image](https://user-images.githubusercontent.com/60719165/201929029-44ec83b7-870a-4baa-bc8e-50e46f558a2e.png)
+The aim of a DigitalPy is to define all the frozen spots, so that is hot spot can be gnerated from the ASOT.
+While DigitalPy is well suited for Digital Enginering, there are no dependencies with the ASoT or the DAF Generator ([DAFGen](https://github.com/FreeTAKTeam/FreeTAKModel)) that are maintained as a separated project.
 
 ## Aphrodite principles
 ### KISS Keep It Simple Stupid
@@ -28,11 +30,18 @@ DigitalPy runs with minimal or no configuration. Even if a configurable entity w
 DigitalPy follows 
 * Abstraction: Alpha abstraction, supports the KISS principle, by hiding internal implementation and showing only the required features or set of services that are offered. 
 * Encapsulation: Alpha  binds data and attributes or methods and data members in classes
-* Inheritance: Alpha allocated features to super classes that can be  inherited from children classes
+* Inheritance: Alpha allocates features to super classes that can be  inherited from children classes
 * Polymorphism: Alpha describe objects with polymorphic charatteristics.
 
 provides a  way to describes concepts like “Domain Object”, Services , View . See also the MVC point below.
 
+## Model-View-Controller
+ is an architectural pattern used in software engineering. Successful use of the pattern isolates business logic from user interface considerations, resulting in an application where it is easier to modify either the visual appearance of the application or the underlying business rules without affecting the other.
+ 
+the DigitalPy Model classes  support the ability to Create, read, update and delete (CRUD) tree of elements taking in account the model information.
+
+### Modular design
+Modular design is a generally recognized “Good Thing(tm)” in software engineering. As in science in general, breaking a problem down to smaller, bite-sized pieces makes it easier to solve. It also allows different people to solve different parts of the problem and still have it all work correctly in the end. Each component is then self-contained and, as long as the interface between different components remains constant, can be extended or even gutted and rewritten as needed without causing a chaotic mess. DigitalPy supports this principle with his component Architecture (see below).
 
 ## Component Architecture
 Aphrodite 1.0 describes a monolithic architecture, the 2.0 specs introduces the concept of Component Architecture. 
@@ -47,8 +56,7 @@ Aphrodite 1.0 describes a monolithic architecture, the 2.0 specs introduces the 
 
 ![image](https://user-images.githubusercontent.com/60719165/201923460-71da92c0-f685-4f44-aa19-8dc53fe0119c.png)
 
-The aim of a DigitalPy is to define all the frozen spots, so that is hot spot can be gnerated from the ASOT.
-While DigitalPy is well suited for Digital Enginering, there are no dependencies with the ASoT or the DAF Generator (DAFGen) that are mainatined in separated project. 
+ 
 
 ## package dependencies
 ![image](https://user-images.githubusercontent.com/60719165/201922228-a4a7842c-8425-437f-be1c-884ec8c852d1.png)
@@ -57,9 +65,12 @@ While DigitalPy is well suited for Digital Enginering, there are no dependencies
 
 ![image](https://user-images.githubusercontent.com/60719165/201922624-5bcfbda3-8267-4f07-8200-4198db6b8589.png)
 
+## Model
+An application is usually based on a domain model that represents the real-world concepts of the domain of interest. In object oriented programming this model is implemented using classes. Depending on the application requirements the instances of some of these classes have to be persisted in a storage to keep the contained data. These classes represent the data model. The classes that provide the infrastructure for storing data form the persistence layer.
 
+![image](https://user-images.githubusercontent.com/60719165/201990851-634ce6ed-f980-426d-95be-4367dc24c0c2.png)
 
+DigitalPy defines [PersistentObject](https://github.com/FreeTAKTeam/DigitalPy/blob/main/digitalpy/model/persistent_object.py) as base class for persistent domain classes. It mainly implements an unique identifier for each instance (see [ObjectId](https://github.com/FreeTAKTeam/DigitalPy/blob/main/digitalpy/model/object_id.py)), tracking of the persistent state, methods for setting and getting values as well as callback methods for lifecycle events. For the composition of object graphs the derived class Node is used as base class. It implements relation support for persistent objects.
 
-
-
+To retrieve persisted objects [PersistenceFacade](https://github.com/FreeTAKTeam/DigitalPy/blob/main/digitalpy/model/persistence_facade.py) is used. The actual operations for creating, reading, updating and deleting objects (e.g. SQL commands) are defined in classes implementing the [PersistenceMapper](https://github.com/FreeTAKTeam/DigitalPy/blob/main/digitalpy/model/persistence_mapper.py) interface (see Data Mapper Pattern). Although not necessary there usually exists one mapper class for each persistent domain class. Mapper classes are introduced to the persistent facade by configuration.
 
