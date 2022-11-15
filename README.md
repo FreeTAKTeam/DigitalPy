@@ -25,7 +25,13 @@ A lesson learned from “Ruby on rails” in positive and the typical old J2EE a
 DigitalPy runs with minimal or no configuration. Even if a configurable entity was not configured, there should be some proper default to attach it with.
 
 ### (Good) Object Orientation
-DigitalPy provides a  way to describes concepts like “Domain Object”, Services , View . See also the MVC point below.
+DigitalPy follows 
+* Abstraction: Alpha abstraction, supports the KISS principle, by hiding internal implementation and showing only the required features or set of services that are offered. 
+* Encapsulation: Alpha  binds data and attributes or methods and data members in classes
+* Inheritance: Alpha allocated features to super classes that can be  inherited from children classes
+* Polymorphism: Alpha describe objects with polymorphic charatteristics.
+
+provides a  way to describes concepts like “Domain Object”, Services , View . See also the MVC point below.
 
 
 ## Component Architecture
