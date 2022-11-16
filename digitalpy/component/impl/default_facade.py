@@ -6,8 +6,10 @@ from digitalpy.routing.impl.default_action_mapper import DefaultActionMapper
 from digitalpy.core.impl.default_event_manager import DefaultEventManager
 from digitalpy.core.object_factory import ObjectFactory
 from digitalpy.core.log_manager import LogManager
+from digitalpy.core.object_factory import ObjectFactory
 from digitalpy.core.impl.default_file_logger import DefaultFileLogger
 from digitalpy.routing.controller import Controller
+from digitalpy.telemetry.tracer import Tracer
 
 
 class DefaultFacade(Controller):
@@ -25,6 +27,7 @@ class DefaultFacade(Controller):
         response=None,
         configuration=None,
         configuration_path_template=None,
+        tracing_provider_instance=None,
         **kwargs,
     ):
         super().__init__(
@@ -35,6 +38,7 @@ class DefaultFacade(Controller):
         )
         self.last_event = ""
         self.base = base
+
         self.action_mapping_path = action_mapping_path
         self.internal_action_mapping_path = internal_action_mapping_path
         self.type_mapping = type_mapping
@@ -43,6 +47,12 @@ class DefaultFacade(Controller):
             self.component_name = component_name
         else:
             self.component_name = self.__class__.__name__
+
+        # get a tacer from the tracer provider
+        if tracing_provider_instance is not None:
+            self.tracer: Tracer = tracing_provider_instance.create_tracer(
+                component_name
+            )
 
         # define the logging
         self.log_manager = LogManager()
@@ -65,6 +75,7 @@ class DefaultFacade(Controller):
     def execute(self, method):
         self.request.set_value("logger", self.logger)
         self.request.set_value("config_loader", self.config_loader)
+        self.request.set_value("tracer", self.tracer)
         try:
             if hasattr(self, method):
                 getattr(self, method)()
@@ -103,7 +114,7 @@ class DefaultFacade(Controller):
             request.set_action("RegisterMachineToHumanMapping")
             request.set_value("machine_to_human_mapping", self.type_mapping)
 
-            actionmapper = ObjectFactory.get_instance("actionMapper")
+            actionmapper = ObjectFactory.get_instance("syncactionMapper")
             response = ObjectFactory.get_new_instance("response")
             actionmapper.process_action(request, response)
 

@@ -52,7 +52,7 @@ class DefaultRoutingWorker:
         try:
             self.tracing_provider = self.factory.get_instance("tracingprovider")
             self.factory.register_instance(
-                "tracing_provider_instance", self.tracing_provider
+                "tracingproviderinstance", self.tracing_provider
             )
         except Exception as e:
             pass
