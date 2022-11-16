@@ -103,6 +103,7 @@ class AsyncActionMapper(ActionMapper):
             listener.setsockopt_string(zmq.UNSUBSCRIBE, topic)
             # temporary fix to see if delay is required before closing the socket
             import time
+
             time.sleep(3)
             print(e)
             listener.close()
@@ -136,7 +137,7 @@ class AsyncActionMapper(ActionMapper):
         else:
             routing_subscriber = None
 
-        threading.Thread(target = self.submit_request, args=(request,), daemon=True).start()
+        self.submit_request(request)
 
         return routing_subscriber
 
