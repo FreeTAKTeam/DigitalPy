@@ -2,20 +2,21 @@
 A framework to support digital engineering in the Python language
 
 ## introduction
-The [Digital Architecture Framework](https://github.com/FreeTAKTeam/DigitalArchitectureFramework) (DAF) Metamodel is a modeling language which defines the notation for all elements used in the different stages of an organization life cycle to support the concept of Digital Engineering (DE). from the requirement to the application. DAF isintended to be used within a DE scope.
-The aim of the DE is to create a *Digital Twin* of an organization or domain, by holding the all knowledge of the enterprise in an Authoritate Source of Truth (ASoT)
-The products of this knowledge (text documents, code configuration, deployment files, etc.) are generated from the model rather that produced, managed and stored separately.
+The [Digital Architecture Framework](https://github.com/FreeTAKTeam/DigitalArchitectureFramework) (DAF) Metamodel is a modeling language which defines the notation for all elements used in the different stages of an organization life cycle to support the concept of Digital Engineering (DE), from the requirement to the application. DAF is intended to be used within a DE scope.
+The aim of the DE is to create a *Digital Twin* of an organization or domain, by holding all knowledge of the enterprise in an Authoritate Source of Truth (ASoT).
+The products of this knowledge (text documents, code configuration, deployment files, etc.) are generated from the model rather than produced, managed, and stored separately.
 
-To be able to transform this abstract model in running code the support of a special class of frameworks is required, this is called Aphodite (Alfa). 
-DigitalPy is a Python framework that implements the  Aphrodite 2.0 specifications. Other Aphrodites Frameworks and the original specification  are maintained under the [Olympos MDA](https://sourceforge.net/projects/olympos/) project (e.g. VenusSharp a C# implementation). 
-The most notable being the [WCMF](https://wcmf.wemove.com) an Aphrodite framework for PHP.
+To be able to transform this abstract model into running code the support of a special class of frameworks is required, called Aphrodites (Alfa). 
+DigitalPy is a Python framework that implements the Aphrodites 2.0 specifications. Other Aphrodites frameworks and the original specification  are maintained under the [Olympos MDA](https://sourceforge.net/projects/olympos/) project (e.g. VenusSharp a C# implementation). 
+The most notable being the [WCMF](https://wcmf.wemove.com), an Aphrodite framework for PHP.
 
 ## Goal of  DigitalPy
 
-Am Aphrodites  frameworks consists of [frozen spots and hot spots](http://en.wikipedia.org/wiki/Software_framework ). On the one hand, frozen spots define the overall architecture of a software system, that is to say its basic components and the relationships between them. These remain unchanged (frozen) in any instantiation of the application framework. On the other hand, hot spots represent those parts where the programmers using the framework add their own code to add the functionality specific to their own project.
+An Aphrodites framework consists of [frozen spots and hot spots](http://en.wikipedia.org/wiki/Software_framework ). On one hand, frozen spots define the overall architecture of a software system, that is to say, its basic components and the relationships between them. These remain unchanged (frozen) in any instantiation of the application framework. On the other hand, hot spots represent those parts where the programmers using the framework add their own code to add the functionality specific to their own project.
 
 ![image](https://user-images.githubusercontent.com/60719165/201929029-44ec83b7-870a-4baa-bc8e-50e46f558a2e.png)
-The aim of a DigitalPy is to define all the frozen spots, so that is hot spot can be gnerated from the ASOT.
+
+The aim of a DigitalPy is to define all the frozen spots, so that is hot spot can be generated from the ASOT.
 While DigitalPy is well suited for Digital Enginering, there are no dependencies with the ASoT or the DAF Generator ([DAFGen](https://github.com/FreeTAKTeam/FreeTAKModel)) that are maintained as a separated project.
 
 ## Aphrodite principles
