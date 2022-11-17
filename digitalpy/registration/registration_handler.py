@@ -13,7 +13,7 @@ DIGITALPY = "digitalpy"
 REQUIRED_ALFA_VERSION = "requiredAlfaVersion"
 NAME = "name"
 VERSION = "version"
-ID = "id"
+ID = "UUID"
 
 
 class RegistrationHandler:
