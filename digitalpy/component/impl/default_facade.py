@@ -28,6 +28,7 @@ class DefaultFacade(Controller):
         configuration=None,
         configuration_path_template=None,
         tracing_provider_instance=None,
+        manifest_path=None,
         **kwargs,
     ):
         super().__init__(
@@ -53,6 +54,11 @@ class DefaultFacade(Controller):
             self.tracer: Tracer = tracing_provider_instance.create_tracer(
                 component_name
             )
+
+        # load the manifest file as a configuration
+        if manifest_path is not None:
+            self.manifest = InifileConfiguration("")
+            self.manifest.add_configuration(manifest_path)
 
         # define the logging
         self.log_manager = LogManager()
@@ -105,6 +111,10 @@ class DefaultFacade(Controller):
             ),
         )
         self._register_type_mapping()
+
+    def get_manifest(self):
+        """returns the current manifest configuration"""
+        return self.manifest
 
     def _register_type_mapping(self):
         """any component may or may not have a type mapping defined,
