@@ -2,10 +2,9 @@ import importlib
 import os
 from pathlib import PurePath
 from typing import List
-
 import pkg_resources
-from digitalpy.component.impl.default_facade import DefaultFacade
 
+from digitalpy.component.impl.default_facade import DefaultFacade
 from digitalpy.config.configuration import Configuration
 from digitalpy.config.impl.inifile_configuration import InifileConfiguration
 
@@ -14,6 +13,7 @@ DIGITALPY = "digitalpy"
 REQUIRED_ALFA_VERSION = "requiredAlfaVersion"
 NAME = "name"
 VERSION = "version"
+ID = "id"
 
 
 class RegistrationHandler:
@@ -82,6 +82,7 @@ class RegistrationHandler:
                     return False
             else:
                 return False
+            RegistrationHandler.save_component(facade_instance.get_manifest(), component_name)
             return True
         except Exception as e:
             # must use a print because logger may not be available
@@ -89,7 +90,13 @@ class RegistrationHandler:
             return False
 
     @staticmethod
+    def save_component(manifest: Configuration, component_name: str):
+        section = manifest.get_section(component_name + MANIFEST, include_meta=True)
+        RegistrationHandler.registered_components[section[NAME]] = section
+
+    @staticmethod
     def validate_manifest(manifest: Configuration, component_name: str) -> bool:
+        #TODO: determine better way to inform the caller that the manifest is invalid
         """validate that the component is compatible with the current digitalpy version
 
         Args:
@@ -129,6 +136,14 @@ class RegistrationHandler:
             component_name in RegistrationHandler.registered_components
             and section[VERSION]
             != RegistrationHandler.registered_components[component_name][VERSION]
+        ):
+            return False
+
+        # dont approve the manifest if a component with the same name but a different ID already exists
+        if (
+            component_name in RegistrationHandler.registered_components
+            and RegistrationHandler.registered_components[component_name][ID]
+            != section[ID]
         ):
             return False
 
