@@ -9,6 +9,9 @@ setup(name='digitalpy',
       install_requires=[
             "rule-engine",
             "pyzmq",
-            ],
+      ],
+      extras_require={
+            "DEV": ["pytest"],
+      },
       packages=find_packages(include=["digitalpy", "digitalpy.*"])
      )
