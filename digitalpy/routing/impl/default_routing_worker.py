@@ -63,6 +63,7 @@ class DefaultRoutingWorker:
         self.initialize_tracing()
         while True:
             try:
+                print("listening")
                 message = self.sock.recv_multipart()
                 topic = message[0]
 
@@ -196,4 +197,12 @@ class DefaultRoutingWorker:
                     ]
                 )
             except Exception as e:
-                pass
+                try:
+                    self.sock.send_multipart(
+                        [
+                            response_topic.encode("utf-8"),
+                            f"error thrown {str(e)}".encode("utf-8"),
+                        ]
+                    )
+                except Exception as e:
+                    print(str(e))
