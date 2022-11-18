@@ -327,7 +327,7 @@ class InifileConfiguration(Configuration):
         else:
             final_key_name = key
         self.config_array[final_section_name][final_key_name] = value
-        self.build_lookup_table()
+        self._build_lookup_table()
 
     def unserialize(self, parsed_files: Any) -> Any:
         """Retrieve parsed ini data from the file system and update the current instance.
