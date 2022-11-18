@@ -107,7 +107,8 @@ class DefaultFacade(Controller):
         ObjectFactory.register_instance(
             f"{self.component_name.lower()}actionmapper",
             self.base.ActionMapper(
-                ObjectFactory.get_instance("event_manager"), internal_config
+                ObjectFactory.get_instance("event_manager"),
+                internal_config,
             ),
         )
         self._register_type_mapping()
