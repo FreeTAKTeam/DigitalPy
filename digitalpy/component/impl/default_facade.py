@@ -119,7 +119,7 @@ class DefaultFacade(Controller):
     def _register_type_mapping(self):
         """any component may or may not have a type mapping defined,
         if it does then it should be registered"""
-        if self.type_mapping is not None:
+        if self.type_mapping:
             request = ObjectFactory.get_new_instance("request")
             request.set_action("RegisterMachineToHumanMapping")
             request.set_value("machine_to_human_mapping", self.type_mapping)
