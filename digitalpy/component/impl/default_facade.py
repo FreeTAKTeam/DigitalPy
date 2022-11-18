@@ -50,11 +50,13 @@ class DefaultFacade(Controller):
             self.component_name = self.__class__.__name__
 
         # get a tacer from the tracer provider
+        
         if tracing_provider_instance is not None:
             self.tracer: Tracer = tracing_provider_instance.create_tracer(
                 component_name
             )
-
+        else:
+            self.tracer = None
         # load the manifest file as a configuration
         if manifest_path is not None:
             self.manifest = InifileConfiguration("")

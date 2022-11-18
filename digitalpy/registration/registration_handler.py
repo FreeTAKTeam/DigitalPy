@@ -14,6 +14,7 @@ REQUIRED_ALFA_VERSION = "requiredAlfaVersion"
 NAME = "name"
 VERSION = "version"
 ID = "UUID"
+VERSION_DELIMITER = "."
 
 
 class RegistrationHandler:
@@ -127,7 +128,14 @@ class RegistrationHandler:
         if component_name != section[NAME]:
             return False
 
-        # validate the manifest required version against the current version
+        # iterate the delimited version number and compare it to the digitalpy version
+        for i in range(len(section[REQUIRED_ALFA_VERSION].split(VERSION_DELIMITER))):
+            #check if the version matches
+            digitalpy_version_number = digitalpy_version.split(VERSION_DELIMITER)[i] if len(digitalpy_version.split(VERSION_DELIMITER))>i else 0
+            if int(digitalpy_version_number)>=int(section[REQUIRED_ALFA_VERSION].split(VERSION_DELIMITER)[i]):
+                continue
+            else:
+                return False
         if section[REQUIRED_ALFA_VERSION] != digitalpy_version:
             return False
 
