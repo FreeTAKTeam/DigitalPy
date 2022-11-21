@@ -92,11 +92,11 @@ class InifileConfiguration(Configuration):
 
     def parse_ini_file(self, filename):
         """Load in the ini file specified in filename, and return the settings in a
-            multidimensional array, with the section names and settings included. All
-            section names and keys are lowercased.
-            @param $filename The filename of the ini file to parse
-            @return An associative array containing the data
-            @author: Sebastien Cevey <seb@cine_7.net> Original Code base: <info@megaman.nl> Added comment handling/Removed process sections flag: Ingo Herwig
+        multidimensional array, with the section names and settings included. All
+        section names and keys are lowercased.
+        @param $filename The filename of the ini file to parse
+        @return An associative array containing the data
+        @author: Sebastien Cevey <seb@cine_7.net> Original Code base: <info@megaman.nl> Added comment handling/Removed process sections flag: Ingo Herwig
         """
         if not os.path.exists(filename):
             raise FileExistsError
@@ -162,7 +162,7 @@ class InifileConfiguration(Configuration):
     def get_section(self, section, include_meta=False):
         lookup_entry = self._lookup(section)
         if lookup_entry is None:
-            raise Exception(f"section {section} not found")
+            raise ValueError(f"section {section} not found")
         else:
             if include_meta:
                 return self.config_array[lookup_entry[0]]
@@ -182,7 +182,13 @@ class InifileConfiguration(Configuration):
 
     def build_lookup_table(self) -> Any:
         """Build the internal lookup table"""
-        raise NotImplementedError("this method has not yet been implemented")
+        self.lookup_table = {}
+        for section, entry in self.config_array.items():
+            lookup_section_key = section.lower() + ":"
+            self.lookup_table[lookup_section_key] = [section]
+            for key, _ in entry.items():
+                lookup_key = lookup_section_key.lower()+key
+                self.lookup_table[lookup_key] = {section: key}
 
     def check_file_date(self, file_list: Any, reference_file: Any) -> Any:
         """Check if one file in file_list is newer than the reference_file.
@@ -216,14 +222,14 @@ class InifileConfiguration(Configuration):
         """@see Configuration::get_file_value()"""
         raise NotImplementedError("this method has not yet been implemented")
 
-    def get_serialize_filename(self,parsed_files: Any) -> Any:
+    def get_serialize_filename(self, parsed_files: Any) -> Any:
         """Get the filename for the serialized data that correspond to the the given ini
         file sequence. NOTE: The method returns None, if no cache path is configured
            @param $parsed_files An array of parsed filenames
            @return String
         """
         raise NotImplementedError("this method has not yet been implemented")
-    
+
     def is_editable(self, section: Any) -> Any:
         """@see WritableConfiguration::is_editable()"""
         raise NotImplementedError("this method has not yet been implemented")
@@ -232,14 +238,18 @@ class InifileConfiguration(Configuration):
         """@see WritableConfiguration::is_modified()"""
         raise NotImplementedError("this method has not yet been implemented")
 
-    def lookup(self, section: Any, key: Any = None) -> Any:
+    def lookup(self, section: Any, key: Any = "") -> Any:
         """Lookup section and key.
            @param $section The section to lookup
            @param $key The key to lookup (optional)
            @return Array with section as first entry and key as second or None if not
         found
         """
-        raise NotImplementedError("this method has not yet been implemented")
+        lookup_key = section.lower()+":"+key.lower()
+        if lookup_key in self.lookup_table:
+            return self.lookup_table[lookup_key]
+        else:
+            return None
 
     def process_value(self, value: Any) -> Any:
         """Process the values in the ini array. This method turns string values that hold
@@ -282,7 +292,30 @@ class InifileConfiguration(Configuration):
         self, key: Any, value: Any, section: Any, create_section: Any = True
     ) -> Any:
         """@see WritableConfiguration::set_value()"""
-        raise NotImplementedError("this method has not yet been implemented")
+        key = key.strip()
+        if len(key) == 0:
+            raise ValueError("Key cannot be empty")
+
+        lookup_entry_section = self.lookup(section)
+        if lookup_entry_section is None and not create_section:
+            raise ValueError(f"section {section} does no exist")
+
+        if lookup_entry_section is None and create_section:
+            section = section.strip()
+            self.config_array[section] = []
+            final_section_name = section
+        else:
+            final_section_name = lookup_entry_section[0]
+        if lookup_entry_section is not None:
+            lookup_entry_key = self.lookup(section, key)
+            if lookup_entry_key is None:
+                final_key_name = key
+            else:
+                final_key_name = lookup_entry_key[1]
+        else:
+            final_key_name = key
+        self.config_array[final_section_name][final_key_name] = value
+        self.build_lookup_table()
 
     def unserialize(self, parsed_files: Any) -> Any:
         """Retrieve parsed ini data from the file system and update the current instance.
@@ -301,7 +334,7 @@ class InifileConfiguration(Configuration):
 
     def get_directory_value(self, key: str, section: str):
         raise NotImplementedError("this method has not yet been implemented")
-    
+
     # files added to the configuration
     __addedFiles = []
     __cachePath = None

@@ -1,77 +1,82 @@
-from abc import ABC, abstractmethod
-class ControllerMessage(ABC):
+from uuid import uuid4
+
+from digitalpy.routing.controller_message import ControllerMessage
+
+
+class AbstractControllerMessage(ControllerMessage):    
+    def __init__(self):
+        self.sender = ""
+        self.context = ""
+        self.action = ""
+        self.values = {}
+        self.id = str(uuid4())
+        self.properties = None
+        self.errors = None
+        self.format = ""
     
-    @abstractmethod
     def get_id(self):
         return self.id
     
-    @abstractmethod
     def set_id(self, id):
         self.id = id
     
-    @abstractmethod
     def set_sender(self, sender):
         self.sender = sender
 
-    @abstractmethod
     def get_sender(self):
         return self.sender
     
-    @abstractmethod
     def set_context(self, context):
         self.context = context
     
-    @abstractmethod
     def get_context(self):
         return self.context
 
-    @abstractmethod
+    
     def get_action(self):
         return self.action
 
-    @abstractmethod
+    
     def set_action(self, action):
         self.action = action
     
-    @abstractmethod
+    
     def set_value(self, name, value):
         """Set a value
         @param name The name of the variable
         @param value The value of the variable
         """
+        self.values[name] = value
     
-    @abstractmethod
     def set_values(self, values: dict):
-        """set all key value pairs at once"""
+        self.values = values
     
-    @abstractmethod
     def get_values(self):
-        """get all key value pairs at once"""
+        return self.values
     
-    @abstractmethod
     def get_value(self, name, default=None):
-        """Get a value"""
+        return self.values.get(name, default)
     
-    @abstractmethod
     def get_boolean_value(self, name, default=False):
-        """Get a value as boolean"""
-
-    @abstractmethod
+        raise NotImplementedError
+    
     def clear_value(self, name):
-        """Remove a value"""
-        
-    @abstractmethod
+        del self.values[name]
+    
     def clear_values(self):
-        """Remove all values"""
-        
-    @abstractmethod
+        self.values = {}
+    
     def has_value(self, name):
-        """Check for existence of a value"""
-        
-    @abstractmethod
+        raise NotImplementedError
+    
     def set_property(self, name, value):
-        """Set a property"""
-        
-    @abstractmethod
+        raise NotImplementedError
+    
     def get_property(self, name):
-        """Get a property"""
+        raise NotImplementedError
+    
+    def set_format(self, format):
+        self.format = format
+    
+    def get_format(self):
+        return self.format

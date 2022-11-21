@@ -82,4 +82,3 @@ this allows:
 
 ## DigitalPy package dependencies
 ![image](https://user-images.githubusercontent.com/60719165/201922228-a4a7842c-8425-437f-be1c-884ec8c852d1.png)
-

@@ -26,7 +26,7 @@ class DefaultPersistenceFacade(PersistenceFacade):
     __eventManager = None
     __logStrategy = None
     __mappers = []
-    __simpleToFqNames = []
+    simple_to_fq_names = {}
 
     def __init__(self, event_manager: EventManager) -> Any:
         """Constructor
@@ -133,8 +133,24 @@ class DefaultPersistenceFacade(PersistenceFacade):
 
     def get_mapper(self, type: Any) -> Any:
         """@see _persistence_facade::get_mapper()"""
-        pass
+        if self.is_known_type(type):
+            mapper = self.mappers[type]
+            return mapper
+        else:
+            raise ValueError("No persistence mapper found for type "+type)
 
+    def set_mapper(self, type, mapper: PersistenceMapper):
+        self.mappers[type] = mapper
+    
+    def set_mappers(self, mappers):
+        self.mappers = mappers
+        for fq_name, mapper in self.mappers.items():
+            name = self.calculate_simple_type(fq_name)
+            if not name in self.simple_to_fq_names:
+                self.simple_to_fq_names[name] = fq_name
+            else:
+                del self.simple_to_fq_names
+            
     def get_OIDs(
         self,
         type: Any,
