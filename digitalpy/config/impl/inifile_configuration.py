@@ -159,7 +159,19 @@ class InifileConfiguration(Configuration):
             raise Exception(f"Value {value} not found in section {section}")
         return map[value]
 
-    def get_section(self, section, include_meta=False):
+    def get_section(self, section: str, include_meta=False) -> dict:
+        """get a section from the configuration as a dictionary
+
+        Args:
+            section (str): the name of the section to be retrieved
+            include_meta (bool, optional): whether or not to include values not prefixed by '__'. Defaults to False.
+
+        Raises:
+            ValueError: raised if the section is not found
+
+        Returns:
+            dict: a dictionary representing the contents of the section
+        """
         lookup_entry = self._lookup(section)
         if lookup_entry is None:
             raise ValueError(f"section {section} not found")
@@ -187,7 +199,7 @@ class InifileConfiguration(Configuration):
             lookup_section_key = section.lower() + ":"
             self.lookup_table[lookup_section_key] = [section]
             for key, _ in entry.items():
-                lookup_key = lookup_section_key.lower()+key
+                lookup_key = lookup_section_key.lower() + key
                 self.lookup_table[lookup_key] = {section: key}
 
     def check_file_date(self, file_list: Any, reference_file: Any) -> Any:
@@ -245,7 +257,7 @@ class InifileConfiguration(Configuration):
            @return Array with section as first entry and key as second or None if not
         found
         """
-        lookup_key = section.lower()+":"+key.lower()
+        lookup_key = section.lower() + ":" + key.lower()
         if lookup_key in self.lookup_table:
             return self.lookup_table[lookup_key]
         else:
@@ -315,7 +327,7 @@ class InifileConfiguration(Configuration):
         else:
             final_key_name = key
         self.config_array[final_section_name][final_key_name] = value
-        self.build_lookup_table()
+        self._build_lookup_table()
 
     def unserialize(self, parsed_files: Any) -> Any:
         """Retrieve parsed ini data from the file system and update the current instance.

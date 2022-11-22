@@ -48,6 +48,7 @@ class ObjectFactory:
 
     @staticmethod
     def clear():
+        """clear the configured factory instance"""
         if ObjectFactory.__factory != None:
             ObjectFactory.__factory.clear()
         ObjectFactory.__factory = None

@@ -28,6 +28,7 @@ class DefaultFacade(Controller):
         configuration=None,
         configuration_path_template=None,
         tracing_provider_instance=None,
+        manifest_path=None,
         **kwargs,
     ):
         super().__init__(
@@ -49,10 +50,17 @@ class DefaultFacade(Controller):
             self.component_name = self.__class__.__name__
 
         # get a tacer from the tracer provider
+        
         if tracing_provider_instance is not None:
             self.tracer: Tracer = tracing_provider_instance.create_tracer(
                 component_name
             )
+        else:
+            self.tracer = None
+        # load the manifest file as a configuration
+        if manifest_path is not None:
+            self.manifest = InifileConfiguration("")
+            self.manifest.add_configuration(manifest_path)
 
         # define the logging
         self.log_manager = LogManager()
@@ -101,15 +109,20 @@ class DefaultFacade(Controller):
         ObjectFactory.register_instance(
             f"{self.component_name.lower()}actionmapper",
             self.base.ActionMapper(
-                ObjectFactory.get_instance("event_manager"), internal_config
+                ObjectFactory.get_instance("event_manager"),
+                internal_config,
             ),
         )
         self._register_type_mapping()
 
+    def get_manifest(self):
+        """returns the current manifest configuration"""
+        return self.manifest
+
     def _register_type_mapping(self):
         """any component may or may not have a type mapping defined,
         if it does then it should be registered"""
-        if self.type_mapping is not None:
+        if self.type_mapping:
             request = ObjectFactory.get_new_instance("request")
             request.set_action("RegisterMachineToHumanMapping")
             request.set_value("machine_to_human_mapping", self.type_mapping)

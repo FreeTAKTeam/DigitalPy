@@ -19,15 +19,34 @@ class DefaultActionMapper(ActionMapper):
     # @param formatter
     # @param configuration
     #
-    def __init__(self, event_manager: EventManager, configuration: Configuration):
+    def __init__(
+        self,
+        event_manager: EventManager,
+        configuration: Configuration,
+    ):
         self.eventManager = event_manager
         self.configuration = configuration
         self.is_finished = False
+        self.tracing_provider = None
 
     #
     # @see ActionMapper.processAction()
     #
+    def initialize_tracing(self):
+        try:
+            self.tracing_provider = ObjectFactory.get_instance("tracingprovider")
+            ObjectFactory.register_instance(
+                "tracingproviderinstance", self.tracing_provider
+            )
+        except Exception as e:
+            pass
+
     def process_action(self, request: Request, response: Response):
+
+        # this is added for the sake of the latter use of multiprocessing
+        if not self.tracing_provider:
+            self.initialize_tracing()
+
         self.eventManager.dispatch(
             ApplicationEvent.NAME,
             ApplicationEvent(ApplicationEvent.BEFORE_ROUTE_ACTION, request),
