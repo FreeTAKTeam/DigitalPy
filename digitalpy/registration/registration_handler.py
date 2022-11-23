@@ -136,9 +136,7 @@ class RegistrationHandler:
                 continue
             else:
                 return False
-        if section[REQUIRED_ALFA_VERSION] != digitalpy_version:
-            return False
-
+            
         # dont approve the manifest if the component has already been registered
         if (
             component_name in RegistrationHandler.registered_components
