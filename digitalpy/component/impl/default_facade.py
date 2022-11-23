@@ -21,7 +21,7 @@ class DefaultFacade(Controller):
         log_file_path,
         component_name=None,
         type_mapping=None,
-        action_mapper=None,
+        action_mapper: DefaultActionMapper = None,
         base=object,
         request=None,
         response=None,
@@ -49,8 +49,8 @@ class DefaultFacade(Controller):
         else:
             self.component_name = self.__class__.__name__
 
-        # get a tacer from the tracer provider
-        
+        # get a tracer from the tracer provider
+
         if tracing_provider_instance is not None:
             self.tracer: Tracer = tracing_provider_instance.create_tracer(
                 component_name
@@ -93,6 +93,8 @@ class DefaultFacade(Controller):
         except Exception as e:
             self.logger.fatal(str(e))
 
+        self.response.set_value("tracer", None)
+
     def get_logs(self):
         """get all the log files available"""
         return self.log_manager.get_logs()
@@ -127,7 +129,7 @@ class DefaultFacade(Controller):
             request.set_action("RegisterMachineToHumanMapping")
             request.set_value("machine_to_human_mapping", self.type_mapping)
 
-            actionmapper = ObjectFactory.get_instance("syncactionMapper")
+            actionmapper = ObjectFactory.get_instance("SyncActionMapper")
             response = ObjectFactory.get_new_instance("response")
             actionmapper.process_action(request, response)
 
@@ -138,7 +140,7 @@ class DefaultFacade(Controller):
                 "human_to_machine_mapping", {k: v for v, k in self.type_mapping.items()}
             )
 
-            actionmapper = ObjectFactory.get_instance("actionMapper")
+            actionmapper = ObjectFactory.get_instance("SyncActionMapper")
             response = ObjectFactory.get_new_instance("response")
             actionmapper.process_action(request, response)
 

@@ -34,7 +34,10 @@ class DefaultActionMapper(ActionMapper):
     #
     def initialize_tracing(self):
         try:
-            self.tracing_provider = ObjectFactory.get_instance("tracingprovider")
+            # new instance used because the contents of tracing_provider cant be serialized between
+            # processes and so shouldnt be persisted in the factory hance we have custom handling
+            # to avoid duplication of the tracing provider
+            self.tracing_provider = ObjectFactory.get_new_instance("tracingprovider")
             ObjectFactory.register_instance(
                 "tracingproviderinstance", self.tracing_provider
             )
@@ -119,7 +122,10 @@ class DefaultActionMapper(ActionMapper):
                 controllerObj,
             ),
         )
-        controllerObj.execute(controllerMethod)
+        try:
+            controllerObj.execute(controllerMethod)
+        except Exception as e:
+            raise e
         self.eventManager.dispatch(
             ApplicationEvent.NAME,
             ApplicationEvent(
