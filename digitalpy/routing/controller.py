@@ -73,7 +73,7 @@ class Controller(ABC):
         sub_request.set_sender(self.__class__.__name__)
         sub_request.set_context(cur_request.get_context())
         sub_request.set_action(action)
-        sub_request.set_values(cur_request.get_values())
+        sub_request.set_values(cur_request.get_values().copy())
         sub_request.set_format(cur_request.get_format())
         sub_response = ObjectFactory.get_new_instance("response")
         sub_response.set_format(cur_response.get_format())
