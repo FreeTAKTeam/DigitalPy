@@ -36,7 +36,7 @@ class DigitalPyService(Service, ZmqSubscriber, ZerolessPusher):
     def send_heart_beat(self):
         """send service is alive
         """
-        self.subject_send(self.service_identity+"here")
+        self.subject_send(self.service_id+"here")
     
     def initialize_connections(self):
         self.subject_bind(self.subject_address, self.subject_port)
