@@ -4,7 +4,7 @@ from digitalpy.core.object_factory import ObjectFactory
 from digitalpy.config.configuration import Configuration
 
 
-class RoutingProxy:
+class Subject:
     def __init__(
         self,
         routing_worker,

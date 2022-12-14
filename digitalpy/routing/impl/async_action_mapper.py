@@ -40,14 +40,14 @@ class AsyncActionMapper(ActionMapper):
 
     def get_routing_publisher(self):
         sock_context = zmq.Context()
-        routing_publisher = sock_context.socket(zmq.PUB)
+        routing_publisher = sock_context.socket(zmq.PUSH)
         routing_publisher.connect(self.routing_subscriber_address)
         time.sleep(1)
         return routing_publisher
 
     def initiate_sockets(self):
         self.sock_context = zmq.Context()
-        self.routing_publisher = self.sock_context.socket(zmq.PUB)
+        self.routing_publisher = self.sock_context.socket(zmq.PUSH)
         self.routing_publisher.connect(self.routing_subscriber_address)
         self.general_routing_subscriber = self.sock_context.socket(zmq.SUB)
         self.general_routing_subscriber.connect(self.routing_publisher_address)
