@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from digitalpy.telemetry.meter import Meter
+from digitalpy.core.telemetry.meter import Meter
 
 class MetricsProvider(ABC):
     

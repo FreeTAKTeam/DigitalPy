@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from digitalpy.telemetry.tracer import Tracer
+from digitalpy.core.telemetry.tracer import Tracer
 
 class TracingProvider(ABC):
     

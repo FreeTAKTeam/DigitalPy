@@ -1,6 +1,6 @@
 from opentelemetry.sdk.metrics.export import MetricReader as OpenTelMetricReaderImpl
 import json
-from digitalpy.telemetry.metrics_reader import MetricReader
+from digitalpy.core.telemetry.metrics_reader import MetricReader
 
 
 class OpenTelMetricReader(MetricReader):

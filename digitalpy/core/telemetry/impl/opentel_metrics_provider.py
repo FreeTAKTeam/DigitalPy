@@ -1,6 +1,6 @@
 from digitalpy.telemetry.impl.opentel_meter import OpenTelMeter
 from digitalpy.telemetry.impl.opentel_metric_reader import OpenTelMetricReader
-from digitalpy.telemetry.metrics_provider import MetricsProvider
+from digitalpy.core.telemetry.metrics_provider import MetricsProvider
 from digitalpy.core.object_factory import ObjectFactory
 import io
 from opentelemetry.sdk.metrics import MeterProvider

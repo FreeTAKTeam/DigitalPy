@@ -6,7 +6,7 @@ from digitalpy.telemetry.impl.opentel_counter import OpenTelCounter
 if TYPE_CHECKING:
     from digitalpy.telemetry.impl.opentel_metrics_provider import OpenTelMetricsProvider
 
-from digitalpy.telemetry.meter import Meter
+from digitalpy.core.telemetry.meter import Meter
 
 
 class OpenTelMeter(Meter):

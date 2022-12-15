@@ -1,5 +1,5 @@
 from opentelemetry.trace import Tracer as OpenTelTracerImpl
-from digitalpy.telemetry.tracer import Tracer
+from digitalpy.core.telemetry.tracer import Tracer
 
 class OpenTelTracer(Tracer):
     """class to implement the digitalpy Tracer interface for the 

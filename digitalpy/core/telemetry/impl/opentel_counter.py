@@ -1,5 +1,5 @@
 from typing import Dict
-from digitalpy.telemetry.counter import Counter
+from digitalpy.core.telemetry.counter import Counter
 
 
 class OpenTelCounter(Counter):

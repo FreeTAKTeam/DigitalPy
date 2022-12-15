@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from digitalpy.telemetry.counter import Counter
-    from digitalpy.telemetry.metrics_provider import MetricsProvider
+    from digitalpy.core.telemetry.counter import Counter
+    from digitalpy.core.telemetry.metrics_provider import MetricsProvider
 
 from abc import ABC, abstractmethod
 
