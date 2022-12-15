@@ -1,9 +1,9 @@
-from digitalpy.model.impl.null_mapper import NullMapper
+from digitalpy.core.persistence.impl.null_mapper import NullMapper
 from digitalpy.core.object_factory import ObjectFactory
-from digitalpy.model.object_id import ObjectId
-from digitalpy.model.persistent_object import PersistentObject
-from digitalpy.model.property_change_event import PropertyChangeEvent
-from digitalpy.model.value_change_event import ValueChangeEvent
+from digitalpy.core.persistence.object_id import ObjectId
+from digitalpy.core.persistence.persistent_object import PersistentObject
+from digitalpy.core.persistence.property_change_event import PropertyChangeEvent
+from digitalpy.core.persistence.value_change_event import ValueChangeEvent
 
 
 class DefaultPersistentObject(PersistentObject):

@@ -2,7 +2,7 @@ import re
 from typing import Any
 
 from uuid import uuid4
-from digitalpy.model.object_id import ObjectId
+from digitalpy.core.persistence.object_id import ObjectId
 from abc import abstractmethod, ABC
 
 

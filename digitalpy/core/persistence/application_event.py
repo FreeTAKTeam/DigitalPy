@@ -1,7 +1,7 @@
 from digitalpy.core.event import Event
-from digitalpy.routing.request import Request
-from digitalpy.routing.response import Response
-from digitalpy.routing.controller import Controller
+from digitalpy.core.zmanager.request import Request
+from digitalpy.core.zmanager.response import Response
+from digitalpy.core.zmanager.controller import Controller
 
 class ApplicationEvent(Event):
     NAME = "ApplicationEvent"

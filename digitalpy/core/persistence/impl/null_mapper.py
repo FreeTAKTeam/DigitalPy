@@ -1,11 +1,11 @@
 from typing import Any, List
-from digitalpy.model.persistence_mapper import PersistenceMapper
-from digitalpy.model.build_depth import BuildDepth
-from digitalpy.model.persistent_object import PersistentObject
-from digitalpy.translation.message import Message
-from digitalpy.model.persistence_operation import PersistenceOperation
-from digitalpy.model.paging_info import PagingInfo
-from digitalpy.model.object_id import ObjectId
+from digitalpy.core.persistence.persistence_mapper import PersistenceMapper
+from digitalpy.core.persistence.build_depth import BuildDepth
+from digitalpy.core.persistence.persistent_object import PersistentObject
+from digitalpy.core.translation.message import Message
+from digitalpy.core.persistence.persistence_operation import PersistenceOperation
+from digitalpy.core.persistence.paging_info import PagingInfo
+from digitalpy.core.persistence.object_id import ObjectId
 
 
 class NullMapper(PersistenceMapper):
