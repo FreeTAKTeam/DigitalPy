@@ -1,6 +1,6 @@
-from digitalpy.parsing.impl.abstract_format import AbstractFormat
-from digitalpy.model.object_id import ObjectId
-from digitalpy.model.node import Node
+from digitalpy.core.parsing.abstract_format import AbstractFormat
+from digitalpy.core.persistence.object_id import ObjectId
+from digitalpy.core.persistence.node import Node
 
 class HirearchicalFormat(AbstractFormat):
     

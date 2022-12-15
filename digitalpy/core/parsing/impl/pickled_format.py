@@ -1,8 +1,8 @@
 import pickle
 
-from digitalpy.parsing.impl.abstract_format import AbstractFormat
-from digitalpy.routing.request import Request
-from digitalpy.routing.response import Response
+from digitalpy.core.parsing.abstract_format import AbstractFormat
+from digitalpy.core.zmanager.request import Request
+from digitalpy.core.zmanager.response import Response
 
 class PickledFormat(AbstractFormat):
 

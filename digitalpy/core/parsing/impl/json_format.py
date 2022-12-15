@@ -1,4 +1,4 @@
-from digitalpy.parsing.impl.hierarchical_format import HirearchicalFormat
+from digitalpy.core.parsing.impl.hierarchical_format import HirearchicalFormat
 
 
 class JsonFormat(HirearchicalFormat):

@@ -1,13 +1,13 @@
 from abc import abstractmethod
 import importlib
 from pickle import PERSID
-from digitalpy.parsing.format import Format
-from digitalpy.routing.request import Request
-from digitalpy.routing.response import Response
+from digitalpy.core.parsing.format import Format
+from digitalpy.core.zmanager.request import Request
+from digitalpy.core.zmanager.response import Response
 from digitalpy.core.object_factory import ObjectFactory
-from digitalpy.model.object_id import ObjectId
-from digitalpy.model.node import Node
-from digitalpy.model.build_depth import BuildDepth
+from digitalpy.core.persistence.object_id import ObjectId
+from digitalpy.core.persistence.node import Node
+from digitalpy.core.persistence.build_depth import BuildDepth
 
 
 class AbstractFormat(Format):

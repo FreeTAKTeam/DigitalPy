@@ -1,7 +1,7 @@
-from digitalpy.parsing.formatter import Formatter
-from digitalpy.parsing.format import Format
-from digitalpy.routing.request import Request
-from digitalpy.routing.response import Response
+from digitalpy.core.parsing.formatter import Formatter
+from digitalpy.core.parsing.format import Format
+from digitalpy.core.zmanager.request import Request
+from digitalpy.core.zmanager.response import Response
 
 class DefaultFormatter(Formatter):
     
