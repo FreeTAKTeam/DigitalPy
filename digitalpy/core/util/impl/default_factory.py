@@ -1,5 +1,5 @@
 import inspect
-from digitalpy.config.configuration import Configuration
+from digitalpy.core.digipy_configuration.configuration import Configuration
 from digitalpy.core.factory import Factory
 import json
 import importlib

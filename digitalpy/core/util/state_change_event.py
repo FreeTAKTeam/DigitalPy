@@ -8,7 +8,7 @@
 # 
 #######################################################
 from typing import Any
-from digitalpy.model.persistent_object import PersistentObject
+from digitalpy.core.persistence.persistent_object import PersistentObject
 from digitalpy.core.event import Event
 
 class StateChangeEvent(Event):

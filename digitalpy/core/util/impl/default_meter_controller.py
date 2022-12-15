@@ -1,7 +1,7 @@
-from digitalpy.routing.controller import Controller
-from digitalpy.core.object_factory import ObjectFactory
-from digitalpy.telemetry.metrics_provider import MetricsProvider
-from digitalpy.telemetry.meter import Meter
+from digitalpy.core.zmanager.controller import Controller
+from digitalpy.core.util.object_factory import ObjectFactory
+from digitalpy.core.telemetry.metrics_provider import MetricsProvider
+from digitalpy.core.telemetry.meter import Meter
 
 
 class MeterController(Controller):
