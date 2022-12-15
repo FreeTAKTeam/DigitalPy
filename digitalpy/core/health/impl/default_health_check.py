@@ -1,8 +1,8 @@
-from digitalpy.config.configuration import Configuration
-from digitalpy.routing.action_mapper import ActionMapper
-from digitalpy.routing.controller import Controller
-from digitalpy.routing.request import Request
-from digitalpy.routing.response import Response
+from digitalpy.core.digipy_configuration.configuration import Configuration
+from digitalpy.core.zmanager.action_mapper import ActionMapper
+from digitalpy.core.zmanager.controller import Controller
+from digitalpy.core.zmanager.request import Request
+from digitalpy.core.zmanager.response import Response
 import re
 
 
