@@ -4,9 +4,9 @@ from pathlib import PurePath
 from typing import List
 import pkg_resources
 
-from digitalpy.component.impl.default_facade import DefaultFacade
-from digitalpy.config.configuration import Configuration
-from digitalpy.config.impl.inifile_configuration import InifileConfiguration
+from digitalpy.core.component_management.impl.default_facade import DefaultFacade
+from digitalpy.core.digipy_configuration.configuration import Configuration
+from digitalpy.core.digipy_configuration.impl.inifile_configuration import InifileConfiguration
 
 MANIFEST = "manifest"
 DIGITALPY = "digitalpy"

@@ -1,15 +1,13 @@
-from digitalpy.routing.controller import Controller
-from digitalpy.model.node import Node
-from digitalpy.model.load_configuration import LoadConfiguration
-from digitalpy.config.impl.inifile_configuration import InifileConfiguration
-from digitalpy.routing.impl.default_action_mapper import DefaultActionMapper
-from digitalpy.core.impl.default_event_manager import DefaultEventManager
-from digitalpy.core.object_factory import ObjectFactory
-from digitalpy.core.log_manager import LogManager
-from digitalpy.core.object_factory import ObjectFactory
-from digitalpy.core.impl.default_file_logger import DefaultFileLogger
-from digitalpy.routing.controller import Controller
-from digitalpy.telemetry.tracer import Tracer
+from digitalpy.core.zmanager.controller import Controller
+from digitalpy.core.persistence.node import Node
+from digitalpy.core.persistence.load_configuration import LoadConfiguration
+from digitalpy.core.digipy_configuration.impl.inifile_configuration import InifileConfiguration
+from digitalpy.core.zmanager.impl.default_action_mapper import DefaultActionMapper
+from digitalpy.core.util.object_factory import ObjectFactory
+from digitalpy.core.util.log_manager import LogManager
+from digitalpy.core.util.impl.default_file_logger import DefaultFileLogger
+from digitalpy.core.zmanager.controller import Controller
+from digitalpy.core.telemetry.tracer import Tracer
 
 
 class DefaultFacade(Controller):
