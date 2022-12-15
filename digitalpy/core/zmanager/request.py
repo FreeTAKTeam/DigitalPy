@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 
-from digitalpy.routing.response import Response
+from digitalpy.core.zmanager.response import Response
 
-from digitalpy.routing.controller_message import ControllerMessage
+from digitalpy.core.zmanager.controller_message import ControllerMessage
 
 class Request(ControllerMessage):
 

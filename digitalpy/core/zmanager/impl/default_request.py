@@ -1,5 +1,5 @@
-from digitalpy.routing.impl.abstract_controller_message import AbstractControllerMessage
-from digitalpy.routing.request import Request
+from digitalpy.core.zmanager.impl.abstract_controller_message import AbstractControllerMessage
+from digitalpy.core.zmanager.request import Request
 import json
 
 class DefaultRequest(Request, AbstractControllerMessage):

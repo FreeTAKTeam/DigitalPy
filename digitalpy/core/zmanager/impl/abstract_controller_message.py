@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-from digitalpy.routing.controller_message import ControllerMessage
+from digitalpy.core.zmanager.controller_message import ControllerMessage
 
 
 class AbstractControllerMessage(ControllerMessage):    

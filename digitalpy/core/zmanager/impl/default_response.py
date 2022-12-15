@@ -1,6 +1,6 @@
-from digitalpy.routing.impl.abstract_controller_message import AbstractControllerMessage
-from digitalpy.routing.response import Response
-from digitalpy.routing.request import Request
+from digitalpy.core.zmanager.impl.abstract_controller_message import AbstractControllerMessage
+from digitalpy.core.zmanager.response import Response
+from digitalpy.core.zmanager.request import Request
 
 class DefaultResponse(Response, AbstractControllerMessage):
     def __init__(self):

@@ -1,13 +1,13 @@
 import time
-from digitalpy.config.action_key import ActionKey
-from digitalpy.model.application_event import ApplicationEvent
-from digitalpy.config.impl.config_action_key_provider import ConfigActionKeyProvider
-from digitalpy.config.configuration import Configuration
+from digitalpy.core.digipy_configuration.action_key import ActionKey
+from digitalpy.core.persistence.application_event import ApplicationEvent
+from digitalpy.core.digipy_configuration.impl.config_action_key_provider import ConfigActionKeyProvider
+from digitalpy.core.digipy_configuration.configuration import Configuration
 from digitalpy.core.event_manager import EventManager
-from digitalpy.routing.request import Request
-from digitalpy.routing.response import Response
-from digitalpy.routing.action_mapper import ActionMapper
-from digitalpy.parsing.formatter import Formatter
+from digitalpy.core.zmanager.request import Request
+from digitalpy.core.zmanager.response import Response
+from digitalpy.core.zmanager.action_mapper import ActionMapper
+from digitalpy.core.parsing.formatter import Formatter
 from digitalpy.core.object_factory import ObjectFactory
 import threading
 import zmq

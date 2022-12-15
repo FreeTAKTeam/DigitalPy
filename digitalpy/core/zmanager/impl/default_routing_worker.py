@@ -1,12 +1,12 @@
 import uuid
 import zmq
 from digitalpy.core.object_factory import ObjectFactory
-from digitalpy.config.action_key import ActionKey
-from digitalpy.config.configuration import Configuration
-from digitalpy.model.application_event import ApplicationEvent
-from digitalpy.routing.action_mapper import ActionMapper
-from digitalpy.config.impl.config_action_key_provider import ConfigActionKeyProvider
-from digitalpy.parsing.formatter import Formatter
+from digitalpy.core.digipy_configuration.action_key import ActionKey
+from digitalpy.core.digipy_configuration.configuration import Configuration
+from digitalpy.core.persistence.application_event import ApplicationEvent
+from digitalpy.core.zmanager.action_mapper import ActionMapper
+from digitalpy.core.digipy_configuration.impl.config_action_key_provider import ConfigActionKeyProvider
+from digitalpy.core.parsing.formatter import Formatter
 from digitalpy.core.factory import Factory
 from digitalpy.telemetry.impl.opentel_metrics_provider import OpenTelMetricsProvider
 
