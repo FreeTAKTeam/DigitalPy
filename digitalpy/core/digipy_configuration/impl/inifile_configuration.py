@@ -2,7 +2,7 @@ import os
 import re
 from typing import Any
 
-from digitalpy.config.configuration import Configuration
+from digitalpy.core.digipy_configuration.configuration import Configuration
 import collections.abc
 
 

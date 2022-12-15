@@ -1,5 +1,5 @@
-from digitalpy.config.action_key_provider import ActionKeyProvider
-from digitalpy.config.configuration import Configuration
+from digitalpy.core.digipy_configuration.action_key_provider import ActionKeyProvider
+from digitalpy.core.digipy_configuration.configuration import Configuration
 
 
 class ConfigActionKeyProvider(ActionKeyProvider):

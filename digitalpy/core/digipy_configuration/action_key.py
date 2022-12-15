@@ -1,4 +1,4 @@
-from digitalpy.config.action_key_provider import ActionKeyProvider
+from digitalpy.core.digipy_configuration.action_key_provider import ActionKeyProvider
 
 
 class ActionKey:
