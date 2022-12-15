@@ -1,4 +1,4 @@
-from digitalpy.routing.controller import Controller
+from digitalpy.core.zmanager.controller import Controller
 from digitalpy.logic.contexts import Contexts
 from digitalpy.core.object_factory import ObjectFactory
 import rule_engine
