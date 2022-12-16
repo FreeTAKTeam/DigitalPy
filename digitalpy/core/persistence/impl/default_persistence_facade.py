@@ -8,14 +8,14 @@
 #
 #######################################################
 from typing import Any
-from digitalpy.core.event_manager import EventManager
-from digitalpy.core.persistence.object_id import ObjectId
+from digitalpy.core.util.event_manager import EventManager
+from digitalpy.core.domain.object_id import ObjectId
 from digitalpy.core.persistence.persistence_facade import PersistenceFacade
 from digitalpy.core.persistence.persistent_object import PersistentObject
 from digitalpy.core.persistence.build_depth import BuildDepth
 from digitalpy.core.persistence.paging_info import PagingInfo
 from digitalpy.core.persistence.persistence_mapper import PersistenceMapper
-from digitalpy.core.state_change_event import StateChangeEvent
+from digitalpy.core.util.state_change_event import StateChangeEvent
 
 
 class DefaultPersistenceFacade(PersistenceFacade):
@@ -200,6 +200,7 @@ class DefaultPersistenceFacade(PersistenceFacade):
         return obj
 
     def load_first_object(
+        self,
         type_or_types: Any,
         build_depth: Any = BuildDepth.SINGLE,
         criteria: Any = None,

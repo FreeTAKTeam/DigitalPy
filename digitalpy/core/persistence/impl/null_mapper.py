@@ -5,7 +5,7 @@ from digitalpy.core.persistence.persistent_object import PersistentObject
 from digitalpy.core.translation.message import Message
 from digitalpy.core.persistence.persistence_operation import PersistenceOperation
 from digitalpy.core.persistence.paging_info import PagingInfo
-from digitalpy.core.persistence.object_id import ObjectId
+from digitalpy.core.domain.object_id import ObjectId
 
 
 class NullMapper(PersistenceMapper):
@@ -94,10 +94,6 @@ class NullMapper(PersistenceMapper):
 
     def get_statements(self) -> Any:
         """@see _persistence_mapper.get_statements()"""
-        pass
-
-    def get_type(self) -> Any:
-        """@see _persistence_mapper.get_type()"""
         pass
 
     def get_type_description(self, message: Message) -> Any:

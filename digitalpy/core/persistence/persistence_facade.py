@@ -8,7 +8,7 @@
 # 
 #######################################################
 from typing import Any
-from digitalpy.core.persistence.object_id import ObjectId
+from digitalpy.core.domain.object_id import ObjectId
 from digitalpy.core.persistence.persistence_mapper import PersistenceMapper
 from abc import ABC, abstractmethod
 from digitalpy.core.persistence.build_depth import BuildDepth
