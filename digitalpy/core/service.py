@@ -4,7 +4,7 @@ class Service(ABC):
     def __init__(self):
         self.running = True
     
-    @abstractproperty
+    @abstractmethod
     def server(self):
         """this property should be used to accept connections and send messages"""
     

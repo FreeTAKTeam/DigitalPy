@@ -69,8 +69,8 @@ class Subject:
         state = self.__dict__.copy()
         if "backend_dealer" in state:
             del state["backend_dealer"]
-        if "frontend_sub" in state:
-            del state["frontend_sub"]
+        if "frontend_pull" in state:
+            del state["frontend_pull"]
         if "frontend_pub" in state:
             del state["frontend_pub"]
         if "poller" in state:

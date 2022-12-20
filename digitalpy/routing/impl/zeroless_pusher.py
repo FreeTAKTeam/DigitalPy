@@ -1,12 +1,15 @@
 from zeroless import Client
 from digitalpy.routing.pusher import Pusher
+from digitalpy.routing.request import Request
+from digitalpy.parsing.formatter import Formatter
 
 class ZerolessPusher(Pusher):
     
-    def __init__(self, port: int, address: str):
+    def __init__(self, port: int, address: str, formatter: Formatter):
         self.client = Client()
         self.connected = False
         self.push = None
+        self.formatter = formatter
         if port and address:
             self.subject_bind(port, address)
 
@@ -16,7 +19,8 @@ class ZerolessPusher(Pusher):
         self.client.connect(port, address)
         self.push = self.client.push()
         
-    def subject_send(self, message: str):
+    def subject_send_request(self, request: Request):
         """send the message to a Puller
         """
-        self.push(message)
+        serialized_request = self.formatter.serialize(request)
+        self.push(serialized_request)
