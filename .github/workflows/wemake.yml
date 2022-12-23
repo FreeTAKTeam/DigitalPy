@@ -21,6 +21,7 @@ jobs:
         with:
           path: 'digitalpy/'
           reporter: 'github-pr-review'
+          args: '--error-only'
         env:
           GITHUB_TOKEN: ${{ secrets.WEMAKE_GIT_TOKEN }}
       # You may pin to the exact commit or the version.
