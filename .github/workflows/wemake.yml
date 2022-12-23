@@ -19,7 +19,6 @@ jobs:
       - name: wemake-python-styleguide
         uses: wemake-services/wemake-python-styleguide@0.17.0
         with:
-          path: 'digitalpy/'
           reporter: 'github-pr-review'
           args: '--error-only'
         env:
