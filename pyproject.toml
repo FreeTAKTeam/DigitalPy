@@ -1,0 +1,4 @@
+[tool.flakeheaven]
+# optionally inherit from remote config (or local if you want)
+base = "https://raw.githubusercontent.com/wemake-services/wemake-python-styleguide/master/styles/flakeheaven.toml"
+baseline = ".flakeheaven_baseline"
