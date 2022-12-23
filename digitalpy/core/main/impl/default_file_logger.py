@@ -1,6 +1,6 @@
 import logging
 import logging.config
-from digitalpy.core.logger import Logger
+from digitalpy.core.main.logger import Logger
 import pathlib
 import os
 

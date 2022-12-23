@@ -1,6 +1,6 @@
 from digitalpy.core.digipy_configuration.configuration import Configuration
 from digitalpy.core.zmanager.action_mapper import ActionMapper
-from digitalpy.core.zmanager.controller import Controller
+from digitalpy.core.main.controller import Controller
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
 import re

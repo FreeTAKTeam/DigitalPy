@@ -1,10 +1,10 @@
 # used for type hinting to prevent circular import
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from digitalpy.telemetry.impl.opentel_counter import OpenTelCounter
+from digitalpy.core.telemetry.impl.opentel_counter import OpenTelCounter
 
 if TYPE_CHECKING:
-    from digitalpy.telemetry.impl.opentel_metrics_provider import OpenTelMetricsProvider
+    from digitalpy.core.telemetry.impl.opentel_metrics_provider import OpenTelMetricsProvider
 
 from digitalpy.core.telemetry.meter import Meter
 

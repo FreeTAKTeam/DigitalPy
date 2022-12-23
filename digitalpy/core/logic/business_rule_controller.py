@@ -1,4 +1,4 @@
-from digitalpy.core.zmanager.controller import Controller
+from digitalpy.core.main.controller import Controller
 from abc import ABC, abstractmethod
 from typing import Union
 

@@ -1,13 +1,13 @@
 import inspect
 from digitalpy.core.digipy_configuration.configuration import Configuration
-from digitalpy.core.factory import Factory
+from digitalpy.core.main.factory import Factory
 import json
 import importlib
 
 
 class DefaultFactory(Factory):
     required_interfaces = {
-        "event_manager": "digitalpy.core.event_manager.EventManager",
+        "event_manager": "digitalpy.core.main.event_manager.EventManager",
         "logger": "logger.Logger",
         "log_manager": "log_manager.LogManager",
         "session": "session.Session",
@@ -15,9 +15,9 @@ class DefaultFactory(Factory):
         "message": "message.Message",
         "persistence_facade": "wcmf\lib\persistence\PersistenceFacade",
         "concurrency_manager": "concurrency_manager.ConcurrencyManager",
-        "action_mapper": "digitalpy.routing.action_mapper.ActionMapper",
-        "request": "digitalpy.routing.request.Request",
-        "response": "digitalpy.routing.response.Response",
+        "action_mapper": "digitalpy.core.zmanager.action_mapper.ActionMapper",
+        "request": "digitalpy.core.zmanager.request.Request",
+        "response": "digitalpy.core.zmanager.response.Response",
         "list_strategies": "list_strategy.ListStrategy",
         "formats": "digitalpy.parsing.format.Format",
         "formatter": "digitalpy.parsing.formatter.Formatter",

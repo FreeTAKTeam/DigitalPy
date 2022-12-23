@@ -1,6 +1,6 @@
-from digitalpy.core.zmanager.controller import Controller
-from digitalpy.logic.contexts import Contexts
-from digitalpy.core.object_factory import ObjectFactory
+from digitalpy.core.main.controller import Controller
+from digitalpy.core.logic.contexts import Contexts
+from digitalpy.core.main.object_factory import ObjectFactory
 import rule_engine
 from typing import Dict, Callable, List, Union
 import json

@@ -1,7 +1,7 @@
-from digitalpy.core.event import Event
+from digitalpy.core.main.event import Event
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
-from digitalpy.core.zmanager.controller import Controller
+from digitalpy.core.main.controller import Controller
 
 class ApplicationEvent(Event):
     NAME = "ApplicationEvent"

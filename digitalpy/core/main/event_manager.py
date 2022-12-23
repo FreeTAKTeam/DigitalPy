@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Callable
-from digitalpy.core.event import Event
+from digitalpy.core.main.event import Event
 
 class EventManager(ABC):
     """EventManager is responsible for dispatching events to registered listeners."""

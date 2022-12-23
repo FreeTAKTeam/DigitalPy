@@ -1,4 +1,4 @@
-from digitalpy.telemetry.tracing_exporter import TracingExporter
+from digitalpy.core.telemetry.tracing_exporter import TracingExporter
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 import json
 

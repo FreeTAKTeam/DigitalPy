@@ -1,4 +1,4 @@
-from digitalpy.core.factory import Factory
+from digitalpy.core.main.factory import Factory
 
 
 class ObjectFactory:

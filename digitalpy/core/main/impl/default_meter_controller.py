@@ -1,4 +1,4 @@
-from digitalpy.core.zmanager.controller import Controller
+from digitalpy.core.main.controller import Controller
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.telemetry.metrics_provider import MetricsProvider
 from digitalpy.core.telemetry.meter import Meter

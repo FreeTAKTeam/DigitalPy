@@ -1,8 +1,8 @@
-from digitalpy.telemetry.impl.opentel_tracer import OpenTelTracer
-from digitalpy.telemetry.tracing_provider import TracingProvider
+from digitalpy.core.telemetry.impl.opentel_tracer import OpenTelTracer
+from digitalpy.core.telemetry.tracing_provider import TracingProvider
 from opentelemetry.sdk.trace import TracerProvider
-from digitalpy.core.object_factory import ObjectFactory
-from digitalpy.telemetry.impl.opentel_tracing_exporter import OpenTelTracingExporter
+from digitalpy.core.main.object_factory import ObjectFactory
+from digitalpy.core.telemetry.impl.opentel_tracing_exporter import OpenTelTracingExporter
 
 class OpenTelTracingProvider(TracingProvider):
     """tracing provider implementation for the open telemetry protocol."""
