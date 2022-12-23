@@ -1,7 +1,7 @@
 from zeroless import Client
-from digitalpy.routing.pusher import Pusher
-from digitalpy.routing.request import Request
-from digitalpy.parsing.formatter import Formatter
+from digitalpy.core.zmanager.pusher import Pusher
+from digitalpy.core.zmanager.request import Request
+from digitalpy.core.parsing.formatter import Formatter
 
 class ZerolessPusher(Pusher):
     

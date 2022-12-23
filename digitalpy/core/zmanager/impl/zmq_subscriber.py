@@ -1,10 +1,10 @@
 import zmq
 from typing import List
 
-from digitalpy.routing.subscriber import Subscriber
-from digitalpy.routing.response import Response
-from digitalpy.core.object_factory import ObjectFactory
-from digitalpy.parsing.formatter import Formatter
+from digitalpy.core.zmanager.subscriber import Subscriber
+from digitalpy.core.zmanager.response import Response
+from digitalpy.core.main.object_factory import ObjectFactory
+from digitalpy.core.parsing.formatter import Formatter
 
 class ZmqSubscriber(Subscriber):
     

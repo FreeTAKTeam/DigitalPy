@@ -4,7 +4,7 @@ from pickle import PERSID
 from digitalpy.core.parsing.format import Format
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
-from digitalpy.core.util.object_factory import ObjectFactory
+from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.domain.object_id import ObjectId
 from digitalpy.core.domain.node import Node
 from digitalpy.core.persistence.build_depth import BuildDepth

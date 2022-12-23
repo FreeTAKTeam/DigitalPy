@@ -3,9 +3,9 @@ from digitalpy.core.domain.node import Node
 from digitalpy.core.parsing.load_configuration import LoadConfiguration
 from digitalpy.core.digipy_configuration.impl.inifile_configuration import InifileConfiguration
 from digitalpy.core.zmanager.impl.default_action_mapper import DefaultActionMapper
-from digitalpy.core.util.object_factory import ObjectFactory
-from digitalpy.core.util.log_manager import LogManager
-from digitalpy.core.util.impl.default_file_logger import DefaultFileLogger
+from digitalpy.core.main.object_factory import ObjectFactory
+from digitalpy.core.main.log_manager import LogManager
+from digitalpy.core.main.impl.default_file_logger import DefaultFileLogger
 from digitalpy.core.zmanager.controller import Controller
 from digitalpy.core.telemetry.tracer import Tracer
 

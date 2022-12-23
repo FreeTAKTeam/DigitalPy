@@ -1,4 +1,4 @@
-from digitalpy.core.util.event import Event
+from digitalpy.core.main.event import Event
 from digitalpy.core.persistence.persistent_object import PersistentObject
 
 class ValueChangeEvent(Event):

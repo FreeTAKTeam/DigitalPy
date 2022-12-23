@@ -1,7 +1,7 @@
 import zmq
 import multiprocessing
-from digitalpy.core.object_factory import ObjectFactory
-from digitalpy.config.configuration import Configuration
+from digitalpy.core.main.object_factory import ObjectFactory
+from digitalpy.core.digipy_configuration.configuration import Configuration
 
 
 class Subject:

@@ -1,5 +1,5 @@
 from digitalpy.core.persistence.impl.null_mapper import NullMapper
-from digitalpy.core.util.object_factory import ObjectFactory
+from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.domain.object_id import ObjectId
 from digitalpy.core.persistence.persistent_object import PersistentObject
 from digitalpy.core.persistence.property_change_event import PropertyChangeEvent

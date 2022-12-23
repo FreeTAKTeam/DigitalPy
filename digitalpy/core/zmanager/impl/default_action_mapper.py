@@ -2,12 +2,12 @@ from digitalpy.core.digipy_configuration.action_key import ActionKey
 from digitalpy.core.persistence.application_event import ApplicationEvent
 from digitalpy.core.digipy_configuration.impl.config_action_key_provider import ConfigActionKeyProvider
 from digitalpy.core.digipy_configuration.configuration import Configuration
-from digitalpy.core.event_manager import EventManager
+from digitalpy.core.main.event_manager import EventManager
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
 from digitalpy.core.zmanager.action_mapper import ActionMapper
 
-from digitalpy.core.object_factory import ObjectFactory
+from digitalpy.core.main.object_factory import ObjectFactory
 
 
 class DefaultActionMapper(ActionMapper):
