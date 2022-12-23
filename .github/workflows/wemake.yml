@@ -20,6 +20,9 @@ jobs:
         uses: wemake-services/wemake-python-styleguide@0.17.0
         with:
           path: 'digitalpy/'
+          reporter: 'github-pr-review'
+        env:
+          GITHUB_TOKEN: ${{ secrets.WEMAKE_GIT_TOKEN }}
       # You may pin to the exact commit or the version.
       # uses: wemake-services/wemake-python-styleguide@657508a0b169e15faeda641c4d9c7bc2afda484b
       
