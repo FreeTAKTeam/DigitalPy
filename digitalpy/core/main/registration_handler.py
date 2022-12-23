@@ -9,8 +9,8 @@ from digitalpy.component.impl.default_facade import DefaultFacade
 from digitalpy.config.configuration import Configuration
 from digitalpy.config.impl.inifile_configuration import InifileConfiguration
 class RegistrationHandler(ABC):
-    @abstractmethod
     @staticmethod
+    @abstractmethod
     def discover(entity_folder_path: PurePath) -> List[str]:
         """this method is used to discover all available entitys
 
@@ -25,9 +25,8 @@ class RegistrationHandler(ABC):
             List[str]: a list of available entitys in the given path
         """
         
-
-    @abstractmethod
     @staticmethod
+    @abstractmethod
     def register(
         entity_path: PurePath, import_root: str, config: InifileConfiguration
     ) -> bool:
@@ -42,14 +41,13 @@ class RegistrationHandler(ABC):
             bool: whether or not the entity was registered successfully
         """
        
-
-    @abstractmethod
     @staticmethod
+    @abstractmethod
     def save(manifest: Configuration, entity_name: str):
         """save a given entity to some form of persistency"""
         
-    @abstractmethod
     @staticmethod
+    @abstractmethod
     def validate_manifest(manifest: Configuration, entity_name: str) -> bool:
         #TODO: determine better way to inform the caller that the manifest is invalid
         """validate that the entity is compatible with the current digitalpy version

@@ -39,10 +39,12 @@ class ZmqSubscriber(Subscriber):
                 self.formatter.deserialize(response)
 
                 topic = message[0]
-                topic_sections = topic.decode("utf-8").split("/")
-                response.set_sender(topic_sections[4])
-                response.set_context(topic_sections[5])
-                response.set_action(topic_sections[6])
+                decoded_topic = topic.decode("utf-8")
+                topic_sections = decoded_topic.split("/")
+                _, _, _, _, sender, context, action, *_ = topic_sections
+                response.set_sender(sender)
+                response.set_context(context)
+                response.set_action(action)
 
                 responses.append(response)
 
