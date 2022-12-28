@@ -64,25 +64,7 @@ class DefaultRoutingWorker:
         while True:
             try:
                 print("listening")
-                message = self.sock.recv_multipart()
-                topic = message[0]
-
-                print("received topic %s" % topic)
-
-                topic_section = topic.decode("utf-8").split("/")
-
-                request_id = topic_section[7]
-
-                response_topic = f"/routing/response/{topic_section[3]}/{topic_section[4]}/{topic_section[5]}/{topic_section[6]}/{request_id}"
-
-                request = ObjectFactory.get_new_instance("request")
-                request.values = message[1]
-                request.set_sender(topic_section[3])
-                request.set_context(topic_section[4])
-                request.set_action(topic_section[5])
-                request.set_format(topic_section[6])
-
-                self.formatter.deserialize(request)
+                topic_section, response_topic, request = self.receive_request()
 
                 response = ObjectFactory.get_new_instance("response")
                 referrer = request.get_sender()
@@ -176,17 +158,8 @@ class DefaultRoutingWorker:
                         ]
                     )
                     continue
-
-                # set the request based on the result
-                nextRequest = ObjectFactory.get_new_instance("request")
-                nextRequest.set_sender(controllerClass)
-                nextRequest.set_context(response.get_context())
-                nextRequest.set_action(response.get_action())
-                nextRequest.set_format(response.get_format())
-                nextRequest.set_values(response.get_values())
-                # nextRequest.set_errors(response.get_errors())
-                # nextRequest.set_response_format(request.get_response_format())
-                self.action_mapper.process_action(nextRequest, response)
+                
+                self.process_next_request(controllerClass=controllerClass,response=response)
 
                 self.formatter.serialize(response)
 
@@ -206,3 +179,37 @@ class DefaultRoutingWorker:
                     )
                 except Exception as e:
                     print(str(e))
+
+    def process_next_request(self, controllerClass, response):
+        # set the request based on the result
+        nextRequest = ObjectFactory.get_new_instance("request")
+        nextRequest.set_sender(controllerClass)
+        nextRequest.set_context(response.get_context())
+        nextRequest.set_action(response.get_action())
+        nextRequest.set_format(response.get_format())
+        nextRequest.set_values(response.get_values())
+        # nextRequest.set_errors(response.get_errors())
+        # nextRequest.set_response_format(request.get_response_format())
+        self.action_mapper.process_action(nextRequest, response)
+
+    def receive_request(self):
+        message = self.sock.recv_multipart()
+        topic = message[0]
+
+        print("received topic %s" % topic)
+
+        topic_section = topic.decode("utf-8").split("/")
+
+        request_id = topic_section[7]
+
+        response_topic = f"/routing/response/{topic_section[3]}/{topic_section[4]}/{topic_section[5]}/{topic_section[6]}/{request_id}"
+
+        request = ObjectFactory.get_new_instance("request")
+        request.values = message[1]
+        request.set_sender(topic_section[3])
+        request.set_context(topic_section[4])
+        request.set_action(topic_section[5])
+        request.set_format(topic_section[6])
+
+        self.formatter.deserialize(request)
+        return topic_section,response_topic,request
