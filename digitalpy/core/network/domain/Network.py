@@ -9,80 +9,40 @@
 #######################################################
 
 
-class Network(CoTNode):
-# default constructor  def __init__(self):  
+import sqlalchemy
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
-    def __init__(Configuration):
-        pass
+Base = declarative_base()
 
-    @CoTProperty
-    def detail():
-        pass
+class Network(Base):
+    __tablename__ = 'network_settings'
+    id = Column(Integer, primary_key=True)
+    ip_address = Column(String)
+    subnet_mask = Column(String)
+    default_gateway = Column(String)
+    dns_servers = Column(String)
 
-    @detail.setter
-    def detail( = None):
-        pass
+def configure_network_settings(ip_address=None, subnet_mask=None, default_gateway=None, dns_servers=None):
+    engine = create_engine('sqlite:///network_settings.db')
+    Base.metadata.create_all(engine)
+    Session = sessionmaker(bind=engine)
+    session = Session()
 
-    @CoTProperty
-    def how():
-        pass
+    network_settings = session.query(NetworkSettings).first()
+    if not network_settings:
+        network_settings = NetworkSettings()
+        session.add(network_settings)
 
-    @how.setter
-    def how( = 0):
-        pass
+    if ip_address:
+        network_settings.ip_address = ip_address
+    if subnet_mask:
+        network_settings.subnet_mask = subnet_mask
+    if default_gateway:
+        network_settings.default_gateway = default_gateway
+    if dns_servers:
+        network_settings.dns_servers = dns_servers
 
-    @CoTProperty
-    def point():
-        pass
-
-    @point.setter
-    def point( = None):
-        pass
-
-    @CoTProperty
-    def stale():
-        pass
-
-    @stale.setter
-    def stale( = None,  = 60):
-        pass
-
-    @CoTProperty
-    def start():
-        pass
-
-    @start.setter
-    def start( = 0):
-        pass
-
-    @CoTProperty
-    def time():
-        pass
-
-    @time.setter
-    def time( = 0):
-        pass
-
-    @CoTProperty
-    def type():
-        pass
-
-    @type.setter
-    def type( = 0):
-        pass
-
-    @CoTProperty
-    def uid():
-        pass
-
-    @uid.setter
-    def uid():
-        pass
-
-    @CoTProperty
-    def version():
-        pass
-
-    @version.setter
-    def version():
-        pass
+    session.commit()
+    session.close()
