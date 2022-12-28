@@ -19,8 +19,8 @@ class DefaultFactory(Factory):
         "request": "digitalpy.core.zmanager.request.Request",
         "response": "digitalpy.core.zmanager.response.Response",
         "list_strategies": "list_strategy.ListStrategy",
-        "formats": "digitalpy.parsing.format.Format",
-        "formatter": "digitalpy.parsing.formatter.Formatter",
+        "formats": "digitalpy.core.parsing.format.Format",
+        "formatter": "digitalpy.core.parsing.formatter.Formatter",
         "principal_factory": "principal_factory.PrincipalFactory",
     }
 

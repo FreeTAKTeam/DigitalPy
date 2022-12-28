@@ -1,1 +1,0 @@
-def test_component_discovery(se)
