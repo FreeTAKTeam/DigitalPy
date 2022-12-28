@@ -9,16 +9,16 @@ from digitalpy.core.parsing.formatter import Formatter
 class ZmqSubscriber(Subscriber):
     
     def __init__(self, formatter: Formatter):
-        self.context = zmq.Context()
-        self.formatter = formatter
-        self.socket = self.context.socket(zmq.SUB)
-        
+        self.subscriber_context = zmq.Context()
+        self.subscriber_formatter = formatter
+        self.subscriber_socket = self.subscriber_context.socket(zmq.SUB)
+
     def broker_connect(self, integration_manager_address: str, integration_manager_port: int, service_identity: str):
         """Connect or reconnect to broker
         """
-        self.socket.connect(f"tcp://{integration_manager_address}:{integration_manager_port}")
-        self.socket.setsockopt(zmq.SUBSCRIBE, f"/{service_identity}/messages")
-        self.socket.setsockopt(zmq.SUBSCRIBE, f"/{service_identity}/commands")
+        self.subscriber_socket.connect(f"tcp://{integration_manager_address}:{integration_manager_port}")
+        self.subscriber_socket.setsockopt_string(zmq.SUBSCRIBE, f"/{service_identity}/messages")
+        self.subscriber_socket.setsockopt_string(zmq.SUBSCRIBE, f"/{service_identity}/commands")
         
     def broker_receive(self) -> List[Response]:
         """Returns the reply message or None if there was no reply
@@ -26,7 +26,7 @@ class ZmqSubscriber(Subscriber):
         responses = []
         try:
             while True:
-                message = self.socket.recv_multipart(flags=zmq.NOBLOCK)
+                message = self.subscriber_socket.recv_multipart(flags=zmq.NOBLOCK)
                 # instantiate the response object
                 response = ObjectFactory.get_instance("response")
                 
@@ -36,7 +36,7 @@ class ZmqSubscriber(Subscriber):
                 # get the values returned from the routing proxy and serialize them to
                 values = message[1]
                 response.set_values(values)
-                self.formatter.deserialize(response)
+                self.subscriber_formatter.deserialize(response)
 
                 topic = message[0]
                 decoded_topic = topic.decode("utf-8")
@@ -54,4 +54,17 @@ class ZmqSubscriber(Subscriber):
     def broker_send(self, message):
         """Send request to broker
         """
-        self.socket.send(message)
+        self.subscriber_socket.send(message)
+    
+    def __getstate__(self):
+        state = self.__dict__
+        if "subscriber_socket" in state:
+            del state["subscriber_socket"]
+        if "subscriber_context" in state:
+            del state["subscriber_context"]
+        return state
+    
+    def __setstate__(self, state):
+        self.__dict__ = state
+        self.subscriber_context = zmq.Context()
+        self.subscriber_socket = self.subscriber_context.socket(zmq.SUB)
