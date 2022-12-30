@@ -18,7 +18,12 @@ class DigPyCoreGeneralController(Controller):
     def execute( = None):
         pass
 
-    def serialize_component_name():
+    def serialize_digpy_core():
         """this is the general method used to serialize the component to a given format
         """
         pass
+        
+	def digpycoremanifest():
+		"""Core capabilities of DigitalPy"""
+    	pass
+    	

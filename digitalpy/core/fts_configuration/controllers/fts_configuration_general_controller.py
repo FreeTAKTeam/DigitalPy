@@ -18,7 +18,8 @@ class FTSConfigurationGeneralController(Controller):
     def execute( = None):
         pass
 
-    def serialize_component_name():
+    def serialize_fts_configuration():
         """this is the general method used to serialize the component to a given format
         """
         pass
+        

@@ -17,7 +17,7 @@ class RESTAPISenderController(Controller):
     def __init__(Request, Response, ActionMapper, Configuration):
         pass
 
-    def broadcast_component_name(Event):
+    def broadcast_rest_api(Event):
        	"""this method will broadcast the component
         """
         pass

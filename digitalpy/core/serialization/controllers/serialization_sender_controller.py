@@ -17,7 +17,7 @@ class SerializationSenderController(Controller):
     def __init__(Request, Response, ActionMapper, Configuration):
         pass
 
-    def broadcast_component_name(Event):
+    def broadcast_serialization(Event):
        	"""this method will broadcast the component
         """
         pass

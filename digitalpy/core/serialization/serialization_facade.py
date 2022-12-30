@@ -1,4 +1,4 @@
-from Catalog.Data.Domain.FTS Model.Facade import Facade
+from Catalog.Data.Domain.FTS_Model.Facade import Facade
 
 class SerializationFacade(Facade, Facade):
     """Facade class for the this component. Responsible for handling all public
@@ -14,7 +14,17 @@ class SerializationFacade(Facade, Facade):
     clients and the Subsystems.</li>
       </ul>
     """
+	
 # default constructor  def __init__(self):  
 
-    def __init__():
-        pass
+    def __init__(self):
+		self.deserialize = SerializationGeneralController()
+		self.serialize_to_file = SerializationGeneralController()
+		self.serialize = SerializationGeneralController()
+		self.domain_to_xml_parsing = SerializationGeneralController()
+		self.xml_to_domain_parsing = SerializationGeneralController()
+		self.domain_to_json_parsing = SerializationGeneralController()
+		self.domain_to_protobuf_parsing = SerializationGeneralController()
+		self.deserialize_from_file = SerializationGeneralController()
+	
+

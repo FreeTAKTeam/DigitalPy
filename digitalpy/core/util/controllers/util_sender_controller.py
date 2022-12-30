@@ -14,13 +14,12 @@ class UtilSenderController(Controller):
     """
 # default constructor  def __init__(self):  
 
-    def __init__(Request, Response, ActionMapper, Configuration):
-        pass
+	def __init__(Request, Response, ActionMapper, Configuration):
+        	pass
 
-    def broadcast_util(Event):
-       	"""this method will broadcast the component
-        """
-        pass
+	def broadcast_util(Event):
+		"""this method will broadcast the component"""
+        	pass
 
 	def execute( = None):
 		pass

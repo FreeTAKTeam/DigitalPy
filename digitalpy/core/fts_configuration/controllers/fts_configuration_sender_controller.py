@@ -17,7 +17,7 @@ class FTSConfigurationSenderController(Controller):
     def __init__(Request, Response, ActionMapper, Configuration):
         pass
 
-    def broadcast_component_name(Event):
+    def broadcast_fts_configuration(Event):
        	"""this method will broadcast the component
         """
         pass

@@ -1,4 +1,4 @@
-from Catalog.Data.Domain.FTS Model.Facade import Facade
+from Catalog.Data.Domain.FTS_Model.Facade import Facade
 
 class HealthFacade(Facade, Facade):
     """Facade class for the this component. Responsible for handling all public
@@ -14,7 +14,20 @@ class HealthFacade(Facade, Facade):
     clients and the Subsystems.</li>
       </ul>
     """
+	
 # default constructor  def __init__(self):  
 
-    def __init__():
-        pass
+    def __init__(self):
+		self.check_system_services = HealthGeneralController()
+		self.monitor_system_performance = HealthGeneralController()
+		self.check_network_connectivity = HealthGeneralController()
+		self.check_system_updates = HealthGeneralController()
+		self.health_check = HealthGeneralController()
+		self.dashboard__system_health = HealthGeneralController()
+		self.check_system_backups = HealthGeneralController()
+		self.check_disk_space = HealthGeneralController()
+		self.check_system_logs = HealthGeneralController()
+		self.check_component_status = HealthGeneralController()
+		self.check_system_security = HealthGeneralController()
+	
+

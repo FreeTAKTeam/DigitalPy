@@ -1,4 +1,4 @@
-from Catalog.Data.Domain.FTS Model.Facade import Facade
+from Catalog.Data.Domain.FTS_Model.Facade import Facade
 
 class DataPackageFacade(Facade, Facade):
     """Facade class for the this component. Responsible for handling all public
@@ -14,7 +14,25 @@ class DataPackageFacade(Facade, Facade):
     clients and the Subsystems.</li>
       </ul>
     """
+	
 # default constructor  def __init__(self):  
 
-    def __init__():
-        pass
+    def __init__(self):
+		self.data_package__download_file_https = DataPackageGeneralController()
+		self.data_package__upload_file_https = DataPackageGeneralController()
+		self.data_package__download_file_http = DataPackageGeneralController()
+		self.replay_hystory = DataPackageGeneralController()
+		self.data_package___file_list_http = DataPackageGeneralController()
+		self.data_package__generate_show_qr_code = DataPackageGeneralController()
+		self.data_package__upload_file = DataPackageGeneralController()
+		self.data_package__delete_file = DataPackageGeneralController()
+		self.data_package__download_file = DataPackageGeneralController()
+		self.data_package__is_private = DataPackageGeneralController()
+		self.data_package__upload_file_http = DataPackageGeneralController()
+		self.data_package__file_list = DataPackageGeneralController()
+		self.broadcast_data_package_to_all_users = DataPackageGeneralController()
+		self.excheck__join_existing_checklist = DataPackageGeneralController()
+		self.enrollment = DataPackageGeneralController()
+		self.data_package__file_list_https = DataPackageGeneralController()
+	
+

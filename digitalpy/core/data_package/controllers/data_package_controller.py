@@ -20,7 +20,7 @@ class DataPackageController(DefaultBusinessRuleController):
     def execute( = None):
         pass
 
-    def parse_component_name():
+    def parse_data_package():
         """Creates the model object outline and passes it to the parser to fill the model
         object with the xml data
         """
