@@ -33,48 +33,26 @@ class Subject:
     def initiate_sockets(self):
         print("initiate_sockets")
         self.context = zmq.Context()
-        self.backend_dealer = self.context.socket(zmq.DEALER)
-        self.backend_dealer.bind(self.backend_address)
+        self.backend_pusher = self.context.socket(zmq.PUSH)
+        self.backend_pusher.bind(self.backend_address)
 
         self.frontend_pull = self.context.socket(zmq.PULL)
         self.frontend_pull.bind(self.frontend_pull_address)
 
-        self.frontend_pub = self.context.socket(zmq.PUB)
-        self.frontend_pub.bind(self.frontend_pub_address)
-
-        self.poller = zmq.Poller()
-        self.poller.register(self.backend_dealer, zmq.POLLIN)
-        self.poller.register(self.frontend_pull, zmq.POLLIN)
-
     def begin_routing(self):
-        self.initiate_sockets()
         self.start_workers()
+        self.initiate_sockets()
         while True:
-            socks = dict(self.poller.poll())
-
-            if socks.get(self.frontend_pull) == zmq.POLLIN:
-                message = self.frontend_pull.recv_multipart()
-                message.insert(0, b"")
-                self.backend_dealer.send_multipart(message)
-
-            if socks.get(self.backend_dealer) == zmq.POLLIN:
-                message = self.backend_dealer.recv_multipart()
-                if message[0] == b"":
-                    message = message[1:]
-                print("publishing message to: " + str(message[0]))
-                self.frontend_pub.send_multipart(message)
+            message = self.frontend_pull.recv_multipart()
+            self.backend_pusher.send_multipart(message)
 
     def __getstate__(self):
         """delete objects that cannot be pickled or generally serialized"""
         state = self.__dict__.copy()
-        if "backend_dealer" in state:
-            del state["backend_dealer"]
+        if "backend_push" in state:
+            del state["backend_push"]
         if "frontend_pull" in state:
             del state["frontend_pull"]
-        if "frontend_pub" in state:
-            del state["frontend_pub"]
-        if "poller" in state:
-            del state["poller"]
         if "workers" in state:
             del state["workers"]
         if "context" in state:
