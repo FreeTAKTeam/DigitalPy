@@ -9,21 +9,23 @@
 #######################################################
 from digitalpy.core.zmanager.service import Service
 from digitalpy.core.zmanager.impl.zmq_subscriber import ZmqSubscriber
-from digitalpy.core.zmanager.impl.zeroless_pusher import ZerolessPusher
+from digitalpy.core.zmanager.impl.zmq_pusher import ZMQPusher
 from digitalpy.core.parsing.formatter import Formatter
 
-class DigitalPyService(Service, ZmqSubscriber, ZerolessPusher):
+class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
     # on the reception of messages from the subscriber interface or the socket
     #TODO: what is the service manager supposed to do? is this going to be a new service
     
-    def __init__(self, service_id: str, subject_address: str, subject_port: int, integration_manager_address: str, integration_manager_port: int, formatter: Formatter):
+    def __init__(self, service_id: str, subject_address: str, subject_port: int, subject_protocol: str, integration_manager_address: str, integration_manager_port: int, integration_manager_protocol: str, formatter: Formatter):
         Service.__init__(self)
         ZmqSubscriber.__init__(self, formatter)
-        ZerolessPusher.__init__(self, formatter)
+        ZMQPusher.__init__(self, formatter)
         self.subject_address = subject_address
         self.subject_port = subject_port
+        self.subject_protocol = subject_protocol
         self.integration_manager_address = integration_manager_address
-        self.integration_port_address = integration_manager_port
+        self.integration_manager_port = integration_manager_port
+        self.integration_manager_protocol = integration_manager_protocol
         self.service_id = service_id
 
     def discovery(self):
@@ -37,6 +39,15 @@ class DigitalPyService(Service, ZmqSubscriber, ZerolessPusher):
         # TODO: once the service manager has been well defined then we will need
         # to define the format for this service.
 
-    def initialize_connections(self):
-        ZerolessPusher.initiate_connections(self, self.subject_port, self.subject_address)
-        self.broker_connect(self.integration_port_address, self.integration_manager_address,self.service_id)
+    def initialize_connections(self, application_protocol):
+        ZMQPusher.initiate_connections(self, self.subject_port, self.subject_address)
+        self.broker_connect(self.integration_manager_address, self.integration_manager_port, self.integration_manager_protocol, self.service_id, application_protocol)
+
+    def __getstate__(self):
+        ZmqSubscriber.__getstate__(self)
+        ZMQPusher.__getstate__(self)
+        return self.__dict__
+    
+    def __setstate__(self, state):
+        ZmqSubscriber.__setstate__(self, state)
+        ZMQPusher.__setstate__(self, self.__dict__)
