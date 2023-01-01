@@ -10,15 +10,67 @@
 from Catalog.Implementation.Libraries.Digitalpy.digitalpy.Async.routing.controller import Controller
 
 class DataPackageGeneralController(Controller):
-# default constructor  def __init__(self):  
-
-    def __init__(Request, Response, ActionMapper, Configuration):
+    def broadcast(self):
+        """Broadcasts a specific data package to all users in the system."""
         pass
-
-    def execute( = None):
+    
+    def enrollment(self):
+        """Enrolls the user to FTS, provisioning ATAK devices through device profiles."""
         pass
-
-    def serialize_component_name():
-        """this is the general method used to serialize the component to a given format
+    
+    def file_list_http(self):
+        """Gets a list of files on the server."""
+        pass
+    
+    def excheck_join_existing_checklist(self):
+        """Joins the user to a started set of tasks."""
+        pass
+    
+    def delete_file(self):
+        """Deletes a file from the server."""
+        pass
+    
+    def download_file(self):
+        """Downloads a file from the server."""
+        pass
+    
+    def download_file_http(self):
+        """Downloads one file from the server via HTTP."""
+        pass
+    
+    def download_file_https(self):
+        """Downloads one file from the server via HTTPS."""
+        pass
+    
+    def file_list(self):
+        """Provides a list of files on the server."""
+        pass
+    
+    def file_list_https(self):
+        """Gets a list of files on the server via HTTPS."""
+        pass
+    
+    def generate_show_qr_code(self):
+        """Generates and shows a QR code."""
+        pass
+    
+    def is_private(self):
+        """Checks if a data package is private.
+        
+        Returns:
+            bool: True if the data package is private, False otherwise.
         """
         pass
+    
+    def upload_file(self):
+        """Uploads a data package from the UI."""
+        pass
+    
+    def upload_file_http(self):
+        """Uploads one file to the server via HTTP."""
+        pass
+    
+    def upload_file_https(self):
+        """Uploads one file to the server via HTTPS."""
+        pass
+

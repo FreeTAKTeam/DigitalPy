@@ -10,15 +10,91 @@
 from Catalog.Implementation.Libraries.Digitalpy.digitalpy.Async.routing.controller import Controller
 
 class ComponentManagementGeneralController(Controller):
-# default constructor  def __init__(self):  
+    def __init__(self, component_registry, **kwargs):
+        super().__init__(**kwargs)
+        self.component_registry = component_registry
+    
+    def get_component_info(self, component_id: str) -> Dict:
+        component = self.component_registry.get_component(component_id)
+        if component is None:
+            raise ValueError(f"Component with ID {component_id} not found")
+        return component.to_dict()
+    
+    def list_components(self) -> List[Dict]:
+        return [c.to_dict() for c in self.component_registry.get_all_components()]
+    
+    def register_component(self, component_info: Dict) -> None:
+        component = Component.from_dict(component_info)
+        self.component_registry.add_component(component)
+    
+    def restart_component(self, component_id: str) -> None:
+        component = self.component_registry.get_component(component_id)
+        if component is None:
+            raise ValueError(f"Component with ID {component_id} not found")
+        component.restart()
+    
+    def start_component(self, component_id: str) -> None:
+        component = self.component_registry.get_component(component_id)
+        if component is None:
+            raise ValueError(f"Component with ID {component_id} not found")
+        component.start()
+    
+    def update_component(self, component_id: str, component_data: Dict[str, Any]):
+    """Updates the information of an existing component.
+    Args:
+    component_id (str): The ID of the component to update.
+    component_data (Dict[str, Any]): The updated information for the component.
 
-    def __init__(Request, Response, ActionMapper, Configuration):
-        pass
+        Returns:
+            bool: True if the update was successful, False otherwise.
+            """
+            if not self._validate_component_data(component_data):
+                return False
 
-    def execute( = None):
-        pass
+            component_store = self.get_component_store()
+            component = component_store.get(component_id)
+            if component is None:
+                return False
 
-    def serialize_component_management():
-        """this is the general method used to serialize the component to a given format
-        """
-        pass
+            component.update(component_data)
+            component_store[component_id] = component
+            return True
+
+
+            def stop_component(self, component_name: str) -> bool:
+                """
+                Stops a specific component
+
+                Parameters:
+                component_name (str): The name of the component to stop
+
+                Returns:
+                bool: True if the component was successfully stopped, False otherwise
+                """
+                # Implement stopping the component here
+                pass
+
+            def discover_components(self) -> List[str]:
+                """
+                Discovers all the installed components
+
+                Returns:
+                List[str]: A list of the names of all installed components
+                """
+                # Implement discovering the installed components here
+                pass
+
+            def deregister_component(self, component_name: str) -> bool:
+                """
+                Deregisters a component from the system
+
+                Parameters:
+                component_name (str): The name of the component to deregister
+
+                Returns:
+                bool: True if the component was successfully deregistered, False otherwise
+                """
+                # Implement deregistering the component here
+                pass
+
+        

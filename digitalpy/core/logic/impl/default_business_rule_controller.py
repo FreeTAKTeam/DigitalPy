@@ -53,60 +53,50 @@ class DefaultBusinessRuleController(Controller):
 
         if resolver is None:
             if isinstance(matchable, dict):
-                resolver = getattr(rule_engine, Contexts.ITEM_CTX.value)
+                resolver = getattr(rule_engine,
+	
+        resolver = getattr(rule_engine, Contexts.ITEM_CTX.value)
 
-            elif isinstance(matchable, object):
-                resolver = getattr(rule_engine, Contexts.ATTRIBUTE_CTX.value)
+    elif isinstance(matchable, object):
+        resolver = getattr(rule_engine, Contexts.ATTRIBUTE_CTX.value)
 
-            else:
-                raise ValueError(
-                    "matchable is of unsupported type: %s" % type(matchable)
-                )
+    else:
+        raise ValueError(
+            "matchable is of unsupported type: %s" % type(matchable)
+        )
 
-        else:
-            resolver = getattr(rule_engine, getattr(Contexts, resolver))
-        return resolver
+		else:
+			resolver = getattr(rule_engine, getattr(Contexts, resolver))
+		return resolver
+		
+		def _evaluate_actions(self, rule_dict):
+			if "actions" in rule_dict:
+				cur_request = self.get_request()
+				cur_response = self.get_response()
+				for action in rule_dict["actions"]:
+					sub_request = Request(
+						sender=self.__class__.__name__,
+						context=cur_request.get_context(),
+						action=action,
+						values=cur_request.get_values(),
+						format=cur_request.get_format(),
+					)
+					sub_response = Response(format=cur_response.get_format())
+					self.internal_action_mapper.process_action(sub_request, sub_response)
+					cur_response.update(sub_response.get_values())
+		
+		def _process_response(self, rule_dict):
+			# process the response according to the rules defined in the configuration
+			if "response" in rule_dict:
+				for key, value in rule_dict["response"].items():
+					# set the response value according to the configuration
+					self.response.set_value(key, value)
+			else:
+				# if no response is defined in the configuration, set the response to an empty dictionary
+				self.response.set_value({})
 
-    def _get_matchable_object(self, matchable, rule_dict):
-        # TODO: it may be better to get the matchable from the response
-        # instead of the request
-        new_matchable = rule_dict.get("matchable", None)
-        if new_matchable is None:
-            matchable = self.request.get_values()
-        else:
-            matchable = self.request.get_value(new_matchable)
-        return matchable
-
-    def _evaluate_actions(self, rule_dict):
-        try:
-            if "actions" in rule_dict:
-                for action in rule_dict["actions"]:
-                    # here we define the current request and response objects
-                    cur_request = self.get_request()
-                    cur_response = self.get_response()
-
-                    # we instantiate the sub request object to use all of the same properties as
-                    # the current request except for the action which is taken from the business rule configuration
-                    # and the sender which is set to the current controller
-                    sub_request = ObjectFactory.get_new_instance("request")
-                    sub_request.set_sender(self.__class__.__name__)
-                    sub_request.set_context(cur_request.get_context())
-                    sub_request.set_action(action)
-                    sub_request.set_values(cur_request.get_values())
-                    sub_request.set_format(cur_request.get_format())
-                    # here we instantiate the sub response object, it is simpler than the request object
-                    # taking only the format from the current response
-                    sub_response = ObjectFactory.get_new_instance("response")
-                    sub_response.set_format(cur_response.get_format())
-                    # finally we call the internal_action_mapper to process the action
-                    # it should be noted that the internal_action_mapper is synchronous and can
-                    # only access the internal action mapping configuration
-                    self.internal_action_mapper.process_action(
-                        sub_request, sub_response
-                    )
-
-                    # add all the sub_response values to the current response
-                    for key, value in sub_response.get_values().items():
-                        cur_response.set_value(key, value)
-        except Exception as e:
-            raise e
+		def run(self):
+			# evaluate the request according to the business rules defined in the configuration
+			self.evaluate_request()
+			# process the response according to the rules defined in the configuration
+			self._process_response(self.business_rules)
