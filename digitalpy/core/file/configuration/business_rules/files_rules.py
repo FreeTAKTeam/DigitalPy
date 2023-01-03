@@ -9,7 +9,7 @@
 #######################################################
 
 
-class FTSCoreRules:
+class FilesRules:
 # default constructor  def __init__(self):  
 
     pass

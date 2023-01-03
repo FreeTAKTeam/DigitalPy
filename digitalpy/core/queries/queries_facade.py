@@ -18,6 +18,6 @@ class QueriesFacade(Facade, Facade):
 # default constructor  def __init__(self):  
 
     def __init__(self):
-		self.web_map__search_cot = QueriesGeneralController()
+		self.web_map_search_cot = QueriesGeneralController()
 	
 

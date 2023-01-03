@@ -23,11 +23,11 @@ class TelemetryFacade(Facade, Facade):
 		self.get_telemetry_data = TelemetryGeneralController()
 		self.set_telemetry_data = TelemetryGeneralController()
 		self.get_telemetry_alarms = TelemetryGeneralController()
-		self.dashboard__logs = TelemetryGeneralController()
+		self.dashboard_logs = TelemetryGeneralController()
 		self.telemetry = TelemetryGeneralController()
 		self.set_telemetry_config = TelemetryGeneralController()
 		self.metrics = TelemetryGeneralController()
 		self.telemetry = TelemetryGeneralController()
-		self.dashboard__runtime_and_connected_clients = TelemetryGeneralController()
+		self.dashboard_runtime_and_connected_clients = TelemetryGeneralController()
 	
 

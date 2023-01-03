@@ -25,21 +25,21 @@ class ServiceManagementGeneralController(Controller):
         
 	def list_services():
 		"""List all services and their current status"""
-    	pass
-    	
+		pass
+ 
 	def stop_service():
 		"""Stop a specific service"""
-    	pass
-    	
+		pass
+ 
 	def start_service():
 		"""Start a specific service"""
-    	pass
-    	
+		pass
+ 
 	def stop_start_service():
 		"""Ability to  stop and restart a service dynamically"""
-    	pass
-    	
+		pass
+ 
 	def get_service_status():
 		"""Get the current status of a specific service"""
-    	pass
-    	
+		pass
+ 

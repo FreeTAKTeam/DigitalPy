@@ -19,16 +19,16 @@ class UtilFacade(Facade, Facade):
 
     def __init__(self):
 		self.about = UtilGeneralController()
-		self.web_map__search_cot = UtilGeneralController()
+		self.web_map_search_cot = UtilGeneralController()
 		self.protobuf_to_domain_parsing = UtilGeneralController()
 		self.json_to_domain_parsing = UtilGeneralController()
-		self.presense__update = UtilGeneralController()
-		self.web_map__measure_distances = UtilGeneralController()
-		self.presence__connect = UtilGeneralController()
-		self.data_package__generate_show_qr_code = UtilGeneralController()
+		self.presense_update = UtilGeneralController()
+		self.web_map_measure_distances = UtilGeneralController()
+		self.presence_connect = UtilGeneralController()
+		self.data_package_generate_show_qr_code = UtilGeneralController()
 		self.send_welcome_message = UtilGeneralController()
 		self.rest_api_push_kml = UtilGeneralController()
-		self.presence__delete = UtilGeneralController()
+		self.presence_delete = UtilGeneralController()
 		self.asci_welcome = UtilGeneralController()
 	
 

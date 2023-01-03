@@ -25,21 +25,21 @@ class DigPyConfigurationGeneralController(Controller):
         
 	def configure_dp_ip():
 		"""Configure the IP of DP dynamically"""
-    	pass
-    	
-	def web_ui__manage_services():
+		pass
+ 
+	def web_ui_manage_services():
 		"""the services can be turned on and off and a port can be assigned to the service."""
-    	pass
-    	
+		pass
+ 
 	def installation_wizard():
 		""" guides the user trough the installation process"""
-    	pass
-    	
-	def configure__set_port():
+		pass
+ 
+	def configure_set_port():
 		"""Ability to set port dynamically"""
-    	pass
-    	
+		pass
+ 
 	def configuration_wizard():
 		"""starts a wizard to create a YAML configuration"""
-    	pass
-    	
+		pass
+ 

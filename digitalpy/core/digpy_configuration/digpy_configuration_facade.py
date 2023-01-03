@@ -19,9 +19,9 @@ class DigPyConfigurationFacade(Facade, Facade):
 
     def __init__(self):
 		self.configure_dp_ip = DigPyConfigurationGeneralController()
-		self.web_ui__manage_services = DigPyConfigurationGeneralController()
+		self.web_ui_manage_services = DigPyConfigurationGeneralController()
 		self.installation_wizard = DigPyConfigurationGeneralController()
-		self.configure__set_port = DigPyConfigurationGeneralController()
+		self.configure_set_port = DigPyConfigurationGeneralController()
 		self.configuration_wizard = DigPyConfigurationGeneralController()
 	
 

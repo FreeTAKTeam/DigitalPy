@@ -23,7 +23,7 @@ class QueriesGeneralController(Controller):
         """
         pass
         
-	def web_map__search_cot():
+	def web_map_search_cot():
 		"""search a COT by Name"""
-    	pass
-    	
+		pass
+ 

@@ -25,21 +25,21 @@ class PersistenceGeneralController(Controller):
         
 	def db_support_activate_saving_cot_into_db():
 		"""core"""
-    	pass
-    	
+		pass
+ 
 	def db_multiple_support():
 		"""Support for any DB"""
-    	pass
-    	
+		pass
+ 
 	def db_support_mysql():
 		"""Experimental"""
-    	pass
-    	
+		pass
+ 
 	def cot_record_in_db():
 		"""record all the traffic in the Database"""
-    	pass
-    	
+		pass
+ 
 	def db_support_sql_lite():
 		"""core"""
-    	pass
-    	
+		pass
+ 

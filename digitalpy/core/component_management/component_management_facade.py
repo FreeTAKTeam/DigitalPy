@@ -1,4 +1,4 @@
-from Catalog.Data.Domain.FTS Model.Facade import Facade
+from Catalog.Data.Domain.FTS_Model.Facade import Facade
 
 class ComponentManagementFacade(Facade, Facade):
     """Facade class for the this component. Responsible for handling all public
@@ -14,7 +14,17 @@ class ComponentManagementFacade(Facade, Facade):
     clients and the Subsystems.</li>
       </ul>
     """
+	
 # default constructor  def __init__(self):  
 
-    def __init__():
-        pass
+    def __init__(self):
+		self.start_component = ComponentManagementGeneralController()
+		self.stop_component = ComponentManagementGeneralController()
+		self.restart_component = ComponentManagementGeneralController()
+		self.component_discovery = ComponentManagementGeneralController()
+		self.register_component = ComponentManagementGeneralController()
+		self.list_components = ComponentManagementGeneralController()
+		self.get_component_info = ComponentManagementGeneralController()
+		self.update_component = ComponentManagementGeneralController()
+	
+

@@ -25,33 +25,33 @@ class ComponentManagementGeneralController(Controller):
         
 	def start_component():
 		"""Starts a specific component"""
-    	pass
-    	
+		pass
+ 
 	def stop_component():
 		"""Stops a specific component"""
-    	pass
-    	
+		pass
+ 
 	def restart_component():
 		"""Restarts a specific component"""
-    	pass
-    	
+		pass
+ 
 	def component_discovery():
 		"""discover all the installed components"""
-    	pass
-    	
+		pass
+ 
 	def register_component():
 		"""Registers a new component in the system"""
-    	pass
-    	
+		pass
+ 
 	def list_components():
 		"""Lists all the registered components in the system"""
-    	pass
-    	
+		pass
+ 
 	def get_component_info():
 		"""Retrieves information about a specific component"""
-    	pass
-    	
+		pass
+ 
 	def update_component():
 		"""Updates the information of an existing component"""
-    	pass
-    	
+		pass
+ 

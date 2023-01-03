@@ -25,13 +25,13 @@ class NetworkGeneralController(Controller):
         
 	def ftp_connect():
 		"""Connect to the FTP server"""
-    	pass
-    	
+		pass
+ 
 	def ftp_download():
 		"""send a file over FTP to a connected client for Download"""
-    	pass
-    	
+		pass
+ 
 	def ftp_upload():
 		"""receive a file from a connected client"""
-    	pass
-    	
+		pass
+ 
