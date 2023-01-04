@@ -6,11 +6,17 @@ from digitalpy.core.parsing.formatter import Formatter
 class ZMQPusher(Pusher):
     
     def __init__(self, formatter: Formatter):
-        self.pusher_context = zmq.Context()
+        self.pusher_context = None
+        self.pusher_socket = None
         self.pusher_formatter = formatter
-        self.pusher_socket = self.pusher_context.socket(zmq.PUSH)
 
     def initiate_connections(self, port: int, address: str):
+        # added to fix hanging connect issue as per 
+        # https://stackoverflow.com/questions/44257579/zeromq-hangs-in-a-python-multiprocessing-class-object-solution
+        if self.pusher_context == None:
+            self.pusher_context = zmq.Context()
+        if self.pusher_socket == None:
+            self.pusher_socket = self.pusher_context.socket(zmq.PUSH)
         self.pusher_socket.connect(f"tcp://{address}:{port}")
 
     def subject_bind(self, address: int, port: str):

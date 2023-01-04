@@ -9,19 +9,27 @@ from digitalpy.core.parsing.formatter import Formatter
 class ZmqSubscriber(Subscriber):
     
     def __init__(self, formatter: Formatter):
-        self.subscriber_context = zmq.Context()
+        self.subscriber_context = None
+        self.subscriber_socket = None
         self.subscriber_formatter = formatter
-        self.subscriber_socket = self.subscriber_context.socket(zmq.SUB)
 
     def broker_connect(self, integration_manager_address: str, integration_manager_port: int, integration_manager_protocol: str, service_identity: str, application_protocol: str):
         """Connect or reconnect to broker
         """
+        
         if not isinstance(integration_manager_address, str):
             raise TypeError("'integration_manager_address' must be a string")
         if not isinstance(integration_manager_port, int):
             raise TypeError("'integration_manager_port' must be an integer")
         if not isinstance(integration_manager_protocol, str):
             raise TypeError("'integration_manager_protocol' must be a string")
+        
+        # added to fix hanging connect issue as per 
+        # https://stackoverflow.com/questions/44257579/zeromq-hangs-in-a-python-multiprocessing-class-object-solution
+        if self.subscriber_context == None:
+            self.subscriber_context = zmq.Context()
+        if self.subscriber_socket == None:
+            self.subscriber_socket = self.subscriber_context.socket(zmq.SUB)
         self.subscriber_socket.connect(f"{integration_manager_protocol}://{integration_manager_address}:{integration_manager_port}")
         self.subscriber_socket.setsockopt_string(zmq.SUBSCRIBE, f"/messages/{application_protocol}")
         self.subscriber_socket.setsockopt_string(zmq.SUBSCRIBE, f"/commands/{service_identity}/")
@@ -29,6 +37,7 @@ class ZmqSubscriber(Subscriber):
         # TODO: determine a sane default
         self.subscriber_socket.setsockopt(zmq.RCVHWM, 0)
         self.subscriber_socket.setsockopt(zmq.SNDHWM, 0)
+        
         
     def broker_receive(self) -> List[Response]:
         """Returns the reply message or None if there was no reply
