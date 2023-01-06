@@ -9,7 +9,7 @@
 #######################################################
 from typing import Any
 from digitalpy.core.persistence.persistent_object import PersistentObject
-from digitalpy.core.event import Event
+from digitalpy.core.main.event import Event
 
 class StateChangeEvent(Event):
     """StateChangeEvent signals a change of the state of a PersistentObject instance.

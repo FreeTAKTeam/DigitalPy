@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Callable
 from digitalpy.core.main.event import Event
 
+# TODO decide whether or not to deprecate this class
 class EventManager(ABC):
     """EventManager is responsible for dispatching events to registered listeners."""
     

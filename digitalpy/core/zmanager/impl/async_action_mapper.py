@@ -14,6 +14,7 @@ import zmq
 
 
 class AsyncActionMapper(ActionMapper):
+    # TODO the may need to be deprecated with the new zmanager architecture
     #
     # Constructor
     # @param session
@@ -27,9 +28,18 @@ class AsyncActionMapper(ActionMapper):
         event_manager: EventManager,
         configuration: Configuration,
         formatter: Formatter,
-        routing_publisher_address,
-        routing_subscriber_address,
+        routing_publisher_address: str,
+        routing_subscriber_address: str,
     ):
+        """_summary_
+
+        Args:
+            event_manager (EventManager): the event manager used to dispatch events to listeners
+            configuration (Configuration): the 
+            formatter (Formatter): the formatter used to serialize message values to their specified format
+            routing_publisher_address (str): the address of the routing publisher to send the request
+            routing_subscriber_address (str): the address of the routing subscriber to receive the response
+        """
         self.eventManager = event_manager
         self.configuration = configuration
         self.is_finished = False
@@ -89,7 +99,18 @@ class AsyncActionMapper(ActionMapper):
 
     def get_response(
         self, response: Response, request: Request, listener: zmq.Socket, timeout=10000
-    ):
+    ) -> Response:
+        """get the response from the routing_subscriber
+
+        Args:
+            response (Response): an empty response object
+            request (Request): an empty request object
+            listener (zmq.Socket): a socket to listen on
+            timeout (int, optional): how long to wait for a response. Defaults to 10000.
+
+        Returns:
+            Response: the passed respoonse object with data received by the routing subscriber
+        """
         try:
             topic = f"/routing/response/{request.get_sender()}/{request.get_context()}/{request.get_action()}/{request.get_format()}/{request.get_id()}"
             listener.RCVTIMEO = timeout
@@ -114,7 +135,17 @@ class AsyncActionMapper(ActionMapper):
     #
     def process_action(
         self, request: Request, response: Response, return_listener: bool
-    ):
+    ) -> zmq.Socket:
+        """_summary_
+
+        Args:
+            request (Request): a request object with data to be sent to the routing publisher
+            response (Response): a response object to be passed the basic requset parameters
+            return_listener (bool): whether or not to return the listener
+
+        Returns:
+            zmq.Socket: the zmq socket with a subscription to the endpoint to be listened to
+        """
         self.eventManager.dispatch(
             ApplicationEvent.NAME,
             ApplicationEvent(ApplicationEvent.BEFORE_ROUTE_ACTION, request),
@@ -141,7 +172,12 @@ class AsyncActionMapper(ActionMapper):
 
         return routing_subscriber
 
-    def submit_request(self, request):
+    def submit_request(self, request: Request):
+        """send a request object to the routing publisher
+
+        Args:
+            request (Request): the request object
+        """
         with self.get_routing_publisher() as routing_publisher:
             routing_publisher.send_multipart(
                 [

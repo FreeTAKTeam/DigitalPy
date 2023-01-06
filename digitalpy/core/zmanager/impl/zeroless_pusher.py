@@ -6,12 +6,16 @@ from digitalpy.core.parsing.formatter import Formatter
 class ZerolessPusher(Pusher):
     
     def __init__(self, formatter: Formatter):
-        
-        self.pusher_connected = False
         self.push = None
         self.pusher_formatter = formatter
 
     def initiate_connections(self, port: int, address: str):
+        """initiate the connections to the subject
+
+        Args:
+            port (int): the subject port
+            address (str): the subject address
+        """
         self.pusher_client = Client()
         if port and address:
             self.subject_bind(address, port)
@@ -20,10 +24,10 @@ class ZerolessPusher(Pusher):
         """create the ZMQ zocket
         """
         self.pusher_client.connect(address, port)
-        self.push = self.pusher_client.push()
         
-    def subject_send_request(self, request: Request):
+    def subject_send_request(self, request: Request, protocol: str):
         """send the message to a Puller
         """
-        serialized_request = self.pusher_formatter.serialize(request)
-        self.push(serialized_request)
+        push = self.pusher_client.push()
+        self.pusher_formatter.serialize(request)
+        push(b",".join([request.get_sender().encode(), request.get_context().encode(), request.get_action().encode(), request.get_format().encode(), protocol.encode(), request.get_values()]))
