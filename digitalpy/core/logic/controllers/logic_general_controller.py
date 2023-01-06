@@ -7,18 +7,27 @@
 # Original author: Giu Platania
 # 
 #######################################################
-from Catalog.Implementation.Libraries.Digitalpy.digitalpy.Async.routing.controller import Controller
+from digitalpy.core.digipy_configuration.configuration import Configuration
+from digitalpy.core.main.controller import Controller
+from digitalpy.core.zmanager.action_mapper import ActionMapper
+from digitalpy.core.zmanager.request import Request
+from digitalpy.core.zmanager.response import Response
 
 class LogicGeneralController(Controller):
 # default constructor  def __init__(self):  
 
-    def __init__(Request, Response, ActionMapper, Configuration):
-        pass
+    def __init__(self, request: Request, response: Response, action_mapper: ActionMapper, configuration: Configuration):
+        """the constructor of the Logic General Controller
+        """
 
-    def execute( = None):
-        pass
+    def execute(self, method = None):
+        """this is the entry point for this controller
 
-    def serialize_logic():
+        Args:
+            method (str, optional): the method to be executed. Defaults to None.
+        """
+        return getattr(self, method)()
+
+    def serialize_logic(self):
         """this is the general method used to serialize the component to a given format
         """
-        pass

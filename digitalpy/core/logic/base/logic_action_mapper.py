@@ -1,4 +1,4 @@
-from Catalog.Implementation.Libraries.Digitalpy.digitalpy.Async.routing.impl.default_action_mapper import DefaultActionMapper
+from digitalpy.core.zmanager.impl.default_action_mapper import DefaultActionMapper
 
 class LogicActionMapper(DefaultActionMapper):
     """This is the CoreName action mapper.  Each core Package must have its own action
@@ -6,5 +6,3 @@ class LogicActionMapper(DefaultActionMapper):
     used by the facade for internal routing.
     """
 # default constructor  def __init__(self):  
-
-    pass
