@@ -24,6 +24,16 @@ class DefaultRoutingWorker:
         server_address: str,
         integration_manager_address: str
     ):
+        """this is the default constructor for the DefaultRoutingWorker class
+
+        Args:
+            factory (Factory): this is the factory which will be used by the ObjectFactory singleton to instantiate objects
+            configuration (Configuration): a configuration object with an index of all action mapping routes
+            sync_action_mapper (ActionMapper): the synchronous action mapper used to actually route requests
+            formatter (Formatter): the formatter used to serialize requests and responses to and from their value
+            server_address (str): the server_address to receive requests from
+            integration_manager_address (str): the integration_manager address to send responses to
+        """
         self.configuration = configuration
         self.factory = factory
         self.action_mapper = sync_action_mapper
@@ -33,6 +43,8 @@ class DefaultRoutingWorker:
         self.worker_id = str(uuid.uuid4())
 
     def initiate_sockets(self):
+        """initiate all socket connections
+        """
         context = zmq.Context()
         self.sock = context.socket(zmq.PULL)
         self.sock.connect(self.server_address)
@@ -62,6 +74,11 @@ class DefaultRoutingWorker:
             pass
 
     def initialize_tracing(self):
+        """initialize tracing system
+
+        Raises:
+            ex: raises thrown exceptions
+        """
         try:
             self.tracing_provider = self.factory.get_instance("tracingprovider")
             self.factory.register_instance(
@@ -70,15 +87,27 @@ class DefaultRoutingWorker:
         except Exception as ex:
             raise ex
 
-    def send_response(self, response: Response, protocol):
+    def send_response(self, response: Response, protocol: str)->None:
+        """send a response to the integration_manager
+
+        Args:
+            response (Response): the response to be sent to integration_manager
+            protocol (str): the protocol of the message
+        """
         self.formatter.serialize(response)
         message = protocol.encode()+b","+response.get_values()
         self.integration_manager_sock.send(message)
 
     def send_error(self, exception: Exception):
+        """send an exception to the integration_manager
+
+        Args:
+            exception (Exception): the exception to be sent to the integration_manager
+        """
         self.integration_manager_sock.send(b"error,"+str(exception).encode("utf-8"))
     
     def start(self):
+        """start the routing worker"""
         self.initiate_sockets()
         self.initialize_metrics()
         self.initialize_tracing()
@@ -86,97 +115,8 @@ class DefaultRoutingWorker:
             try:
                 print("listening")
                 response_topic, request = self.receive_request()
-
-                response = ObjectFactory.get_new_instance("response")
-                referrer = request.get_sender()
-                context = request.get_context()
-                action = request.get_action()
-                format = request.get_format()
-                response.set_sender(referrer)
-                response.set_context(context)
-                response.set_action(action)
-                response.set_format(format)
-
-                actionKeyProvider = ConfigActionKeyProvider(
-                    self.configuration, "actionmapping"
-                )
-
-                actionKey = ActionKey.get_best_match(
-                    actionKeyProvider,
-                    request.get_sender(),
-                    request.get_context(),
-                    request.get_action(),
-                )
-
-                if len(actionKey) == 0:
-                    # return, if action key is not defined
-                    self.send_error(
-                        Exception(f"action key for action {request.get_action()} undefined")
-                    )
-                    continue
-
-                # get next controller
-                controllerClass = None
-                controllerDef = self.configuration.get_value(actionKey, "actionmapping")
-                if len(controllerDef) == 0:
-                    self.logger.error(
-                        "No controller found for best action key "
-                        + actionKey
-                        + ". Request was referrer?context?action"
-                    )
-                    Exception(request, response)
-
-                # check if the controller definition contains a method besides the class name
-                controllerMethod = None
-                if "." in controllerDef:
-                    controller_def_list = controllerDef.split(".")
-                    controllerClass = ".".join(controller_def_list[:-1])
-                    controllerMethod = controller_def_list[-1]
-                else:
-                    controllerClass = controllerDef
-
-                # instantiate controller
-                controllerObj = ObjectFactory.get_instance_of(
-                    controllerClass,
-                )
-
-                # everything is right in place, start processing
-
-                # self.formatter.deserialize(request)
-
-                # initialize controller
-                controllerObj.initialize(request, response)
-
-                # execute controller
-                try:
-                    print("executing %s", action)
-                    controllerObj.execute(controllerMethod)
-                    print("%s executed", action)
-                except Exception as e:
-                    pass
-                # check if an action key exists for the return action
-                nextActionKey = ActionKey.get_best_match(
-                    actionKeyProvider,
-                    controllerClass,
-                    response.get_context(),
-                    response.get_action(),
-                )
-
-                # terminate
-                # - if there is no next action key or
-                # - if the next action key is the same as the previous one (to prevent recursion)
-                terminate = len(nextActionKey) == 0 or actionKey == nextActionKey
-                if terminate:
-                    # stop processing
-                    print("sending on %s", response_topic)
-                    self.send_response(response, response_topic)
-                    continue
+                self.process_request(response_topic, request)
                 
-                self.process_next_request(controllerClass=controllerClass,response=response)
-
-                self.formatter.serialize(response)
-
-                self.send_response(response, protocol=response_topic)
             except Exception as ex:
                 try:
                     self.send_error(ex)
@@ -184,7 +124,111 @@ class DefaultRoutingWorker:
                     self.send_error(ex)
                     print(str(e))
 
-    def process_next_request(self, controllerClass, response):
+    def process_request(self, response_topic: str, request: Request):
+        """process a request made by the subject
+
+        Args:
+            response_topic (str): the base topic from which to send the response
+            request (Request): the request object to be processed
+        """
+        response = ObjectFactory.get_new_instance("response")
+        referrer = request.get_sender()
+        context = request.get_context()
+        action = request.get_action()
+        format = request.get_format()
+        response.set_sender(referrer)
+        response.set_context(context)
+        response.set_action(action)
+        response.set_format(format)
+
+        actionKeyProvider = ConfigActionKeyProvider(
+            self.configuration, "actionmapping"
+        )
+
+        actionKey = ActionKey.get_best_match(
+            actionKeyProvider,
+            request.get_sender(),
+            request.get_context(),
+            request.get_action(),
+        )
+
+        if len(actionKey) == 0:
+            # return, if action key is not defined
+            self.send_error(
+                Exception(f"action key for action {request.get_action()} undefined")
+            )
+            return
+
+        # get next controller
+        controllerClass = None
+        controllerDef = self.configuration.get_value(actionKey, "actionmapping")
+        if len(controllerDef) == 0:
+            self.logger.error(
+                "No controller found for best action key "
+                + actionKey
+                + ". Request was referrer?context?action"
+            )
+            Exception(request, response)
+
+        # check if the controller definition contains a method besides the class name
+        controllerMethod = None
+        if "." in controllerDef:
+            controller_def_list = controllerDef.split(".")
+            controllerClass = ".".join(controller_def_list[:-1])
+            controllerMethod = controller_def_list[-1]
+        else:
+            controllerClass = controllerDef
+
+        # instantiate controller
+        controllerObj = ObjectFactory.get_instance_of(
+            controllerClass,
+        )
+
+        # everything is right in place, start processing
+
+        # self.formatter.deserialize(request)
+
+        # initialize controller
+        controllerObj.initialize(request, response)
+
+        # execute controller
+        try:
+            print("executing %s", action)
+            controllerObj.execute(controllerMethod)
+            print("%s executed", action)
+        except Exception as e:
+            pass
+        # check if an action key exists for the return action
+        nextActionKey = ActionKey.get_best_match(
+            actionKeyProvider,
+            controllerClass,
+            response.get_context(),
+            response.get_action(),
+        )
+
+        # terminate
+        # - if there is no next action key or
+        # - if the next action key is the same as the previous one (to prevent recursion)
+        terminate = len(nextActionKey) == 0 or actionKey == nextActionKey
+        if terminate:
+            # stop processing
+            print("sending on %s", response_topic)
+            self.send_response(response, response_topic)
+            return
+        
+        self.process_next_request(controllerClass=controllerClass,response=response)
+
+        self.formatter.serialize(response)
+
+        self.send_response(response, protocol=response_topic)
+
+    def process_next_request(self, controllerClass: str, response: Response):
+        """_summary_
+
+        Args:
+            controllerClass (str): this is the controller class name from which the response originated
+            response (Response): the response to be processed as the next request
+        """
         # set the request based on the result
         nextRequest = ObjectFactory.get_new_instance("request")
         nextRequest.set_sender(controllerClass)

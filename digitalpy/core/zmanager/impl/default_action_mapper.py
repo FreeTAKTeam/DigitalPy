@@ -44,8 +44,20 @@ class DefaultActionMapper(ActionMapper):
         except Exception as e:
             pass
 
-    def process_action(self, request: Request, response: Response):
+    def process_action(self, request: Request, response: Response)-> None:
+        # TODO break up this method
+        """this is the main method for routing and processing requests within the action mapper
 
+        Args:
+            request (Request): the request containing an action to be routed
+            response (Response): the response to be filled with response data from the component
+
+        Raises:
+            Exception
+
+        Returns:
+            None: return a none
+        """
         # this is added for the sake of the latter use of multiprocessing
         if not self.tracing_provider:
             self.initialize_tracing()
@@ -82,7 +94,7 @@ class DefaultActionMapper(ActionMapper):
                 + actionKey
                 + ". Request was referrer?context?action"
             )
-            Exception(request, response)
+            raise Exception("No controller found for best action key "+ actionKey)
 
         # check if the controller definition contains a method besides the class name
         controllerMethod = None

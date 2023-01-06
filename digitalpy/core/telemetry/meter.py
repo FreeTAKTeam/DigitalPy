@@ -11,7 +11,13 @@ from abc import ABC, abstractmethod
 
 class Meter(ABC):
         
-    def __init__(self, provider: MetricsProvider, meter_name=None):
+    def __init__(self, provider: MetricsProvider, meter_name: str=None):
+        """the constructor for the abstract meter class
+
+        Args:
+            provider (MetricsProvider): the metrics provider used to create this meter
+            meter_name (str, optional): the name of this meter instance. Defaults to None.
+        """
         if meter_name is None:
             meter_name = self.__class__.__name__
         self.meter = provider.get_meter(meter_name)

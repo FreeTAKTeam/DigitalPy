@@ -10,6 +10,12 @@ class ZerolessPusher(Pusher):
         self.pusher_formatter = formatter
 
     def initiate_connections(self, port: int, address: str):
+        """initiate the connections to the subject
+
+        Args:
+            port (int): the subject port
+            address (str): the subject address
+        """
         self.pusher_client = Client()
         if port and address:
             self.subject_bind(address, port)

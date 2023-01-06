@@ -17,6 +17,18 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
     #TODO: what is the service manager supposed to do? is this going to be a new service
     
     def __init__(self, service_id: str, subject_address: str, subject_port: int, subject_protocol: str, integration_manager_address: str, integration_manager_port: int, integration_manager_protocol: str, formatter: Formatter):
+        """the constructor for the digitalpy service class
+
+        Args:
+            service_id (str): the unique id of the service inheriting from DigitalpyService
+            subject_address (str): the address of the zmanager "subject"
+            subject_port (int): the port of the zmanager "subject"
+            subject_protocol (str): the protocol of the zmanager "subject"
+            integration_manager_address (str): the address of the zmanager "integration_manager"
+            integration_manager_port (int): the port of the zmanager "integration_manager"
+            integration_manager_protocol (str): the protocol of the zmanager "integration_manager"
+            formatter (Formatter): the formatter used by the service to serialize the request values to and from messages, (should be injected by object factory)
+        """
         Service.__init__(self)
         ZmqSubscriber.__init__(self, formatter)
         ZMQPusher.__init__(self, formatter)
@@ -39,7 +51,12 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         # TODO: once the service manager has been well defined then we will need
         # to define the format for this service.
 
-    def initialize_connections(self, application_protocol):
+    def initialize_connections(self, application_protocol: str):
+        """initialize connections to the subject and the integration manager
+
+        Args:
+            application_protocol (str): the application protocol of the service
+        """
         ZMQPusher.initiate_connections(self, self.subject_port, self.subject_address)
         self.broker_connect(self.integration_manager_address, self.integration_manager_port, self.integration_manager_protocol, self.service_id, application_protocol)
 

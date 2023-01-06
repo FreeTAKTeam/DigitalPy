@@ -77,14 +77,14 @@ class ServiceRegistrationHandler(RegistrationHandler):
                 )
 
                 if ServiceRegistrationHandler.validate_manifest(
-                    facade_instance.get_manifest(), service_name
+                    service_instance.get_manifest(), service_name
                 ):
-                    facade_instance.register(config)
+                    service_instance.register(config)
                 else:
                     return False
             else:
                 return False
-            ServiceRegistrationHandler.save_service(facade_instance.get_manifest(), service_name)
+            ServiceRegistrationHandler.save_service(service_instance.get_manifest(), service_name)
             return True
         except Exception as e:
             # must use a print because logger may not be available
@@ -93,6 +93,12 @@ class ServiceRegistrationHandler(RegistrationHandler):
 
     @staticmethod
     def save_service(manifest: Configuration, service_name: str):
+        """save a service to the service registry
+
+        Args:
+            manifest (Configuration): _description_
+            service_name (str): _description_
+        """
         section = manifest.get_section(service_name + MANIFEST, include_meta=True)
         ServiceRegistrationHandler.registered_services[section[NAME]] = section
 
