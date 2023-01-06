@@ -1,6 +1,6 @@
-from Catalog.Data.Domain.FTS Model.Facade import Facade
+from Catalog.Data.Domain.FTS_Model.Facade import Facade
 
-class DigPyConfigurationFacade(Facade, Facade):
+class DigiPyConfigurationFacade(Facade, Facade):
     """Facade class for the this component. Responsible for handling all public
     routing. Forwards all requests to the internal router.
       WHY
@@ -14,7 +14,14 @@ class DigPyConfigurationFacade(Facade, Facade):
     clients and the Subsystems.</li>
       </ul>
     """
+	
 # default constructor  def __init__(self):  
 
-    def __init__():
-        pass
+    def __init__(self):
+		self.configure_dp_ip = DigiPyConfigurationGeneralController()
+		self.web_ui_manage_services = DigiPyConfigurationGeneralController()
+		self.installation_wizard = DigiPyConfigurationGeneralController()
+		self.configure_set_port = DigiPyConfigurationGeneralController()
+		self.configuration_wizard = DigiPyConfigurationGeneralController()
+	
+

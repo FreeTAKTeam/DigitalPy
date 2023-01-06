@@ -14,14 +14,14 @@ class QueriesController(DefaultBusinessRuleController):
     """
 # default constructor  def __init__(self):  
 
-    def __init__():
-        pass
+	def __init__():
+		pass
 
-    def execute( = None):
-        pass
+	def execute( = None):
+		pass
 
-    def parse_component_name():
-        """Creates the model object outline and passes it to the parser to fill the model
-        object with the xml data
-        """
-        pass
+	def parse_queries():
+		"""Creates the model object outline and passes it to the parser to fill the model
+		object with the xml data
+		"""
+		pass

@@ -1,6 +1,6 @@
-from Catalog.Data.Domain.FTS Model.Facade import Facade
+from Catalog.Data.Domain.FTS_Model.Facade import Facade
 
-class RESTAPIFacade(Facade, Facade):
+class COTManagementFacade(Facade, Facade):
     """Facade class for the this component. Responsible for handling all public
     routing. Forwards all requests to the internal router.
       WHY
@@ -14,7 +14,16 @@ class RESTAPIFacade(Facade, Facade):
     clients and the Subsystems.</li>
       </ul>
     """
+	
 # default constructor  def __init__(self):  
 
-    def __init__():
-        pass
+    def __init__(self):
+		self.build_drop_point_object = COTManagementGeneralController()
+		self.cot__share_privately = COTManagementGeneralController()
+		self.cot_record_in_db = COTManagementGeneralController()
+		self.cot__broadcast = COTManagementGeneralController()
+		self.medevac__receive = COTManagementGeneralController()
+		self.web_ui_manage_presence = COTManagementGeneralController()
+		self.medevac__send = COTManagementGeneralController()
+	
+

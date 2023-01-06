@@ -16,7 +16,6 @@ from digitalpy.core.zmanager.response import Response
 class LogicSenderController(Controller):
     """contains all the business logic of this core package
     """
-# default constructor  def __init__(self):  
 
     def __init__(self, request: Request, response: Response, action_mapper: ActionMapper, configuration: Configuration):
         """the constructor of the Logic Sender Controller class

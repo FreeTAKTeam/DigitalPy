@@ -18,7 +18,12 @@ class QueriesGeneralController(Controller):
     def execute( = None):
         pass
 
-    def serialize_component_name():
+    def serialize_queries():
         """this is the general method used to serialize the component to a given format
         """
         pass
+        
+	def web_map_search_cot():
+		"""search a COT by Name"""
+		pass
+ 

@@ -1,4 +1,4 @@
-from Catalog.Data.Domain.FTS Model.Facade import Facade
+from Catalog.Data.Domain.FTS_Model.Facade import Facade
 
 class TelemetryFacade(Facade, Facade):
     """Facade class for the this component. Responsible for handling all public
@@ -14,7 +14,20 @@ class TelemetryFacade(Facade, Facade):
     clients and the Subsystems.</li>
       </ul>
     """
+	
 # default constructor  def __init__(self):  
 
-    def __init__():
-        pass
+    def __init__(self):
+		self.get_telemetry_config = TelemetryGeneralController()
+		self.log = TelemetryGeneralController()
+		self.get_telemetry_data = TelemetryGeneralController()
+		self.set_telemetry_data = TelemetryGeneralController()
+		self.get_telemetry_alarms = TelemetryGeneralController()
+		self.dashboard_logs = TelemetryGeneralController()
+		self.telemetry = TelemetryGeneralController()
+		self.set_telemetry_config = TelemetryGeneralController()
+		self.metrics = TelemetryGeneralController()
+		self.telemetry = TelemetryGeneralController()
+		self.dashboard_runtime_and_connected_clients = TelemetryGeneralController()
+	
+

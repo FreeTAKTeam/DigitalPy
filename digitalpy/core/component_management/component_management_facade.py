@@ -14,7 +14,16 @@ class ComponentManagementFacade(DefaultFacade):
     clients and the Subsystems.</li>
       </ul>
     """
+	
 # default constructor  def __init__(self):  
 
     def __init__(self):
-        pass
+        self.start_component = ComponentManagementGeneralController()
+        self.stop_component = ComponentManagementGeneralController()
+        self.restart_component = ComponentManagementGeneralController()
+        self.component_discovery = ComponentManagementGeneralController()
+        self.register_component = ComponentManagementGeneralController()
+        self.list_components = ComponentManagementGeneralController()
+        self.get_component_info = ComponentManagementGeneralController()
+        self.update_component = ComponentManagementGeneralController()
+      

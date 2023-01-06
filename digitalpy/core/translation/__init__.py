@@ -1,0 +1,2 @@
+"""translation of messages to different languages.
+Internationalization of an application requires to identify all language dependent resources and make them exchangeable for the actual localization into a specific language. This includes static and dynamic texts as well as images. Since images are referenced by their filename or represented as text (e.g. base64 encoded), it is sufficient to focus on text."""

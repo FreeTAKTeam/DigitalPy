@@ -9,7 +9,7 @@
 #######################################################
 from Catalog.Implementation.Libraries.Digitalpy.digitalpy.Async.routing.controller import Controller
 
-class DigPyConfigurationGeneralController(Controller):
+class DigiPyConfigurationGeneralController(Controller):
 # default constructor  def __init__(self):  
 
     def __init__(Request, Response, ActionMapper, Configuration):
@@ -18,7 +18,28 @@ class DigPyConfigurationGeneralController(Controller):
     def execute( = None):
         pass
 
-    def serialize_digpy_configuration():
+    def serialize_digipy_configuration():
         """this is the general method used to serialize the component to a given format
         """
         pass
+        
+	def configure_dp_ip():
+		"""Configure the IP of DP dynamically"""
+		pass
+ 
+	def web_ui_manage_services():
+		"""the services can be turned on and off and a port can be assigned to the service."""
+		pass
+ 
+	def installation_wizard():
+		""" guides the user trough the installation process"""
+		pass
+ 
+	def configure_set_port():
+		"""Ability to set port dynamically"""
+		pass
+ 
+	def configuration_wizard():
+		"""starts a wizard to create a YAML configuration"""
+		pass
+ 
