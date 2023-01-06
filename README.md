@@ -78,6 +78,34 @@ this allows:
  * Loose Coupling: Availability of loose coupling between the clients and the Subsystems.
  
  each component exposes a Facade, that is inheriting from the framework Facade. All the messages are routed trough the facade to the Component Actionmapper that allocates the action to the proper controller as defined in internalActionMapping.ini.
+ 
+ Here is an example of how you could create a facade for a "emergency" component in Python :
+
+```
+class EmergencyFacade:
+    def received(self, request, response):
+        # Implement the logic for handling received emergency alerts here
+        pass
+
+class Emergency:
+    @staticmethod
+    def Received(request, response):
+        emergency_facade = EmergencyFacade()
+        emergency_facade.received(request, response)
+ ```
+The Emergency class acts as a facade, providing a single point of entry for handling emergency alerts. The Received method delegates the actual handling of the alert to the EmergencyFacade class. This allows you to encapsulate the implementation details of the emergency alert handling logic within the EmergencyFacade class, while providing a simpler interface for interacting with it through the Emergency facade.
+
+You can then use the Emergency class in your actionmapping configuration like this:
+
+```
+[actionmapping]
+EmergencyAlert = FreeTAKServer.components.extended.emergency.Emergency.Received
+EmergencyInContact = FreeTAKServer.components.extended.emergency.Emergency.Received
+EmergencyRingTheBell = FreeTAKServer.components.extended.emergency.Emergency.Received
+EmergencyGeoFenceBreached = FreeTAKServer.components.extended.emergency.Emergency.Received
+This allows you to keep the implementation details of the emergency alert handling logic separate from the rest of the application, and makes it easier to maintain and modify the code in the future.
+ ```
+ 
 
 
 ## DigitalPy package dependencies
