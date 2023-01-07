@@ -139,16 +139,18 @@ class DefaultBusinessRuleController(Controller):
                 )
                 sub_response = self.create_response(format=cur_response.get_format())
                 self.internal_action_mapper.process_action(sub_request, sub_response)
-                cur_response.update(sub_response.get_values())
+                
+                for key, value in sub_response.get_values().items():
+                    cur_response.set_value(key, value)
 
-    def create_request(self, sender: str=None, context: str=None, action: str=None, values: str=None, format: str=None) -> Request:
+    def create_request(self, sender: str=None, context: str=None, action: str=None, values: Union[dict, str]={}, format: str=None) -> Request:
         """create a request object
 
         Args:
             sender (str, optional): the class name of the sender of the request. Defaults to None.
             context (str, optional): the context of the request. Defaults to None.
             action (str, optional): the action of the request. Defaults to None.
-            values (str, optional): the values dictionary of the request serialized or unserialized. Defaults to None.
+            values (Union[dict, str], optional): the values dictionary of the request serialized or unserialized. Defaults to empty dictionary.
             format (str, optional): the format used to serialize or de-serialize the values dictionary. Defaults to None.
 
         Returns:
@@ -162,14 +164,14 @@ class DefaultBusinessRuleController(Controller):
         request.set_format(format)
         return request
 
-    def create_response(self, sender: str=None, context: str=None, action: str=None, values: str=None, format: str=None) -> Response:
+    def create_response(self, sender: str=None, context: str=None, action: str=None, values: Union[dict, str] = {}, format: str=None) -> Response:
         """create a response object
 
         Args:
             sender (str, optional): the class name of the sender of the response. Defaults to None.
             context (str, optional): the context of the response. Defaults to None.
             action (str, optional): the action of the response. Defaults to None.
-            values (str, optional): the values dictionary of the response serialized or unserialized. Defaults to None.
+            values (dict, optional): the values dictionary of the response serialized or unserialized. Defaults to empty dictionary.
             format (str, optional): the format used to serialize or de-serialize the values dictionary. Defaults to None.
 
         Returns:
