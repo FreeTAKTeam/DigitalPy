@@ -26,6 +26,8 @@ Session = sessionmaker(bind=engine)
 session = Session()
 
 class TopicManagerController:
+    
+    # Todo enbedd all of this in protected region
     def __init__(self):
         # Retrieve all existing topics from the database
         self.topics = session.query(Topic).all()
