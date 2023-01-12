@@ -5,6 +5,11 @@ from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
 
+# 1. The controller is initialized with the request and response objects
+# 2. The controller is initialized with the action mapper
+# 3. The controller is initialized with the configuration
+# 4. The initialize method is called with the request and response objects
+# 5. The request and response objects are set
 
 class Controller(ABC):
     request = None
