@@ -8,6 +8,7 @@ from typing import Dict
 @dataclass
 class Relationship:
     min_occurs: int = 0
+    # max_occurs is set to 0 for no number of max occurs
     max_occurs: int = 1
 
 @dataclass
@@ -43,7 +44,10 @@ class LoadConfiguration:
                 for child_name, value in class_values["properties"].items():
                     if "$ref" in value:
                         child_name = value["$ref"].split("/")[-1]
-                        config[child_name]
                         config_entry.relationships[child_name] = Relationship(value.get("minItems", 0), value.get("maxItems", 1))
+                    # handle the case where a relationship has a multiplicity > 1
+                    elif "items" in value and "$ref" in value["items"]:
+                        child_name = value["items"]["$ref"].split("/")[-1]
+                        config_entry.relationships[child_name] = Relationship(0, 0)
                 configuration.elements[class_name] = config_entry
         return configuration
