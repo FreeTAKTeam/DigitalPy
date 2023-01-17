@@ -1,7 +1,8 @@
+from sqlalchemy.orm import registry
 import uuid
 import re
 from typing import Dict, Any
-from digitalpy.core.persistence.impl.default_persistent_object import DefaultPersistentObject
+from digitalpy.core.persistence.impl.sqlalchemy_persistent_object import SQLAlchemyPersistentObject
 from digitalpy.core.parsing.load_configuration import Configuration
 from digitalpy.core.domain.object_id import ObjectId
 from digitalpy.core.persistence.persistent_object import PersistentObject
@@ -9,7 +10,7 @@ from digitalpy.core.persistence.persistent_object_proxy import PersistentObjectP
 from digitalpy.core.persistence.build_depth import BuildDepth
 
 
-class Node(DefaultPersistentObject):
+class Node(SQLAlchemyPersistentObject):
     """Node adds the concept of relations to PersistentObject. It is the basic
     component for building object trees (although a Node can have more than one
     parents). Relations are stored as values where the value name is the role name.
@@ -33,24 +34,34 @@ class Node(DefaultPersistentObject):
         node_type,
         configuration: Configuration,
         model,
+        registry: registry,
         oid: ObjectId = None,
         initial_data=None,
     ) -> None:
-        super().__init__(oid, initial_data)
         self._children: Dict[str, Node] = {}
         self._parents: Dict[str, Node] = {}
         self._depth = -1
         self._path = ""
+        self._node_type = node_type
         self._relationship_definition = configuration.elements[self.__class__.__name__]
-        self._add_relationships(configuration, model)
+        self.set_oid(oid)
+        self._add_relationships(configuration, model, registry)
+        super().__init__(oid, registry, initial_data)
+    def _add_relationships(self, configuration: Configuration, model, registry) -> None:
+        """add all relationships defined in the configuration to the node
 
-    def _add_relationships(self, configuration: Configuration, model) -> None:
+        Args:
+            configuration (Configuration): configuration defining relationships
+            model (package): a package instance from which related node classes can be gotten
+            registry (registry): sqlalchemy registry used to dynamically define new database classes
+        """
+        # instantiate children
         for (
             relationship_name,
             relationship_def,
         ) in self._relationship_definition.relationships.items():
             child_class = getattr(model, relationship_name)
-            child_instance = child_class(configuration, model)
+            child_instance = child_class(configuration, model, registry)
             self.add_child(child_instance)
 
     def get_first_child(self, child_type, values, properties, use_regex=True):
@@ -108,11 +119,11 @@ class Node(DefaultPersistentObject):
             for cur_node in nodes:
                 if isinstance(cur_node, PersistentObject):
                     children = cur_node
-            return self.filter(
+            return self.filter_node(
                 children, oid, children_type, values, properties, use_regex
             )
         else:
-            return self.filter(
+            return self.filter_node(
                 self.get_children(), oid, children_type, values, properties, use_regex
             )
 
@@ -135,7 +146,7 @@ class Node(DefaultPersistentObject):
 
     def add_child(self, child):
         if self.validate_child_addition(child):
-            self._children[child.get_id()] = child
+            self._children[child.get_oid()] = child
             setattr(self, child.__class__.__name__, child)
             child.set_parent(self)
         else:
@@ -149,7 +160,7 @@ class Node(DefaultPersistentObject):
                     child_type
                 ]
                 children = self.get_children_ex(children_type=child_type)
-                if relationship_requirements["max_occurs"] == len(children):
+                if relationship_requirements.max_occurs>0 and relationship_requirements.max_occurs == len(children):
                     return False
             return True
         raise TypeError("children must inherit from type Node")
@@ -176,7 +187,7 @@ class Node(DefaultPersistentObject):
         else:
             self._parents[parent.get_id()] = parent
 
-    def filter(self, node_list, oid, node_type, values, properties, use_regex):
+    def filter_node(self, node_list, oid, node_type, values, properties, use_regex):
         """Get Nodes that match given conditions from a list."""
         return_array = []
         for key, node in node_list.items():
@@ -295,7 +306,7 @@ class Node(DefaultPersistentObject):
 
     def get_parents_ex(self, oid, type, values, properties, use_regex=True):
         """Get the parents that match given conditions."""
-        return self.filter(self._parents, oid, type, values, properties, use_regex)
+        return self.filter_node(self._parents, oid, type, values, properties, use_regex)
 
     def get_depth(self):
         self._depth = 0
@@ -453,65 +464,6 @@ class Node(DefaultPersistentObject):
                 this_role = None
             other.delete_node(self, this_role, False)
 
-    def filter(
-        node_list: list,
-        oid: ObjectId = None,
-        node_type: Any = None,
-        values: Any = None,
-        properties: Any = None,
-        use_regex: Any = True,
-    ) -> Any:
-        """Get Nodes that match given conditions from a list.
-           @param node_list An array of nodes to filter or a single Node.
-           @param oid The object id that the Nodes should match (optional, default:
-        _None_)
-           @param type The type that the Nodes should match (either fully qualified or
-        simple, if not ambiguous) (optional, default: _None_)
-           @param values An associative array holding key value pairs that the Node
-        values should match (values are interpreted as regular expression, optional,
-        default: _None_)
-           @param properties An associative array holding key value pairs that the
-        Node properties should match (values are interpreted as regular expression,
-        optional, default: _None_)
-           @param use_reg_exp Boolean whether to interpret the given values/properties
-        as regular expressions or not (default: _True_)
-           @return An Array holding references to the Nodes that matched.
-        """
-        return_array = []
-        for key, node in node_list.items():
-            if isinstance(node, PersistentObject):
-                match = True
-                # check id
-                if oid != None and node.get_oid() != oid:
-                    match = False
-                # check type
-                if node_type != None and node.get_type() != node_type:
-                    match = False
-                # check properties
-                if properties != None and isinstance(properties, dict):
-                    for key, value in properties.items():
-                        node_property = node.get_property(key)
-                        if use_regex and not re.match(
-                            "/" + value + "/m", node_property
-                        ):
-                            match = False
-                            break
-
-                        elif not hasattr(node, key) and not use_regex:
-                            match = False
-                            break
-
-                # check values
-                if values != None and isinstance(values, dict):
-                    for key, value in properties.items():
-                        node_value = self.get_value(key)
-                        if use_regex and not re.match("/" + value + "/m", node_value):
-                            match = False
-                            break
-                if match:
-                    return_array.append(node)
-        return return_array
-
     def get_added_nodes(self) -> Any:
         """Get the object ids of the nodes that were added since the node was loaded.
         Persistence mappers use this method when persisting the node relations.
@@ -526,59 +478,10 @@ class Node(DefaultPersistentObject):
         children (default: _True_).
            @return Array PersistentObject instances.
         """
-        return self.get_relatives("child", mem_only)
-
-    def get_children_ex(
-        self,
-        oid: ObjectId = None,
-        role: Any = None,
-        type: Any = None,
-        values: Any = None,
-        properties: Any = None,
-        use_reg_exp: Any = True,
-    ) -> Any:
-        """Get the children that match given conditions.
-           @note This method will only return objects that are already loaded, to get
-        all objects in the given relation (including proxies), use the Node.get_value()
-        method and filter the returned list afterwards.
-           @param oid The object id that the children should match (optional, default:
-        _None_).
-           @param role The role that the children should match (optional, default:
-        _None_).
-           @param type The type that the children should match (either fully qualified
-        or simple, if not ambiguous) (optional, default: _None_).
-           @param values An associative array holding key value pairs that the
-        children values should match (optional, default: _None_).
-           @param properties An associative array holding key value pairs that the
-        children properties should match (optional, default: _None_).
-           @param use_reg_exp Boolean whether to interpret the given values/properties
-        as regular expressions or not (default: _True_)
-           @return Array containing children Nodes that matched (proxies not included).
-        """
-        if role != None:
-            # nodes of a given role are requested
-            # make sure it is a child role
-            child_Roles = self.get_possible_children()
-            if not role in child_Roles:
-                raise ValueError("_No child role defined with name: " + role)
-
-            # we are only looking for nodes that are in memory already
-            nodes = super().get_value(role)
-            if not isinstance(nodes, list):
-                nodes = [nodes]
-
-            # sort out proxies
-            children = []
-            for node in nodes:
-                if isinstance(node, PersistentObject):
-                    children.append(node)
-
-            return self.filter(children, oid, type, values, properties, use_reg_exp)
-
-        else:
-            return self.filter(
-                self.get_children(), oid, type, values, properties, use_reg_exp
-            )
+        # TODO: this should use the get_relatives method but there are some bugs
+        # which need to be worked out and the concept of a mapper must be implemented
+        return self._children
+        #return self.get_relatives("child", mem_only)
 
     def get_deleted_nodes(self) -> Any:
         """Get the object ids of the nodes that were deleted since the node was loaded.
@@ -708,10 +611,10 @@ class Node(DefaultPersistentObject):
                 if isinstance(node, PersistentObject):
                     parents.append(node)
 
-            return self.filter(parents, oid, type, values, properties, use_reg_exp)
+            return self.filter_node(parents, oid, type, values, properties, use_reg_exp)
 
         else:
-            return self.filter(
+            return self.filter_node(
                 self.get_Parents(), oid, type, values, properties, use_reg_exp
             )
 
@@ -1018,3 +921,13 @@ class Node(DefaultPersistentObject):
 
         # default behaviour
         return super().set_value(name, value, force_set, track_change)
+    
+    def get_type(self):
+        """get the type of this node
+        """
+        return self._node_type
+
+    def set_type(self):
+        """set the type of this node
+        """
+        return self._node_type
