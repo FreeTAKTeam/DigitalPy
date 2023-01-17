@@ -16,33 +16,36 @@ class ObjectId:
 
     def __init__(self, type, id=[], prefix=""):
         self.prefix = prefix
-        self.persistence_facade = ObjectFactory.get_instance("persistencefacade")
-        self.__fq_type = (
-            lambda: self.persistence_facade.get_fully_qualified_type(type)
-            if type != "NULL"
-            else "NULL"
-        )()
+        # TODO this can be restored once an implementation for the concept of a persistence facade
+        # has been implemented, for the time being the fqtype is simply set as the type
+        #self.persistence_facade = ObjectFactory.get_instance("persistencefacade")
+        #self.__fq_type = (
+        #    lambda: self.persistence_facade.get_fully_qualified_type(type)
+        #    if type != "NULL"
+        #    else "NULL"
+        #)()
+        self.__fq_type = type
         if not isinstance(id, list):
-            self.id = [id]
+            self._id = [id]
         else:
-            self.id = id
+            self._id = id
 
-        self.num_pks = ObjectId.get_number_of_pks(type)
-
-        while len(self.id) < self.num_pks:
-            self.id.append(self.get_dummy_id())
+        # commented out for same reason described in above TODO
+        #self.num_pks = ObjectId.get_number_of_pks(type)
+        #while len(self._id) < self.num_pks:
+        #    self._id.append(self.get_dummy_id())
 
         self.str_val = self.__str__()
 
     def __str__(self):
-        oid_str = self.__fq_type + ObjectId.DELIMITER + ObjectId.DELIMITER.join(self.id)
+        oid_str = self.__fq_type + ObjectId.DELIMITER + ObjectId.DELIMITER.join(self._id)
         if len(self.prefix.strip()) > 0:
             oid_str = self.prefix + ObjectId.DELIMITER + oid_str
         self.str_val = oid_str
         return self.str_val
 
     def get_id(self):
-        return self.id
+        return self._id
 
     def get_type(self):
         return self.__fq_type
