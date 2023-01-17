@@ -7,21 +7,36 @@
 # Original author: Giu Platania
 # 
 #######################################################
-from Catalog.Implementation.Libraries.Digitalpy.digitalpy.Async.logic.impl.default_business_rule_controller import DefaultBusinessRuleController
+from abc import abstractmethod
+from digitalpy.core.persistence.persistent_object import PersistentObject
+from digitalpy.core.zmanager.action_mapper import ActionMapper
+from digitalpy.core.digipy_configuration.configuration import Configuration
+from digitalpy.core.zmanager.request import Request
+from digitalpy.core.zmanager.response import Response
 
-class PersistenceController(DefaultBusinessRuleController):
+from digitalpy.core.main.controller import Controller
+
+class PersistenceController(Controller):
     """contains all the business logic of this core package
     """
-# default constructor  def __init__(self):  
 
-	def __init__():
-		pass
+    def __init__(self, request: Request, response: Response, action_mapper: ActionMapper, configuration: Configuration):
+        super().__init__(request, response, action_mapper, configuration)
 
-	def execute( = None):
-		pass
+    @abstractmethod
+    def initialize_connection(self):
+        """initialize database connection"""
 
-	def parse_persistence():
-		"""Creates the model object outline and passes it to the parser to fill the model
-		object with the xml data
-		"""
-		pass
+    def parse_persistence(self):
+        """Creates the model object outline and passes it to the parser to fill the model
+        object with the xml data
+        """
+        pass
+
+    @abstractmethod
+    def save(self, persitent_object: PersistentObject):
+        """save a given persistent_object to the database
+
+        Args:
+            persitent_object (PersistentObject): the persistent object to be saved
+        """
