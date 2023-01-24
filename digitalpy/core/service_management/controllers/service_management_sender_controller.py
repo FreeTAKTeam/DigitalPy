@@ -14,7 +14,7 @@ from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
 from digitalpy.core.domain.node import Node
 from digitalpy.core.main.controller import Controller
-from digitalpy.core.IAM.iam_facade import IAM
+from digitalpy.core.IAM.IAM_facade import IAM
 
 USER_DELIMITER = ";"
 
