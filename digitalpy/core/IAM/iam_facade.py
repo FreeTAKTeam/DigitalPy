@@ -20,7 +20,8 @@ from .configuration.iam_constants import (
     INTERNAL_ACTION_MAPPING_PATH,
     MANIFEST_PATH,
     CONFIGURATION_PATH_TEMPLATE,
-    LOG_FILE_PATH
+    LOG_FILE_PATH,
+    CONNECTIONS_PERSISTENCE
 )
 from . import base
 
@@ -36,7 +37,6 @@ class IAM(DefaultFacade):
             request,
             response,
             configuration,
-            persistence_path: str = None,
             log_file_path: str = LOG_FILE_PATH,
         ):
         super().__init__(

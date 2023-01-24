@@ -22,7 +22,15 @@ LOGGING_CONFIGURATION_PATH = str(
 )
 
 LOG_FILE_PATH = str(
-    pathlib.PurePath(r"C:\Users\Natha Paquette\work\DigitalPy\digitalpy\logs")
+    pathlib.PurePath(CURRENT_COMPONENT_PATH, "logs")
+)
+
+PERSISTENCE_PATH = str(
+    pathlib.PurePath(CURRENT_COMPONENT_PATH, "persistence")
+)
+
+CONNECTIONS_PERSISTENCE = str(
+    pathlib.PurePath(PERSISTENCE_PATH, "connections.json")
 )
 
 ACTION_MAPPING_PATH = str(

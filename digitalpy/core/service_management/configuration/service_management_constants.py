@@ -24,7 +24,7 @@ LOGGING_CONFIGURATION_PATH = str(
 # TODO this path shouldn't be hardcoded, 
 # find way to change this to a configured value.
 LOG_FILE_PATH = str(
-    pathlib.PurePath(r"C:\Users\Natha Paquette\work\DigitalPy\digitalpy\logs")
+    pathlib.PurePath(CURRENT_COMPONENT_PATH, "logs")
 )
 
 ACTION_MAPPING_PATH = str(

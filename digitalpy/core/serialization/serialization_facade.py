@@ -32,7 +32,6 @@ class Serialization(DefaultFacade):
             request,
             response,
             configuration,
-            persistence_path: str = None,
             log_file_path: str = LOG_FILE_PATH,
     ):
         super().__init__(

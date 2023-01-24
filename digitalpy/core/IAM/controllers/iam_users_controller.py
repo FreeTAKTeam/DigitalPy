@@ -9,7 +9,7 @@ from digitalpy.core.zmanager.response import Response
 from digitalpy.core.zmanager.action_mapper import ActionMapper
 from digitalpy.core.digipy_configuration.configuration import Configuration
 
-from ..configuration.iam_constants import COMPONENT_NAME
+from ..configuration.iam_constants import COMPONENT_NAME, CONNECTIONS_PERSISTENCE
 from ..model.connection import Connection
 
 class IAMUsersController(Controller):
@@ -67,7 +67,7 @@ class IAMUsersController(Controller):
             dict: all persisted connections
         """
         # TODO, fix how configuration is gotten to be more generic and automatically create file if it doesnt exist
-        with open(self.configuration.get_value("persistencepath", COMPONENT_NAME), "rb+") as f:
+        with open(CONNECTIONS_PERSISTENCE, "rb+") as f:
             return pickle.load(f)
 
     def _update_persistency(self, connections: dict):
@@ -76,5 +76,5 @@ class IAMUsersController(Controller):
         Args:
             clients (dict): a dictionary of all clients
         """
-        with open(self.configuration.get_value("persistencepath", COMPONENT_NAME), "wb+") as f:
+        with open(CONNECTIONS_PERSISTENCE, "wb+") as f:
             pickle.dump(connections, f)
