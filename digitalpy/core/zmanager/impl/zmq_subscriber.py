@@ -6,6 +6,7 @@ from digitalpy.core.zmanager.response import Response
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.parsing.formatter import Formatter
 
+RECIPIENT_DELIMITER = ";"
 class ZmqSubscriber(Subscriber):
     
     def __init__(self, formatter: Formatter):
@@ -31,7 +32,7 @@ class ZmqSubscriber(Subscriber):
         if self.subscriber_socket == None:
             self.subscriber_socket = self.subscriber_context.socket(zmq.SUB)
         self.subscriber_socket.connect(f"{integration_manager_protocol}://{integration_manager_address}:{integration_manager_port}")
-        self.subscriber_socket.setsockopt_string(zmq.SUBSCRIBE, f"/messages/{application_protocol}")
+        self.subscriber_socket.setsockopt_string(zmq.SUBSCRIBE, f"/messages/{service_identity}/")
         self.subscriber_socket.setsockopt_string(zmq.SUBSCRIBE, f"/commands/{service_identity}/")
         # unlimited as trunkating can result in unsent data and broken messages
         # TODO: determine a sane default
@@ -53,17 +54,20 @@ class ZmqSubscriber(Subscriber):
                 response.set_format("pickled")
 
                 # get the values returned from the routing proxy and serialize them to
-                values = message[1]
+                values = message[1].strip(b",")
                 response.set_values(values)
                 self.subscriber_formatter.deserialize(response)
 
                 topic = message[0]
                 decoded_topic = topic.decode("utf-8")
                 topic_sections = decoded_topic.split("/")
-                _, _, _, _, sender, context, action, *_ = topic_sections
+                _, _, sender, context, action, recipients = topic_sections
                 response.set_sender(sender)
                 response.set_context(context)
                 response.set_action(action)
+
+                if len(recipients.split(RECIPIENT_DELIMITER))>1:
+                    response.set_value("recipients", recipients.split(RECIPIENT_DELIMITER)[:-1])
 
                 responses.append(response)
 
