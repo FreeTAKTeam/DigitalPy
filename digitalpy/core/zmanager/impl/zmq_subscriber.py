@@ -7,7 +7,13 @@ from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.parsing.formatter import Formatter
 
 class ZmqSubscriber(Subscriber):
-    
+    # 1. Create a context
+    # 2. Create a socket
+    # 3. Connect to the socket
+    # 4. Subscribe to the socket
+    # 5. Receive the message
+    # 6. Close the socket
+    # 7. Destroy the context
     def __init__(self, formatter: Formatter):
         self.subscriber_context = None
         self.subscriber_socket = None
