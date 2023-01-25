@@ -66,9 +66,12 @@ class IAMUsersController(Controller):
         Returns:
             dict: all persisted connections
         """
-        # TODO, fix how configuration is gotten to be more generic and automatically create file if it doesnt exist
         with open(CONNECTIONS_PERSISTENCE, "rb+") as f:
-            return pickle.load(f)
+            try:
+                return pickle.load(f)
+            # handle case where the file is empty
+            except EOFError:
+                return {}
 
     def _update_persistency(self, connections: dict):
         """update the persistency with changes
