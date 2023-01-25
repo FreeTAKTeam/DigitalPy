@@ -133,8 +133,10 @@ class ComponentRegistrationHandler(RegistrationHandler):
         for i in range(len(section[REQUIRED_ALFA_VERSION].split(VERSION_DELIMITER))):
             #check if the version matches
             digitalpy_version_number = digitalpy_version.split(VERSION_DELIMITER)[i] if len(digitalpy_version.split(VERSION_DELIMITER))>i else 0
-            if int(digitalpy_version_number)>=int(section[REQUIRED_ALFA_VERSION].split(VERSION_DELIMITER)[i]):
+            if int(digitalpy_version_number)==int(section[REQUIRED_ALFA_VERSION].split(VERSION_DELIMITER)[i]):
                 continue
+            elif int(digitalpy_version_number)>int(section[REQUIRED_ALFA_VERSION].split(VERSION_DELIMITER)[i]):
+                break
             else:
                 return False
             
