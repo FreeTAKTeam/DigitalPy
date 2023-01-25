@@ -7,6 +7,7 @@
 # Original author: Giu Platania
 #
 #######################################################
+from typing import List, Union
 from digitalpy.core.domain.node import Node
 from digitalpy.core.main.controller import Controller
 
@@ -31,11 +32,18 @@ class SerializationGeneralController(Controller):
         super().initialize(request, response)
         self.xml_serialization_controller.initialize(request, response)
 
-    def serialize_node_to_protocol(self, message: Node, protocol, **kwargs):
+    def serialize_node_to_protocol(self, message: Union[Node, List[Node]], protocol, **kwargs):
         """this is the general method used to serialize the component to a given format
         """
         if protocol.upper() == Protocols.XML:
-            self.xml_serialization_controller.serialize_node(message)
+            # handle case where message contains multiple messages
+            if isinstance(message, list):
+                for m in message:
+                    self.xml_serialization_controller.serialize_node(m)
+            elif isinstance(message, Node):
+                self.xml_serialization_controller.serialize_node(message)
+            else:
+                raise ValueError("unsupported type passed")
         else:
             raise Exception("unsupported protocol "+protocol)
 
