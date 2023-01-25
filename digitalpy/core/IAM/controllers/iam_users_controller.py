@@ -69,7 +69,6 @@ class IAMUsersController(Controller):
         with open(CONNECTIONS_PERSISTENCE, "rb+") as f:
             try:
                 return pickle.load(f)
-            # handle case where the file is empty
             except EOFError:
                 return {}
 
