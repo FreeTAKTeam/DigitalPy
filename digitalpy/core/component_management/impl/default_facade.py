@@ -13,7 +13,7 @@ from digitalpy.core.telemetry.tracer import Tracer
 class DefaultFacade(Controller):
     def __init__(
         self,
-        action_mapping_path,
+        action_mapping_path: str,
         internal_action_mapping_path,
         logger_configuration,
         log_file_path,
@@ -29,6 +29,27 @@ class DefaultFacade(Controller):
         manifest_path=None,
         **kwargs,
     ):
+        """_summary_
+
+        Args:
+            action_mapping_path (str): path to the external action mapping of the application
+            internal_action_mapping_path (str): path to the internal action mapping of the component
+            logger_configuration (str): path to the ini file describing the configuration for the logger
+            log_file_path (str): path to where the log files will be saved for this component
+            component_name (str, optional): the name of this component. Defaults to the class name.
+            type_mapping (str, optional): the path to the type mapping for this component if there is one
+                type mapping maps a type to a action. Defaults to None.
+            action_mapper (DefaultActionMapper, optional): the action mapper registered to the 
+                internal_action_mapping path, in other words, the internal action mapper. Defaults to None.
+            base (package, optional): the package containing the base classes for the component, 
+                e.g. the component specific action mapper. Defaults to object.
+            request (Request, optional): a request object to instantiate the facade with. Defaults to None.
+            response (Response, optional): a response object to instantiate the facade with. Defaults to None.
+            configuration (Configuration, optional):  . Defaults to None.
+            configuration_path_template (string.Template, optional): a template defining the absoloute path to the model object definitions. Defaults to None.
+            tracing_provider_instance (TracingProvider, optional): an instance of a digitalpy tracing provider used for logging. Defaults to None.
+            manifest_path (str, optional): path to the component manifest file. Defaults to None.
+        """
         super().__init__(
             action_mapper=action_mapper,
             request=request,
@@ -84,25 +105,30 @@ class DefaultFacade(Controller):
         self.request.set_value("tracer", self.tracer)
         try:
             if hasattr(self, method):
-                getattr(self, method)()
+                # pass all request values as keyword arguments
+                getattr(self, method)(**self.request.get_values())
             else:
                 response = self.execute_sub_action(self.request.get_action())
+                # set all the values and senders in main response to the sub-response
                 self.response.set_values(response.get_values())
+                self.response.set_action(response.get_action())
+                self.response.set_context(response.get_context())
+                self.response.set_sender(response.get_sender())
         except Exception as e:
             self.logger.fatal(str(e))
 
         self.response.set_value("tracer", None)
 
-    def get_logs(self):
+    def get_logs(self, **kwargs):
         """get all the log files available"""
         return self.log_manager.get_logs()
 
-    def discover(self):
+    def discover(self, **kwargs):
         """discover the action mappings from the component"""
         config = InifileConfiguration(config_path=self.action_mapping_path)
         return config.config_array
 
-    def register(self, config: InifileConfiguration):
+    def register(self, config: InifileConfiguration, **kwargs):
         config.add_configuration(self.action_mapping_path)
         internal_config = InifileConfiguration("")
         internal_config.add_configuration(self.internal_action_mapping_path)
@@ -115,7 +141,7 @@ class DefaultFacade(Controller):
         )
         self._register_type_mapping()
 
-    def get_manifest(self):
+    def get_manifest(self, **kwargs):
         """returns the current manifest configuration"""
         return self.manifest
 

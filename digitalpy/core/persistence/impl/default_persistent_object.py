@@ -72,6 +72,9 @@ class DefaultPersistentObject(PersistentObject):
             PropertyChangeEvent.NAME, PropertyChangeEvent(self, name, old_value, value)
         )
 
+    def get_properties(self):
+        return self.properties
+
     def get_property(self, name):
         if name in self.properties:
             return self.properties[name]

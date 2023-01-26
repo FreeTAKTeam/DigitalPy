@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Union
 import uuid
 import zmq
 from digitalpy.core.zmanager.request import Request
@@ -94,9 +94,11 @@ class DefaultRoutingWorker:
             response (Response): the response to be sent to integration_manager
             protocol (str): the protocol of the message
         """
-        self.formatter.serialize(response)
-        message = protocol.encode()+b","+response.get_values()
-        self.integration_manager_sock.send(message)
+        response_topics = self.get_response_topic(response, protocol)
+        #self.formatter.serialize(response)
+        #response_value = response.get_values()
+        for response_topic in response_topics:
+            self.integration_manager_sock.send(response_topic)
 
     def send_error(self, exception: Exception):
         """send an exception to the integration_manager
@@ -114,8 +116,8 @@ class DefaultRoutingWorker:
         while True:
             try:
                 print("listening")
-                response_topic, request = self.receive_request()
-                self.process_request(response_topic, request)
+                protocol, request = self.receive_request()
+                self.process_request(protocol, request)
                 
             except Exception as ex:
                 try:
@@ -124,7 +126,7 @@ class DefaultRoutingWorker:
                     self.send_error(ex)
                     print(str(e))
 
-    def process_request(self, response_topic: str, request: Request):
+    def process_request(self, protocol: str, request: Request):
         """process a request made by the subject
 
         Args:
@@ -196,7 +198,7 @@ class DefaultRoutingWorker:
             print("executing %s", action)
             controllerObj.execute(controllerMethod)
             print("%s executed", action)
-        except Exception as e:
+        except Exception as ex:
             pass
         # check if an action key exists for the return action
         nextActionKey = ActionKey.get_best_match(
@@ -212,15 +214,33 @@ class DefaultRoutingWorker:
         terminate = len(nextActionKey) == 0 or actionKey == nextActionKey
         if terminate:
             # stop processing
-            print("sending on %s", response_topic)
-            self.send_response(response, response_topic)
+            self.send_response(response, protocol)
             return
         
         self.process_next_request(controllerClass=controllerClass,response=response)
 
-        self.formatter.serialize(response)
+        self.send_response(response, protocol=protocol)
 
-        self.send_response(response, protocol=response_topic)
+    def get_response_topic(self, response: Response, protocol: str) -> List[bytes]:
+        """get the topic to which the response is to be sent
+
+        Args:
+            response (Response): the response to be sent to the
+                integration manager which may or may not have a value
+                of topics
+
+            protocol (str): the protocol on which the message as sent
+            
+        Return:
+            List[bytes]
+        """
+        if isinstance(response.get_value("topics"), list):
+            return response.get_value("topics")
+        else:
+            message = f'/{protocol}/{response.get_value("service_id")}/{response.get_sender()}/{response.get_context()}/{response.get_action()}'.encode()
+            self.formatter.serialize(response)
+            response_value = response.get_values()
+            return [message+b","+response_value]
 
     def process_next_request(self, controllerClass: str, response: Response):
         """_summary_
@@ -250,7 +270,6 @@ class DefaultRoutingWorker:
             # Receive message from client
             message = self.sock.recv_multipart()[0]            
             sender, context, action, format, protocol, values = message.split(b",", 5)
-            # Construct the response topic
 
             # Create a new request object
             request = ObjectFactory.get_new_instance("request")
@@ -263,9 +282,10 @@ class DefaultRoutingWorker:
             # Deserialize the request
             self.formatter.deserialize(request)
 
-            response_topic = f'/{protocol.decode()}/{request.get_value("service_id")}/{sender.decode("utf-8")}/{context.decode("utf-8")}/{action.decode("utf-8")}'
+            
 
             # Return the topic sections, response topic, and request
-            return response_topic, request
+            return protocol.decode(), request
+
         except Exception as ex:
             self.send_error(ex)
