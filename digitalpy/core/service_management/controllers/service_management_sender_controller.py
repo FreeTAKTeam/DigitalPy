@@ -14,7 +14,7 @@ from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
 from digitalpy.core.domain.node import Node
 from digitalpy.core.main.controller import Controller
-from digitalpy.core.IAM.IAM_facade import IAM
+from digitalpy.core.IAM.iam_facade import IAM
 
 USER_DELIMITER = ";"
 
@@ -36,13 +36,12 @@ class ServiceManagementSenderController(Controller):
 		"""
 		pass
 
-	def publish(self, recipients: List[str], message: Node, **kwargs) -> List[str]:
+	def publish(self, recipients: List[str], **kwargs) -> List[str]:
 		"""this method is used to create the topic to publish a message
 		to a set of services based on the recipients
 
 		Args:
 			recipients (List[str]): a list of recipients id's
-			model_object (Node): the message to be sent to the list of recipients
 
 		Returns:
 			List[str]: a list of topics to which the message should be published
@@ -72,7 +71,7 @@ class ServiceManagementSenderController(Controller):
 			formatter.serialize(sub_response)
 			return_topics.append(main_topic.encode()+ids.encode()+b","+sub_response.get_values())
 
-		self.request.set_value("topics", return_topics)
+		self.response.set_value("topics", return_topics)
 
 	def execute(self, method = None):
 		pass
