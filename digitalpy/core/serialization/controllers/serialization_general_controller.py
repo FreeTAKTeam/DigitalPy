@@ -51,30 +51,30 @@ class SerializationGeneralController(Controller):
         """Deserializes a byte stream into an object"""
         pass
 
-    def serialize_to_file():
+    def serialize_to_file(self):
         """Serializes an object into a file"""
         pass
 
-    def serialize():
+    def serialize(self):
         """Serializes an object into a byte stream"""
         pass
 
-    def domain_to_xml_parsing():
+    def domain_to_xml_parsing(self):
         """convert Domain model to XML string"""
         pass
 
-    def xml_to_domain_parsing():
+    def xml_to_domain_parsing(self):
         """convert XML string to Domain model"""
         pass
 
-    def domain_to_json_parsing():
+    def domain_to_json_parsing(self):
         """convert Domain model object to JSON string"""
         pass
 
-    def domain_to_protobuf_parsing():
+    def domain_to_protobuf_parsing(self):
         """convert Domain model object to protobuf"""
         pass
 
-    def deserialize_from_file():
+    def deserialize_from_file(self):
         """Deserializes a file into an object"""
         pass
