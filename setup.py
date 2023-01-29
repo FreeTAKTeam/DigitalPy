@@ -13,5 +13,6 @@ setup(name='digitalpy',
       extras_require={
             "DEV": ["pytest"],
       },
+      package_data={'': ['*.ini', "*.conf", "*.json"]},
       packages=find_packages(include=["digitalpy", "digitalpy.*", "*.json", "*.ini", "*.conf"])
      )
