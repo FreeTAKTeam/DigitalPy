@@ -1,6 +1,15 @@
 from digitalpy.component.impl.default_facade import DefaultFacade
+#protectedstart imports ############################################################################
+#protectedend ######################################################################################
 
+
+#protectedstart classDeclaration ###################################################################
 class DigiPyConfigurationFacade(DefaultFacade):
+#protectedend ######################################################################################
+
+
+
+
 	"""Facade class for the this component. Responsible for handling all public
 	routing. Forwards all requests to the internal router.
 	WHY:
@@ -14,13 +23,27 @@ class DigiPyConfigurationFacade(DefaultFacade):
 	clients and the Subsystems.</li>
 	</ul>
 	"""
+#protectedstart classComments#######################################################################
+#protectedend ######################################################################################
 
-# default constructor  def __init__(self):  
+
+
+#	default constructor  def __init__(self):
+#protectedstart classVars ##########################################################################
+#protectedend ######################################################################################
+
 
 	def __init__(self):
+#protectedstart classVars ##########################################################################
+#protectedend ######################################################################################
+
 		self.configure_dp_ip = DigiPyConfigurationGeneralController()
 		self.web_ui_manage_services = DigiPyConfigurationGeneralController()
 		self.installation_wizard = DigiPyConfigurationGeneralController()
 		self.configure_set_port = DigiPyConfigurationGeneralController()
 		self.configuration_wizard = DigiPyConfigurationGeneralController()
+
+#protectedstart functions ##########################################################################
+#protectedend ######################################################################################
+
 

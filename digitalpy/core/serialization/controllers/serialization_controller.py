@@ -1,15 +1,15 @@
 from digitalpy.logic.impl.default_business_rule_controller import DefaultBusinessRuleController
 
 
-#protectedstart Business Model.FTS Catalogs.Application.Component.DigitalPy Components.DigitalPy.DigPy Core.Serialization.imports ########################
-#protectedend ########################
+#protectedstart imports ############################################################################
+#protectedend ######################################################################################
 
 
 
 
-#protectedstart Business Model.FTS Catalogs.Application.Component.DigitalPy Components.DigitalPy.DigPy Core.Serialization.classDeclaration ########################
+#protectedstart classDeclaration ###################################################################
 class SerializationController(DefaultBusinessRuleController):
-#protectedend ########################
+#protectedend ######################################################################################
 
 
 
@@ -19,8 +19,9 @@ class SerializationController(DefaultBusinessRuleController):
 	"""
 
 
-	#protectedstart Business Model.FTS Catalogs.Application.Component.DigitalPy Components.DigitalPy.DigPy Core.Serialization.classComments ########################
-#protectedend ########################
+#protectedstart classComments#######################################################################
+#protectedend ######################################################################################
+
 
 
 
@@ -38,7 +39,7 @@ class SerializationController(DefaultBusinessRuleController):
 		"""
 		pass
 
-	#protectedstart Business Model.FTS Catalogs.Application.Component.DigitalPy Components.DigitalPy.DigPy Core.Serialization.functions ########################
-	#protectedend ########################
+#protectedstart functions ##########################################################################
+#protectedend ######################################################################################
 
 

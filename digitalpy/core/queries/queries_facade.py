@@ -1,6 +1,15 @@
 from digitalpy.component.impl.default_facade import DefaultFacade
+#protectedstart imports ############################################################################
+#protectedend ######################################################################################
 
+
+#protectedstart classDeclaration ###################################################################
 class QueriesFacade(DefaultFacade):
+#protectedend ######################################################################################
+
+
+
+
 	"""Facade class for the this component. Responsible for handling all public
 	routing. Forwards all requests to the internal router.
 	WHY:
@@ -14,9 +23,23 @@ class QueriesFacade(DefaultFacade):
 	clients and the Subsystems.</li>
 	</ul>
 	"""
+#protectedstart classComments#######################################################################
+#protectedend ######################################################################################
 
-# default constructor  def __init__(self):  
+
+
+#	default constructor  def __init__(self):
+#protectedstart classVars ##########################################################################
+#protectedend ######################################################################################
+
 
 	def __init__(self):
+#protectedstart classVars ##########################################################################
+#protectedend ######################################################################################
+
 		self.web_map_search_cot = QueriesGeneralController()
+
+#protectedstart functions ##########################################################################
+#protectedend ######################################################################################
+
 

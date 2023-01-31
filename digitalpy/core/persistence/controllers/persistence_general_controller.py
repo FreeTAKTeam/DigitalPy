@@ -1,8 +1,23 @@
 
 from digitalpy.core.main.controller import Controller
 
-class PersistenceGeneralController(Controller):
-# default constructor  def __init__(self):  
+#protectedstart classDeclaration ###################################################################
+class PersistenceController(Controller):
+#protectedend ######################################################################################
+
+
+
+
+#protectedstart classComments#######################################################################
+#protectedend ######################################################################################
+
+
+#	default constructor  def __init__(self):
+#protectedstart classVars ##########################################################################
+#protectedend ######################################################################################
+
+
+
 
 	def __init__(Request, Response, ActionMapper, Configuration):
 		pass
@@ -34,4 +49,7 @@ class PersistenceGeneralController(Controller):
 	def db_support_sql_lite():
 		"""core"""
 		pass
+
+#protectedstart functions ##########################################################################
+#protectedend ######################################################################################
 

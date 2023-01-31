@@ -1,6 +1,15 @@
 from digitalpy.component.impl.default_facade import DefaultFacade
+#protectedstart imports ############################################################################
+#protectedend ######################################################################################
 
+
+#protectedstart classDeclaration ###################################################################
 class PersistenceFacade(DefaultFacade):
+#protectedend ######################################################################################
+
+
+
+
 	"""Facade class for the this component. Responsible for handling all public
 	routing. Forwards all requests to the internal router.
 	WHY:
@@ -14,13 +23,27 @@ class PersistenceFacade(DefaultFacade):
 	clients and the Subsystems.</li>
 	</ul>
 	"""
+#protectedstart classComments#######################################################################
+#protectedend ######################################################################################
 
-# default constructor  def __init__(self):  
+
+
+#	default constructor  def __init__(self):
+#protectedstart classVars ##########################################################################
+#protectedend ######################################################################################
+
 
 	def __init__(self):
+#protectedstart classVars ##########################################################################
+#protectedend ######################################################################################
+
 		self.db_support_activate_saving_cot_into_db = PersistenceGeneralController()
 		self.db_multiple_support = PersistenceGeneralController()
 		self.db_support_mysql = PersistenceGeneralController()
 		self.cot_record_in_db = PersistenceGeneralController()
 		self.db_support_sql_lite = PersistenceGeneralController()
+
+#protectedstart functions ##########################################################################
+#protectedend ######################################################################################
+
 

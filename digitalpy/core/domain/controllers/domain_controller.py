@@ -1,15 +1,15 @@
 from digitalpy.logic.impl.default_business_rule_controller import DefaultBusinessRuleController
 
 
-#protectedstart Business Model.FTS Catalogs.Application.Component.FTS Components.FTS 2.x.Core.FTS Core.Domain.imports ########################
-#protectedend ########################
+#protectedstart imports ############################################################################
+#protectedend ######################################################################################
 
 
 
 
-#protectedstart Business Model.FTS Catalogs.Application.Component.FTS Components.FTS 2.x.Core.FTS Core.Domain.classDeclaration ########################
+#protectedstart classDeclaration ###################################################################
 class DomainController(DefaultBusinessRuleController):
-#protectedend ########################
+#protectedend ######################################################################################
 
 
 
@@ -19,8 +19,9 @@ class DomainController(DefaultBusinessRuleController):
 	"""
 
 
-	#protectedstart Business Model.FTS Catalogs.Application.Component.FTS Components.FTS 2.x.Core.FTS Core.Domain.classComments ########################
-#protectedend ########################
+#protectedstart classComments#######################################################################
+#protectedend ######################################################################################
+
 
 
 
@@ -38,7 +39,7 @@ class DomainController(DefaultBusinessRuleController):
 		"""
 		pass
 
-	#protectedstart Business Model.FTS Catalogs.Application.Component.FTS Components.FTS 2.x.Core.FTS Core.Domain.functions ########################
-	#protectedend ########################
+#protectedstart functions ##########################################################################
+#protectedend ######################################################################################
 
 

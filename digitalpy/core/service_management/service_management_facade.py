@@ -1,6 +1,15 @@
 from digitalpy.component.impl.default_facade import DefaultFacade
+#protectedstart imports ############################################################################
+#protectedend ######################################################################################
 
+
+#protectedstart classDeclaration ###################################################################
 class ServiceManagementFacade(DefaultFacade):
+#protectedend ######################################################################################
+
+
+
+
 	"""Facade class for the this component. Responsible for handling all public
 	routing. Forwards all requests to the internal router.
 	WHY:
@@ -14,13 +23,27 @@ class ServiceManagementFacade(DefaultFacade):
 	clients and the Subsystems.</li>
 	</ul>
 	"""
+#protectedstart classComments#######################################################################
+#protectedend ######################################################################################
 
-# default constructor  def __init__(self):  
+
+
+#	default constructor  def __init__(self):
+#protectedstart classVars ##########################################################################
+#protectedend ######################################################################################
+
 
 	def __init__(self):
+#protectedstart classVars ##########################################################################
+#protectedend ######################################################################################
+
 		self.list_services = ServiceManagementGeneralController()
 		self.stop_service = ServiceManagementGeneralController()
 		self.start_service = ServiceManagementGeneralController()
 		self.stop_start_service = ServiceManagementGeneralController()
 		self.get_service_status = ServiceManagementGeneralController()
+
+#protectedstart functions ##########################################################################
+#protectedend ######################################################################################
+
 

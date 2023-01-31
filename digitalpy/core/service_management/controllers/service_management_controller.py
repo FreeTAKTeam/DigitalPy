@@ -1,15 +1,15 @@
 from digitalpy.logic.impl.default_business_rule_controller import DefaultBusinessRuleController
 
 
-#protectedstart Business Model.FTS Catalogs.Application.Component.DigitalPy Components.DigitalPy.DigPy Core.Service Management.imports ########################
-#protectedend ########################
+#protectedstart imports ############################################################################
+#protectedend ######################################################################################
 
 
 
 
-#protectedstart Business Model.FTS Catalogs.Application.Component.DigitalPy Components.DigitalPy.DigPy Core.Service Management.classDeclaration ########################
+#protectedstart classDeclaration ###################################################################
 class ServiceManagementController(DefaultBusinessRuleController):
-#protectedend ########################
+#protectedend ######################################################################################
 
 
 
@@ -19,8 +19,9 @@ class ServiceManagementController(DefaultBusinessRuleController):
 	"""
 
 
-	#protectedstart Business Model.FTS Catalogs.Application.Component.DigitalPy Components.DigitalPy.DigPy Core.Service Management.classComments ########################
-#protectedend ########################
+#protectedstart classComments#######################################################################
+#protectedend ######################################################################################
+
 
 
 
@@ -38,7 +39,7 @@ class ServiceManagementController(DefaultBusinessRuleController):
 		"""
 		pass
 
-	#protectedstart Business Model.FTS Catalogs.Application.Component.DigitalPy Components.DigitalPy.DigPy Core.Service Management.functions ########################
-	#protectedend ########################
+#protectedstart functions ##########################################################################
+#protectedend ######################################################################################
 
 

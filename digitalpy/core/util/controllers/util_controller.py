@@ -1,15 +1,15 @@
 from digitalpy.logic.impl.default_business_rule_controller import DefaultBusinessRuleController
 
 
-#protectedstart Business Model.FTS Catalogs.Application.Component.DigitalPy Components.DigitalPy.DigPy Core.Util.imports ########################
-#protectedend ########################
+#protectedstart imports ############################################################################
+#protectedend ######################################################################################
 
 
 
 
-#protectedstart Business Model.FTS Catalogs.Application.Component.DigitalPy Components.DigitalPy.DigPy Core.Util.classDeclaration ########################
+#protectedstart classDeclaration ###################################################################
 class UtilController(DefaultBusinessRuleController):
-#protectedend ########################
+#protectedend ######################################################################################
 
 
 
@@ -19,8 +19,9 @@ class UtilController(DefaultBusinessRuleController):
 	"""
 
 
-	#protectedstart Business Model.FTS Catalogs.Application.Component.DigitalPy Components.DigitalPy.DigPy Core.Util.classComments ########################
-#protectedend ########################
+#protectedstart classComments#######################################################################
+#protectedend ######################################################################################
+
 
 
 
@@ -38,7 +39,7 @@ class UtilController(DefaultBusinessRuleController):
 		"""
 		pass
 
-	#protectedstart Business Model.FTS Catalogs.Application.Component.DigitalPy Components.DigitalPy.DigPy Core.Util.functions ########################
-	#protectedend ########################
+#protectedstart functions ##########################################################################
+#protectedend ######################################################################################
 
 

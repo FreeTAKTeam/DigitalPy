@@ -1,8 +1,23 @@
 
 from digitalpy.core.main.controller import Controller
 
-class IAMGeneralController(Controller):
-# default constructor  def __init__(self):  
+#protectedstart classDeclaration ###################################################################
+class IAMController(Controller):
+#protectedend ######################################################################################
+
+
+
+
+#protectedstart classComments#######################################################################
+#protectedend ######################################################################################
+
+
+#	default constructor  def __init__(self):
+#protectedstart classVars ##########################################################################
+#protectedend ######################################################################################
+
+
+
 
 	def __init__(Request, Response, ActionMapper, Configuration):
 		pass
@@ -168,4 +183,7 @@ Two key aspects of securing an application are authentication and authorization.
 	def delete_reports():
 		"""Allows a user to delete reports"""
 		pass
+
+#protectedstart functions ##########################################################################
+#protectedend ######################################################################################
 

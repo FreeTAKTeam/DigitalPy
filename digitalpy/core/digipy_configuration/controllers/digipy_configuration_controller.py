@@ -1,15 +1,15 @@
 from digitalpy.logic.impl.default_business_rule_controller import DefaultBusinessRuleController
 
 
-#protectedstart Business Model.FTS Catalogs.Application.Component.DigitalPy Components.DigitalPy.DigPy Core.DigiPy Configuration.imports ########################
-#protectedend ########################
+#protectedstart imports ############################################################################
+#protectedend ######################################################################################
 
 
 
 
-#protectedstart Business Model.FTS Catalogs.Application.Component.DigitalPy Components.DigitalPy.DigPy Core.DigiPy Configuration.classDeclaration ########################
+#protectedstart classDeclaration ###################################################################
 class DigiPyConfigurationController(DefaultBusinessRuleController):
-#protectedend ########################
+#protectedend ######################################################################################
 
 
 
@@ -19,8 +19,9 @@ class DigiPyConfigurationController(DefaultBusinessRuleController):
 	"""
 
 
-	#protectedstart Business Model.FTS Catalogs.Application.Component.DigitalPy Components.DigitalPy.DigPy Core.DigiPy Configuration.classComments ########################
-#protectedend ########################
+#protectedstart classComments#######################################################################
+#protectedend ######################################################################################
+
 
 
 
@@ -38,7 +39,7 @@ class DigiPyConfigurationController(DefaultBusinessRuleController):
 		"""
 		pass
 
-	#protectedstart Business Model.FTS Catalogs.Application.Component.DigitalPy Components.DigitalPy.DigPy Core.DigiPy Configuration.functions ########################
-	#protectedend ########################
+#protectedstart functions ##########################################################################
+#protectedend ######################################################################################
 
 

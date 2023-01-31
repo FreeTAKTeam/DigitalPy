@@ -1,8 +1,23 @@
 
 from digitalpy.core.main.controller import Controller
 
-class DigiPyConfigurationGeneralController(Controller):
-# default constructor  def __init__(self):  
+#protectedstart classDeclaration ###################################################################
+class DigiPyConfigurationController(Controller):
+#protectedend ######################################################################################
+
+
+
+
+#protectedstart classComments#######################################################################
+#protectedend ######################################################################################
+
+
+#	default constructor  def __init__(self):
+#protectedstart classVars ##########################################################################
+#protectedend ######################################################################################
+
+
+
 
 	def __init__(Request, Response, ActionMapper, Configuration):
 		pass
@@ -34,4 +49,7 @@ class DigiPyConfigurationGeneralController(Controller):
 	def configuration_wizard():
 		"""starts a wizard to create a YAML configuration"""
 		pass
+
+#protectedstart functions ##########################################################################
+#protectedend ######################################################################################
 

@@ -1,8 +1,23 @@
 
 from digitalpy.core.main.controller import Controller
 
-class UtilGeneralController(Controller):
-# default constructor  def __init__(self):  
+#protectedstart classDeclaration ###################################################################
+class UtilController(Controller):
+#protectedend ######################################################################################
+
+
+
+
+#protectedstart classComments#######################################################################
+#protectedend ######################################################################################
+
+
+#	default constructor  def __init__(self):
+#protectedstart classVars ##########################################################################
+#protectedend ######################################################################################
+
+
+
 
 	def __init__(Request, Response, ActionMapper, Configuration):
 		pass
@@ -62,4 +77,7 @@ class UtilGeneralController(Controller):
 	def asci_welcome():
 		"""display a welcome message for console"""
 		pass
+
+#protectedstart functions ##########################################################################
+#protectedend ######################################################################################
 

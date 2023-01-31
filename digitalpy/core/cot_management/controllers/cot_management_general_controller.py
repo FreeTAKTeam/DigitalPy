@@ -1,8 +1,23 @@
 
 from digitalpy.core.main.controller import Controller
 
-class COTManagementGeneralController(Controller):
-# default constructor  def __init__(self):  
+#protectedstart classDeclaration ###################################################################
+class COTManagementController(Controller):
+#protectedend ######################################################################################
+
+
+
+
+#protectedstart classComments#######################################################################
+#protectedend ######################################################################################
+
+
+#	default constructor  def __init__(self):
+#protectedstart classVars ##########################################################################
+#protectedend ######################################################################################
+
+
+
 
 	def __init__(Request, Response, ActionMapper, Configuration):
 		pass
@@ -42,4 +57,7 @@ class COTManagementGeneralController(Controller):
 	def medevac_send():
 		"""send a MedEvac form to another EUD connected to the server"""
 		pass
+
+#protectedstart functions ##########################################################################
+#protectedend ######################################################################################
 

@@ -1,8 +1,23 @@
 
 from digitalpy.core.main.controller import Controller
 
-class ServiceManagementGeneralController(Controller):
-# default constructor  def __init__(self):  
+#protectedstart classDeclaration ###################################################################
+class ServiceManagementController(Controller):
+#protectedend ######################################################################################
+
+
+
+
+#protectedstart classComments#######################################################################
+#protectedend ######################################################################################
+
+
+#	default constructor  def __init__(self):
+#protectedstart classVars ##########################################################################
+#protectedend ######################################################################################
+
+
+
 
 	def __init__(Request, Response, ActionMapper, Configuration):
 		pass
@@ -34,4 +49,7 @@ class ServiceManagementGeneralController(Controller):
 	def get_service_status():
 		"""Get the current status of a specific service"""
 		pass
+
+#protectedstart functions ##########################################################################
+#protectedend ######################################################################################
 

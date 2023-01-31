@@ -1,8 +1,23 @@
 
 from digitalpy.core.main.controller import Controller
 
-class TelemetryGeneralController(Controller):
-# default constructor  def __init__(self):  
+#protectedstart classDeclaration ###################################################################
+class TelemetryController(Controller):
+#protectedend ######################################################################################
+
+
+
+
+#protectedstart classComments#######################################################################
+#protectedend ######################################################################################
+
+
+#	default constructor  def __init__(self):
+#protectedstart classVars ##########################################################################
+#protectedend ######################################################################################
+
+
+
 
 	def __init__(Request, Response, ActionMapper, Configuration):
 		pass
@@ -60,4 +75,7 @@ class TelemetryGeneralController(Controller):
 	def dashboard_runtime_and_connected_clients():
 		"""provide informations regarding connected clients"""
 		pass
+
+#protectedstart functions ##########################################################################
+#protectedend ######################################################################################
 

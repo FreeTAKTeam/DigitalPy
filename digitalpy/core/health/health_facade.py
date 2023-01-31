@@ -1,6 +1,15 @@
 from digitalpy.component.impl.default_facade import DefaultFacade
+#protectedstart imports ############################################################################
+#protectedend ######################################################################################
 
+
+#protectedstart classDeclaration ###################################################################
 class HealthFacade(DefaultFacade):
+#protectedend ######################################################################################
+
+
+
+
 	"""Facade class for the this component. Responsible for handling all public
 	routing. Forwards all requests to the internal router.
 	WHY:
@@ -14,10 +23,20 @@ class HealthFacade(DefaultFacade):
 	clients and the Subsystems.</li>
 	</ul>
 	"""
+#protectedstart classComments#######################################################################
+#protectedend ######################################################################################
 
-# default constructor  def __init__(self):  
+
+
+#	default constructor  def __init__(self):
+#protectedstart classVars ##########################################################################
+#protectedend ######################################################################################
+
 
 	def __init__(self):
+#protectedstart classVars ##########################################################################
+#protectedend ######################################################################################
+
 		self.check_system_services = HealthGeneralController()
 		self.monitor_system_performance = HealthGeneralController()
 		self.check_network_connectivity = HealthGeneralController()
@@ -29,4 +48,8 @@ class HealthFacade(DefaultFacade):
 		self.check_system_logs = HealthGeneralController()
 		self.check_component_status = HealthGeneralController()
 		self.check_system_security = HealthGeneralController()
+
+#protectedstart functions ##########################################################################
+#protectedend ######################################################################################
+
 

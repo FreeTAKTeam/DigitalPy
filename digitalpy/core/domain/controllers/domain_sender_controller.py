@@ -1,8 +1,18 @@
 from digitalpy.core.main.controller import Controller
 
+#protectedstart classDeclaration ###################################################################
 class DomainSenderController(Controller):
+#protectedend ######################################################################################
+
+
+
+
 	"""contains all the business logic of this core package
 	"""
+#protectedstart classComments#######################################################################
+#protectedend ######################################################################################
+
+
 # default constructor  def __init__(self):  
 
 	def __init__(Request, Response, ActionMapper, Configuration):
@@ -15,3 +25,6 @@ class DomainSenderController(Controller):
 
 	def execute( = None):
 		pass
+#protectedstart functions ##########################################################################
+#protectedend ######################################################################################
+

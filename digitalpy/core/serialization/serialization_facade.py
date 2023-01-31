@@ -1,6 +1,15 @@
 from digitalpy.component.impl.default_facade import DefaultFacade
+#protectedstart imports ############################################################################
+#protectedend ######################################################################################
 
+
+#protectedstart classDeclaration ###################################################################
 class SerializationFacade(DefaultFacade):
+#protectedend ######################################################################################
+
+
+
+
 	"""Facade class for the this component. Responsible for handling all public
 	routing. Forwards all requests to the internal router.
 	WHY:
@@ -14,10 +23,20 @@ class SerializationFacade(DefaultFacade):
 	clients and the Subsystems.</li>
 	</ul>
 	"""
+#protectedstart classComments#######################################################################
+#protectedend ######################################################################################
 
-# default constructor  def __init__(self):  
+
+
+#	default constructor  def __init__(self):
+#protectedstart classVars ##########################################################################
+#protectedend ######################################################################################
+
 
 	def __init__(self):
+#protectedstart classVars ##########################################################################
+#protectedend ######################################################################################
+
 		self.deserialize = SerializationGeneralController()
 		self.serialize_to_file = SerializationGeneralController()
 		self.serialize = SerializationGeneralController()
@@ -26,4 +45,8 @@ class SerializationFacade(DefaultFacade):
 		self.domain_to_json_parsing = SerializationGeneralController()
 		self.domain_to_protobuf_parsing = SerializationGeneralController()
 		self.deserialize_from_file = SerializationGeneralController()
+
+#protectedstart functions ##########################################################################
+#protectedend ######################################################################################
+
 

@@ -1,8 +1,23 @@
 
 from digitalpy.core.main.controller import Controller
 
-class SerializationGeneralController(Controller):
-# default constructor  def __init__(self):  
+#protectedstart classDeclaration ###################################################################
+class SerializationController(Controller):
+#protectedend ######################################################################################
+
+
+
+
+#protectedstart classComments#######################################################################
+#protectedend ######################################################################################
+
+
+#	default constructor  def __init__(self):
+#protectedstart classVars ##########################################################################
+#protectedend ######################################################################################
+
+
+
 
 	def __init__(Request, Response, ActionMapper, Configuration):
 		pass
@@ -46,4 +61,7 @@ class SerializationGeneralController(Controller):
 	def deserialize_from_file():
 		"""Deserializes a file into an object"""
 		pass
+
+#protectedstart functions ##########################################################################
+#protectedend ######################################################################################
 

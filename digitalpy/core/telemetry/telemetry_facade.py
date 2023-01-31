@@ -1,6 +1,15 @@
 from digitalpy.component.impl.default_facade import DefaultFacade
+#protectedstart imports ############################################################################
+#protectedend ######################################################################################
 
+
+#protectedstart classDeclaration ###################################################################
 class TelemetryFacade(DefaultFacade):
+#protectedend ######################################################################################
+
+
+
+
 	"""Facade class for the this component. Responsible for handling all public
 	routing. Forwards all requests to the internal router.
 	WHY:
@@ -14,10 +23,20 @@ class TelemetryFacade(DefaultFacade):
 	clients and the Subsystems.</li>
 	</ul>
 	"""
+#protectedstart classComments#######################################################################
+#protectedend ######################################################################################
 
-# default constructor  def __init__(self):  
+
+
+#	default constructor  def __init__(self):
+#protectedstart classVars ##########################################################################
+#protectedend ######################################################################################
+
 
 	def __init__(self):
+#protectedstart classVars ##########################################################################
+#protectedend ######################################################################################
+
 		self.get_telemetry_config = TelemetryGeneralController()
 		self.log = TelemetryGeneralController()
 		self.get_telemetry_data = TelemetryGeneralController()
@@ -29,4 +48,8 @@ class TelemetryFacade(DefaultFacade):
 		self.metrics = TelemetryGeneralController()
 		self.telemetry = TelemetryGeneralController()
 		self.dashboard_runtime_and_connected_clients = TelemetryGeneralController()
+
+#protectedstart functions ##########################################################################
+#protectedend ######################################################################################
+
 

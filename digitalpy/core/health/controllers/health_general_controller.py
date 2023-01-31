@@ -1,8 +1,23 @@
 
 from digitalpy.core.main.controller import Controller
 
-class HealthGeneralController(Controller):
-# default constructor  def __init__(self):  
+#protectedstart classDeclaration ###################################################################
+class HealthController(Controller):
+#protectedend ######################################################################################
+
+
+
+
+#protectedstart classComments#######################################################################
+#protectedend ######################################################################################
+
+
+#	default constructor  def __init__(self):
+#protectedstart classVars ##########################################################################
+#protectedend ######################################################################################
+
+
+
 
 	def __init__(Request, Response, ActionMapper, Configuration):
 		pass
@@ -58,4 +73,7 @@ class HealthGeneralController(Controller):
 	def check_system_security():
 		"""Monitors system security and sends alerts if any vulnerabilities are detected"""
 		pass
+
+#protectedstart functions ##########################################################################
+#protectedend ######################################################################################
 

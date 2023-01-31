@@ -1,6 +1,15 @@
 from digitalpy.component.impl.default_facade import DefaultFacade
+#protectedstart imports ############################################################################
+#protectedend ######################################################################################
 
+
+#protectedstart classDeclaration ###################################################################
 class ComponentManagementFacade(DefaultFacade):
+#protectedend ######################################################################################
+
+
+
+
 	"""Facade class for the this component. Responsible for handling all public
 	routing. Forwards all requests to the internal router.
 	WHY:
@@ -14,10 +23,20 @@ class ComponentManagementFacade(DefaultFacade):
 	clients and the Subsystems.</li>
 	</ul>
 	"""
+#protectedstart classComments#######################################################################
+#protectedend ######################################################################################
 
-# default constructor  def __init__(self):  
+
+
+#	default constructor  def __init__(self):
+#protectedstart classVars ##########################################################################
+#protectedend ######################################################################################
+
 
 	def __init__(self):
+#protectedstart classVars ##########################################################################
+#protectedend ######################################################################################
+
 		self.start_component = ComponentManagementGeneralController()
 		self.stop_component = ComponentManagementGeneralController()
 		self.restart_component = ComponentManagementGeneralController()
@@ -26,4 +45,8 @@ class ComponentManagementFacade(DefaultFacade):
 		self.list_components = ComponentManagementGeneralController()
 		self.get_component_info = ComponentManagementGeneralController()
 		self.update_component = ComponentManagementGeneralController()
+
+#protectedstart functions ##########################################################################
+#protectedend ######################################################################################
+
 

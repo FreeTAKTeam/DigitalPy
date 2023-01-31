@@ -1,8 +1,23 @@
 
 from digitalpy.core.main.controller import Controller
 
-class NetworkGeneralController(Controller):
-# default constructor  def __init__(self):  
+#protectedstart classDeclaration ###################################################################
+class NetworkController(Controller):
+#protectedend ######################################################################################
+
+
+
+
+#protectedstart classComments#######################################################################
+#protectedend ######################################################################################
+
+
+#	default constructor  def __init__(self):
+#protectedstart classVars ##########################################################################
+#protectedend ######################################################################################
+
+
+
 
 	def __init__(Request, Response, ActionMapper, Configuration):
 		pass
@@ -26,4 +41,7 @@ class NetworkGeneralController(Controller):
 	def ftp_upload():
 		"""receive a file from a connected client"""
 		pass
+
+#protectedstart functions ##########################################################################
+#protectedend ######################################################################################
 

@@ -1,8 +1,23 @@
 
 from digitalpy.core.main.controller import Controller
 
-class ComponentManagementGeneralController(Controller):
-# default constructor  def __init__(self):  
+#protectedstart classDeclaration ###################################################################
+class ComponentManagementController(Controller):
+#protectedend ######################################################################################
+
+
+
+
+#protectedstart classComments#######################################################################
+#protectedend ######################################################################################
+
+
+#	default constructor  def __init__(self):
+#protectedstart classVars ##########################################################################
+#protectedend ######################################################################################
+
+
+
 
 	def __init__(Request, Response, ActionMapper, Configuration):
 		pass
@@ -46,4 +61,7 @@ class ComponentManagementGeneralController(Controller):
 	def update_component():
 		"""Updates the information of an existing component"""
 		pass
+
+#protectedstart functions ##########################################################################
+#protectedend ######################################################################################
 
