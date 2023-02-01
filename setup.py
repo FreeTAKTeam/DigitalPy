@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='digitalpy',
-      version='0.2.7',
+      version='0.3.4',
       description="A python implementation of the aphrodite's specification, heavily based on WCMF",
       author='Natha Paquette',
       author_email='natha.paquette@gmail.com',
@@ -13,5 +13,6 @@ setup(name='digitalpy',
       extras_require={
             "DEV": ["pytest"],
       },
-      packages=find_packages(include=["digitalpy", "digitalpy.*"])
+      package_data={'': ['*.ini', "*.conf", "*.json"]},
+      packages=find_packages(include=["digitalpy", "digitalpy.*", "*.json", "*.ini", "*.conf"])
      )

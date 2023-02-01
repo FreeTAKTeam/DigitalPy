@@ -7,7 +7,16 @@
 # Original author: FreeTAKTeam
 # 
 #######################################################
+import multiprocessing
+import os
+import pathlib
 
+from digitalpy.core.digipy_configuration.configuration import Configuration
+from digitalpy.core.digipy_configuration.impl.inifile_configuration import InifileConfiguration
+from digitalpy.core.component_management.impl.component_registration_handler import ComponentRegistrationHandler
+from digitalpy.core.main.factory import Factory
+from digitalpy.core.main.impl.default_factory import DefaultFactory
+from digitalpy.core.main.object_factory import ObjectFactory
 
 class DigitalPy:
     """this is the executable of the digitalPy framework, providing the starting point
@@ -16,11 +25,122 @@ class DigitalPy:
     def __init__(self):
         # Set up necessary resources and configurations for the application to run
         self.resources = []
-        self.configurations = {}
+        self.configuration: Configuration = InifileConfiguration("")
+
+        # register the digitalpy action mapping under ../digitalpy/action_mapping.ini
+        self.configuration.add_configuration(
+            str(
+                pathlib.PurePath(
+                    pathlib.PurePath(os.path.abspath(__file__)).parent.parent,
+                    "action_mapping.ini",
+                )
+            ),
+        )
+        # the central digitalpy configuration used throughout the application
+        self.factory: Factory = DefaultFactory(self.configuration)
+        
+        # register the factory and configuration to the object factory singleton
+        ObjectFactory.configure(self.factory)
+        ObjectFactory.register_instance("configuration", self.configuration)
+    
+        # factory instance is registered for use by the routing worker so that
+        # the instances in the instance dictionary can be preserved when the
+        # new object factory is instantiated in the sub-process
+        ObjectFactory.register_instance("factory", self.factory)
+
+    def register_components(self):
+        """register all components of the application
+        """
+        # register base digitalpy components
+        digipy_components = ComponentRegistrationHandler.discover_components(
+            component_folder_path=pathlib.PurePath(
+                str(
+                    pathlib.PurePath(
+                        os.path.abspath(__file__)
+                    ).parent.parent
+                ),
+            )
+        )
+
+        for digipy_component in digipy_components:
+            ComponentRegistrationHandler.register_component(
+                digipy_component,
+                "digitalpy.core",
+                self.configuration,
+            )
 
     def start(self):
-        # Begin the execution of the application
-        pass
+        """Begin the execution of the application, this should be overriden
+        by any inheriting classes"""
+        self.register_components()
+        self.configure()
+        self.start_services()
+
+    def start_services(self):
+        self.start_routing_proxy_service()
+        self.start_integration_manager_service()
+
+    def start_routing_proxy_service(self):
+        """this function is responsible for starting the routing proxy service"""
+        try:
+            # begin the routing proxy
+            self.routing_proxy_service = ObjectFactory.get_instance("Subject")
+            proc = multiprocessing.Process(
+                target=self.routing_proxy_service.begin_routing
+            )
+            proc.start()
+
+            return 1
+
+        except Exception as ex:
+            return -1
+
+    def stop_routing_proxy_service(self):
+        """this function is responsible for stopping the routing proxy service"""
+        try:
+            # TODO: add a pre termination call to shutdown workers and sockets before a
+            # termination to prevent hanging resources
+            if self.routing_proxy_service.is_alive():
+                self.routing_proxy_service.terminate()
+                self.routing_proxy_service.join()
+            else:
+                self.routing_proxy_service.join()
+            return 1
+        except Exception as e:
+            return -1
+
+    def start_integration_manager_service(self) -> bool:
+        """Starts the integration manager service.
+
+        Returns:
+            bool: True if successful, False otherwise.
+        """
+        try:
+
+            # begin the integration_manager_service
+            self.integration_manager_service = ObjectFactory.get_instance("IntegrationManager")
+            proc = multiprocessing.Process(target=self.integration_manager_service.start)
+            proc.start()
+
+            return True
+        except Exception as ex:
+            raise ex
+
+    def stop_integration_manager_service(self) -> bool:
+        """Stops the integration manager service.
+
+        Returns:
+            bool: True if successful, False otherwise.
+        """
+        try:
+            if self.integration_manager_service.is_alive():
+                self.integration_manager_service.terminate()
+                self.integration_manager_service.join()
+            else:
+                self.routing_proxy_service.join()
+            return True
+        except Exception as ex:
+            raise ex
 
     def stop(self):
         # End the execution of the application
@@ -39,9 +159,9 @@ class DigitalPy:
         # Restore the application to a previously saved state
         pass
 
-    def configure(self, config):
-        # Set or modify the configuration of the application
-        self.configurations = config
+    def configure(self):
+        """Set or modify the configuration of the application"""
+
 
     def get_status(self):
         # Retrieve the current status of the application (e.g. running, stopped, etc.)

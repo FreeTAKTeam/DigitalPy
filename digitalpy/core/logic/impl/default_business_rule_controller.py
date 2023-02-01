@@ -63,6 +63,7 @@ class DefaultBusinessRuleController(Controller):
             resolver = self._get_resolver(matchable, rule_dict)
 
             self._evaluate_sub_rules(matchable, rule_dict, resolver)
+
     def _get_matchable_object(self, matchable, rule_dict):
         # TODO: it may be better to get the matchable from the response
         # instead of the request
@@ -142,6 +143,13 @@ class DefaultBusinessRuleController(Controller):
                 
                 for key, value in sub_response.get_values().items():
                     cur_response.set_value(key, value)
+                
+                # add support for next_action outside of the internal_action_mapper
+                if sub_response.get_action() != sub_request.get_action():
+                    cur_response.set_action(sub_response.get_action())
+                    
+                if sub_response.get_context() != sub_request.get_context():
+                    cur_response.set_context(sub_response.get_context())
 
     def create_request(self, sender: str=None, context: str=None, action: str=None, values: Union[dict, str]={}, format: str=None) -> Request:
         """create a request object
