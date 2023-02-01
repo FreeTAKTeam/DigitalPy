@@ -55,7 +55,7 @@ class ServiceManagementSenderController(Controller):
 		self.iam.get_connections_by_id(recipients)
 
 		for recipient_object in self.response.get_value("connections"):
-			recipient_main_topic = f"/{recipient_object.service_id}/{recipient_object.protocol}/{self.response.get_action()}/"
+			recipient_main_topic = f"/{recipient_object.service_id}/{recipient_object.protocol}/{self.response.get_sender()}/{self.response.get_context()}/{self.response.get_action()}/{self.response.get_id()}/"
 			if recipient_main_topic in main_topics:
 				main_topics[recipient_main_topic]+= str(recipient_object.get_oid())+USER_DELIMITER
 			else:

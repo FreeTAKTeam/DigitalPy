@@ -87,14 +87,14 @@ class DefaultRoutingWorker:
         except Exception as ex:
             raise ex
 
-    def send_response(self, response: Response, protocol: str)->None:
+    def send_response(self, response: Response, protocol: str, service_id: str)->None:
         """send a response to the integration_manager
 
         Args:
             response (Response): the response to be sent to integration_manager
             protocol (str): the protocol of the message
         """
-        response_topics = self.get_response_topic(response, protocol)
+        response_topics = self.get_response_topic(response, protocol, service_id)
         #self.formatter.serialize(response)
         #response_value = response.get_values()
         for response_topic in response_topics:
@@ -133,7 +133,7 @@ class DefaultRoutingWorker:
             response_topic (str): the base topic from which to send the response
             request (Request): the request object to be processed
         """
-        response = ObjectFactory.get_new_instance("response")
+        response: Response = ObjectFactory.get_new_instance("response")
         referrer = request.get_sender()
         context = request.get_context()
         action = request.get_action()
@@ -142,6 +142,8 @@ class DefaultRoutingWorker:
         response.set_context(context)
         response.set_action(action)
         response.set_format(format)
+        response.set_id(request.get_id())
+        service_id =  request.get_value("service_id")
 
         actionKeyProvider = ConfigActionKeyProvider(
             self.configuration, "actionmapping"
@@ -214,14 +216,14 @@ class DefaultRoutingWorker:
         terminate = len(nextActionKey) == 0 or actionKey == nextActionKey
         if terminate:
             # stop processing
-            self.send_response(response, protocol)
+            self.send_response(response, protocol, service_id=service_id)
             return
         
         self.process_next_request(controllerClass=controllerClass,response=response)
 
-        self.send_response(response, protocol=protocol)
+        self.send_response(response, protocol=protocol, service_id=service_id)
 
-    def get_response_topic(self, response: Response, protocol: str) -> List[bytes]:
+    def get_response_topic(self, response: Response, protocol: str, service_id: str) -> List[bytes]:
         """get the topic to which the response is to be sent
 
         Args:
@@ -229,7 +231,9 @@ class DefaultRoutingWorker:
                 integration manager which may or may not have a value
                 of topics
 
-            protocol (str): the protocol on which the message as sent
+            protocol (str): the protocol on which the message is sent
+
+            service_id (str): the service to which the message is sent
             
         Return:
             List[bytes]
@@ -237,7 +241,7 @@ class DefaultRoutingWorker:
         if isinstance(response.get_value("topics"), list):
             return response.get_value("topics")
         else:
-            message = f'/{protocol}/{response.get_value("service_id")}/{response.get_sender()}/{response.get_context()}/{response.get_action()}'.encode()
+            message = f'/{service_id}/{protocol}/{response.get_sender()}/{response.get_context()}/{response.get_action()}/{response.get_id()}/'.encode()
             self.formatter.serialize(response)
             response_value = response.get_values()
             return [message+b","+response_value]
@@ -269,7 +273,7 @@ class DefaultRoutingWorker:
         try:
             # Receive message from client
             message = self.sock.recv_multipart()[0]            
-            sender, context, action, format, protocol, values = message.split(b",", 5)
+            sender, context, action, format, protocol, id, values = message.split(b",", 6)
 
             # Create a new request object
             request = ObjectFactory.get_new_instance("request")
@@ -278,6 +282,7 @@ class DefaultRoutingWorker:
             request.set_context(context.decode("utf-8"))
             request.set_action(action.decode("utf-8"))
             request.set_format(format.decode("utf-8"))
+            request.set_id(id.decode("utf-8"))
 
             # Deserialize the request
             self.formatter.deserialize(request)
