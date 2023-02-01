@@ -16,21 +16,24 @@ class ObjectId:
 
     def __init__(self, type, id=[], prefix=""):
         self.prefix = prefix
-        self.persistence_facade = ObjectFactory.get_instance("persistencefacade")
-        self.__fq_type = (
-            lambda: self.persistence_facade.get_fully_qualified_type(type)
-            if type != "NULL"
-            else "NULL"
-        )()
+        # TODO, properly implement the type checking of the object via the persistence facade
+        #self.persistence_facade = ObjectFactory.get_instance("persistencefacade")
+        #self.__fq_type = (
+        #    lambda: self.persistence_facade.get_fully_qualified_type(type)
+        #    if type != "NULL"
+        #    else "NULL"
+        #)()
+        self.__fq_type = type
+
         if not isinstance(id, list):
             self.id = [id]
         else:
             self.id = id
 
-        self.num_pks = ObjectId.get_number_of_pks(type)
+        #self.num_pks = ObjectId.get_number_of_pks(type)
 
-        while len(self.id) < self.num_pks:
-            self.id.append(self.get_dummy_id())
+        #while len(self.id) < self.num_pks:
+        #    self.id.append(self.get_dummy_id())
 
         self.str_val = self.__str__()
 

@@ -19,6 +19,8 @@ class DefaultFileLogger(Logger):
 
         self.config_file = config_file
 
+        if not os.path.exists(DefaultFileLogger.base_logging_path):
+            os.mkdir(DefaultFileLogger.base_logging_path)
         if not os.path.exists(pathlib.Path(DefaultFileLogger.base_logging_path, name)):
             os.mkdir(pathlib.Path(DefaultFileLogger.base_logging_path, name))
 

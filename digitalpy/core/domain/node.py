@@ -31,18 +31,31 @@ class Node(DefaultPersistentObject):
     def __init__(
         self,
         node_type,
-        configuration: Configuration,
-        model,
+        configuration: Configuration = Configuration(),
+        model = None,
         oid: ObjectId = None,
         initial_data=None,
     ) -> None:
+        """
+
+        Args:
+            node_type (str): the type of the created node
+            configuration (Configuration, optional): a json containing the configuration of this node objects relationships. Defaults to None.
+            model (_type_, optional): _description_. Defaults to None.
+            oid (ObjectId, optional): _description_. Defaults to None.
+            initial_data (_type_, optional): _description_. Defaults to None.
+        """
         super().__init__(oid, initial_data)
         self._children: Dict[str, Node] = {}
         self._parents: Dict[str, Node] = {}
         self._depth = -1
         self._path = ""
-        self._relationship_definition = configuration.elements[self.__class__.__name__]
-        self._add_relationships(configuration, model)
+        # default the elements to an empty dictionary if the class configuration doesn't exist
+        self._relationship_definition = configuration.elements.get(self.__class__.__name__, None)
+        
+        # check that the value of _relationship_definition is not none
+        if self._relationship_definition != None:
+            self._add_relationships(configuration, model)
 
     def _add_relationships(self, configuration: Configuration, model) -> None:
         for (
