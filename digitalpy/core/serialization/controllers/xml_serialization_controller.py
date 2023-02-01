@@ -30,9 +30,8 @@ class XMLSerializationController(Controller):
         Args:
             node (Node): the node to be serialized to xml
         """
-        self.response.set_value(
-            "message", self._serialize_node(node, node.__class__.__name__.lower())
-        )
+        # TODO this should not be a direct return and should be fixed ASAP
+        return self._serialize_node(node, node.__class__.__name__.lower())
 
     def _serialize_node(
         self, node: Node, tag_name: str, level=0
