@@ -35,17 +35,18 @@ class SerializationGeneralController(Controller):
     def serialize_node_to_protocol(self, message: Union[Node, List[Node]], protocol, **kwargs):
         """this is the general method used to serialize the component to a given format
         """
+        messages = []
         if protocol.upper() == Protocols.XML:
             # handle case where message contains multiple messages
             if isinstance(message, list):
                 for m in message:
-                    self.xml_serialization_controller.serialize_node(m)
-            elif isinstance(message, Node):
-                self.xml_serialization_controller.serialize_node(message)
+                    messages.append(self.xml_serialization_controller.serialize_node(m))
             else:
-                raise ValueError("unsupported type passed")
+                raise ValueError("unsupported type passed in message value only list type support")
         else:
             raise Exception("unsupported protocol "+protocol)
+
+        self.response.set_value("message", messages)
 
     def deserialize(self):
         """Deserializes a byte stream into an object"""
