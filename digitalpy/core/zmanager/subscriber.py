@@ -1,9 +1,6 @@
 from abc import ABC, abstractmethod
 
 class Subscriber(ABC):
-    @abstractmethod
-    def handle_sub_message(self, message):
-        """handle the case where a subscriber message is received"""
 
     @abstractmethod
     def broker_receive(self):
