@@ -54,11 +54,11 @@ class IAMUsersController(Controller):
 
         return queried_connections
 
-    def get_all_connections(self, **kwargs):
+    def get_all_connections(self, **kwargs) -> List[Node]:
         """get all recorded connections and save them to the connections value
         """
         connections = self._load_persistency()
-        self.response.set_value("connections", connections)
+        self.response.set_value("connections", connections.values())
 
     def _load_persistency(self) -> dict:
         """load the contents of the persistency file
