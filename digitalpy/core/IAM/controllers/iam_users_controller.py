@@ -66,11 +66,16 @@ class IAMUsersController(Controller):
         Returns:
             dict: all persisted connections
         """
-        with open(CONNECTIONS_PERSISTENCE, "rb+") as f:
-            try:
+        try:
+            with open(CONNECTIONS_PERSISTENCE, "rb+") as f:
                 return pickle.load(f)
-            except EOFError:
-                return {}
+        # in the case that the file contains unreadable data
+        # or no file exists return an empty dictionary which will later be written to the
+        # file
+        except EOFError:
+            return {}
+        except FileNotFoundError:
+            return {}
 
     def _update_persistency(self, connections: dict):
         """update the persistency with changes

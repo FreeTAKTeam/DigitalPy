@@ -16,6 +16,10 @@ class ZmqSubscriber(Subscriber):
     # 6. Close the socket
     # 7. Destroy the context
     def __init__(self, formatter: Formatter):
+        # list of connection to which the socket should reconnect after
+        # being unpickled
+        self.__subscriber_socket_connections = []
+
         self.subscriber_context = None
         self.subscriber_socket = None
         self.subscriber_formatter = formatter
@@ -31,12 +35,16 @@ class ZmqSubscriber(Subscriber):
         if not isinstance(integration_manager_protocol, str):
             raise TypeError("'integration_manager_protocol' must be a string")
         
+        self.service_identity = service_identity
+
         # added to fix hanging connect issue as per 
         # https://stackoverflow.com/questions/44257579/zeromq-hangs-in-a-python-multiprocessing-class-object-solution
         if self.subscriber_context == None:
             self.subscriber_context = zmq.Context()
         if self.subscriber_socket == None:
             self.subscriber_socket = self.subscriber_context.socket(zmq.SUB)
+        self.__subscriber_socket_connections.append(f"{integration_manager_protocol}://{integration_manager_address}:{integration_manager_port}")
+        # add the connection to the connections list so it can be reconnected upon serialization
         self.subscriber_socket.connect(f"{integration_manager_protocol}://{integration_manager_address}:{integration_manager_port}")
         self.subscriber_socket.setsockopt_string(zmq.SUBSCRIBE, f"/messages/{service_identity}/")
         self.subscriber_socket.setsockopt_string(zmq.SUBSCRIBE, f"/commands/{service_identity}/")
@@ -45,14 +53,18 @@ class ZmqSubscriber(Subscriber):
         self.subscriber_socket.setsockopt(zmq.RCVHWM, 0)
         self.subscriber_socket.setsockopt(zmq.SNDHWM, 0)
         
-        
-    def broker_receive(self) -> List[Response]:
+    def broker_receive(self, blocking: bool=False) -> List[Response]:
         """Returns the reply message or None if there was no reply
+        Args:
+            blocking (False): whether or not the operation is blocking. Option defaults to False.
         """
         responses = []
         try:
             while True:
-                message = self.subscriber_socket.recv_multipart(flags=zmq.NOBLOCK)[0].split(b" ", 1)
+                if not blocking:
+                    message = self.subscriber_socket.recv_multipart(flags=zmq.NOBLOCK)[0].split(b" ", 1)
+                else: 
+                    message = self.subscriber_socket.recv_multipart()[0].split(b" ", 1)
                 # instantiate the response object
                 response = ObjectFactory.get_instance("response")
                 
@@ -67,10 +79,11 @@ class ZmqSubscriber(Subscriber):
                 topic = message[0]
                 decoded_topic = topic.decode("utf-8")
                 topic_sections = decoded_topic.split("/")
-                _, _, sender, context, action, recipients = topic_sections
+                _, _, service_id, protocol, sender, context, action, id, recipients = topic_sections
                 response.set_sender(sender)
                 response.set_context(context)
                 response.set_action(action)
+                response.set_id(id)
 
                 if len(recipients.split(RECIPIENT_DELIMITER))>1:
                     response.set_value("recipients", recipients.split(RECIPIENT_DELIMITER)[:-1])
@@ -97,3 +110,7 @@ class ZmqSubscriber(Subscriber):
         self.__dict__ = state
         self.subscriber_context = zmq.Context()
         self.subscriber_socket = self.subscriber_context.socket(zmq.SUB)
+        for connection in self.__subscriber_socket_connections:
+            self.subscriber_socket.connect(connection)
+            self.subscriber_socket.setsockopt_string(zmq.SUBSCRIBE, f"/messages/{self.service_identity}/")
+            self.subscriber_socket.setsockopt_string(zmq.SUBSCRIBE, f"/commands/{self.service_identity}/")

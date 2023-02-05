@@ -57,7 +57,7 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         Args:
             application_protocol (str): the application protocol of the service
         """
-        ZMQPusher.initiate_connections(self, self.subject_port, self.subject_address)
+        ZMQPusher.initiate_connections(self, self.subject_port, self.subject_address, self.service_id)
         self.broker_connect(self.integration_manager_address, self.integration_manager_port, self.integration_manager_protocol, self.service_id, application_protocol)
 
     def __getstate__(self):
