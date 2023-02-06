@@ -7,7 +7,7 @@
 # Original author: Giu Platania
 # 
 #######################################################
-from typing import List
+from typing import List, Union
 
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.zmanager.request import Request
@@ -36,13 +36,12 @@ class ServiceManagementSenderController(Controller):
 		"""
 		pass
 
-	def publish(self, recipients: List[str], message: Node, **kwargs) -> List[str]:
+	def publish(self, recipients: Union[List[str], str], **kwargs) -> List[str]:
 		"""this method is used to create the topic to publish a message
 		to a set of services based on the recipients
 
 		Args:
-			recipients (List[str]): a list of recipients id's
-			model_object (Node): the message to be sent to the list of recipients
+			recipients (Union[List[str], str]): a list of recipients id's or a * representing that the message should be sent to all connected clients
 
 		Returns:
 			List[str]: a list of topics to which the message should be published
@@ -51,9 +50,12 @@ class ServiceManagementSenderController(Controller):
 		main_topics = {}
 
 		return_topics: List[str] = []
-
-		self.iam.get_connections_by_id(recipients)
-
+		# case in which a specific set of users are meant to receive a given message
+		if isinstance(recipients, list):
+			self.iam.get_connections_by_id(recipients)
+		# case in which the message should be sent to all recipients
+		elif isinstance(recipients, str) and recipients == "*":
+			self.iam.get_all_connections()
 		for recipient_object in self.response.get_value("connections"):
 			recipient_main_topic = f"/{recipient_object.service_id}/{recipient_object.protocol}/{self.response.get_sender()}/{self.response.get_context()}/{self.response.get_action()}/{self.response.get_id()}/"
 			if recipient_main_topic in main_topics:
@@ -72,7 +74,7 @@ class ServiceManagementSenderController(Controller):
 			formatter.serialize(sub_response)
 			return_topics.append(main_topic.encode()+ids.encode()+b","+sub_response.get_values())
 
-		self.request.set_value("topics", return_topics)
+		self.response.set_value("topics", return_topics)
 
 	def execute(self, method = None):
 		pass
