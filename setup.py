@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='digitalpy',
-      version='0.3.8,
+      version='0.3.8',
       description="A python implementation of the aphrodite's specification, heavily based on WCMF",
       author='Natha Paquette',
       author_email='natha.paquette@gmail.com',
