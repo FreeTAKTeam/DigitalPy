@@ -1,5 +1,5 @@
 #protectedstart classDeclaration ###################################################################
-class UtilController(Controller):
+class UtilRules:
 #protectedend ######################################################################################
 
 

@@ -1,5 +1,5 @@
 #protectedstart classDeclaration ###################################################################
-class COTManagementController(Controller):
+class COTManagementRules:
 #protectedend ######################################################################################
 
 

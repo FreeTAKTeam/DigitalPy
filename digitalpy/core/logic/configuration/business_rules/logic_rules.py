@@ -1,5 +1,5 @@
 #protectedstart classDeclaration ###################################################################
-class LogicController(Controller):
+class LogicRules:
 #protectedend ######################################################################################
 
 

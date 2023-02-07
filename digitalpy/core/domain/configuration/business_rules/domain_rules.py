@@ -1,5 +1,5 @@
 #protectedstart classDeclaration ###################################################################
-class DomainController(Controller):
+class DomainRules:
 #protectedend ######################################################################################
 
 

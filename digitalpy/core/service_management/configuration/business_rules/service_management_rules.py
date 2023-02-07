@@ -1,5 +1,5 @@
 #protectedstart classDeclaration ###################################################################
-class ServiceManagementController(Controller):
+class ServiceManagementRules:
 #protectedend ######################################################################################
 
 

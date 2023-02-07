@@ -1,5 +1,5 @@
 #protectedstart classDeclaration ###################################################################
-class QueriesController(Controller):
+class QueriesRules:
 #protectedend ######################################################################################
 
 

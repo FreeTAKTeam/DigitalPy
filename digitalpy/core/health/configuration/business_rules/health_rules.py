@@ -1,5 +1,5 @@
 #protectedstart classDeclaration ###################################################################
-class HealthController(Controller):
+class HealthRules:
 #protectedend ######################################################################################
 
 

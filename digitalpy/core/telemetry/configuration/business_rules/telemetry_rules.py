@@ -1,5 +1,5 @@
 #protectedstart classDeclaration ###################################################################
-class TelemetryController(Controller):
+class TelemetryRules:
 #protectedend ######################################################################################
 
 

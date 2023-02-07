@@ -1,5 +1,5 @@
 #protectedstart classDeclaration ###################################################################
-class TranslationController(Controller):
+class TranslationRules:
 #protectedend ######################################################################################
 
 

@@ -1,5 +1,5 @@
 #protectedstart classDeclaration ###################################################################
-class PersistenceController(Controller):
+class PersistenceRules:
 #protectedend ######################################################################################
 
 

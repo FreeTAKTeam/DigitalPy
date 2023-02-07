@@ -1,5 +1,5 @@
 #protectedstart classDeclaration ###################################################################
-class DigiPyConfigurationController(Controller):
+class DigiPyConfigurationRules:
 #protectedend ######################################################################################
 
 

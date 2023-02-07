@@ -1,5 +1,5 @@
 #protectedstart classDeclaration ###################################################################
-class ComponentManagementController(Controller):
+class ComponentManagementRules:
 #protectedend ######################################################################################
 
 

@@ -1,5 +1,5 @@
 #protectedstart classDeclaration ###################################################################
-class IAMController(Controller):
+class IAMRules:
 #protectedend ######################################################################################
 
 

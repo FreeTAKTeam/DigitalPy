@@ -1,5 +1,5 @@
 #protectedstart classDeclaration ###################################################################
-class NetworkController(Controller):
+class NetworkRules:
 #protectedend ######################################################################################
 
 

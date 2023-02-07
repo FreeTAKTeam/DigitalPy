@@ -1,5 +1,5 @@
 #protectedstart classDeclaration ###################################################################
-class SerializationController(Controller):
+class SerializationRules:
 #protectedend ######################################################################################
 
 

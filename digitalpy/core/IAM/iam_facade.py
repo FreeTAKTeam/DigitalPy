@@ -37,7 +37,6 @@ class IAMFacade(DefaultFacade):
 #protectedstart classVars ##########################################################################
 #protectedend ######################################################################################
 
-		self. = IAMGeneralController()
 		self.delete_other_profiles = IAMGeneralController()
 		self.view_profile = IAMGeneralController()
 		self.assign_cot_to_group = IAMGeneralController()

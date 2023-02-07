@@ -1,5 +1,5 @@
 #protectedstart classDeclaration ###################################################################
-class ZManagerController(Controller):
+class ZManagerRules:
 #protectedend ######################################################################################
 
 
