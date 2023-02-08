@@ -248,7 +248,7 @@ class PersistentObject:
         """_reset all values to their original values"""
 
     @abstractmethod
-    def set_OID(self, oid: ObjectId) -> Any:
+    def set_oid(self, oid: ObjectId) -> Any:
         """_set the object id of the PersistentObject.
         @param $oid _the PersistentObject's oid.
         """

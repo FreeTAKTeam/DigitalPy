@@ -91,4 +91,11 @@ class Controller(ABC):
             self.action_mapper.get_response(sub_response, sub_request, listener)
         else:
             self.action_mapper.process_action(sub_request, sub_response)
+        # allow support for next_action to be specified by the sub_request
+        if sub_request.get_action() != sub_response.get_action():
+            self.request.set_action(sub_request.get_action())
+        
+        if sub_request.get_context() != sub_response.get_context():
+            self.request.set_context(sub_request.get_context())
+            
         return sub_response

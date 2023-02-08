@@ -32,12 +32,21 @@ class Node(SQLAlchemyPersistentObject):
     def __init__(
         self,
         node_type,
-        configuration: Configuration,
-        model,
-        registry: registry,
+        configuration: Configuration = Configuration(),
+        model = None,
+        registry: registry = None,
         oid: ObjectId = None,
         initial_data=None,
     ) -> None:
+        """
+
+        Args:
+            node_type (str): the type of the created node
+            configuration (Configuration, optional): a json containing the configuration of this node objects relationships. Defaults to None.
+            model (_type_, optional): _description_. Defaults to None.
+            oid (ObjectId, optional): _description_. Defaults to None.
+            initial_data (_type_, optional): _description_. Defaults to None.
+        """
         self._children: Dict[str, Node] = {}
         self._parents: Dict[str, Node] = {}
         self._depth = -1
@@ -49,12 +58,19 @@ class Node(SQLAlchemyPersistentObject):
         super().__init__(oid, registry, initial_data)
     def _add_relationships(self, configuration: Configuration, model, registry) -> None:
         """add all relationships defined in the configuration to the node
-
         Args:
             configuration (Configuration): configuration defining relationships
             model (package): a package instance from which related node classes can be gotten
             registry (registry): sqlalchemy registry used to dynamically define new database classes
         """
+        # default the elements to an empty dictionary if the class configuration doesn't exist
+        self._relationship_definition = configuration.elements.get(self.__class__.__name__, None)
+        
+        # check that the value of _relationship_definition is not none
+        if self._relationship_definition != None:
+            self._add_relationships(configuration, model)
+
+        
         # instantiate children
         for (
             relationship_name,

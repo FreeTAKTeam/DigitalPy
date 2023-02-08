@@ -16,8 +16,7 @@ class ObjectId:
 
     def __init__(self, type, id=[], prefix=""):
         self.prefix = prefix
-        # TODO this can be restored once an implementation for the concept of a persistence facade
-        # has been implemented, for the time being the fqtype is simply set as the type
+        # TODO, properly implement the type checking of the object via the persistence facade
         #self.persistence_facade = ObjectFactory.get_instance("persistencefacade")
         #self.__fq_type = (
         #    lambda: self.persistence_facade.get_fully_qualified_type(type)
@@ -25,6 +24,7 @@ class ObjectId:
         #    else "NULL"
         #)()
         self.__fq_type = type
+
         if not isinstance(id, list):
             self._id = [id]
         else:
