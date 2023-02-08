@@ -8,6 +8,7 @@
 # example of simplified component with no routing class
 #######################################################
 
+#protectedstart imports
 from typing import List
 from digitalpy.core.component_management.impl.default_facade import DefaultFacade
 from digitalpy.core.main.object_factory import ObjectFactory
@@ -24,12 +25,18 @@ from .configuration.iam_constants import (
     CONNECTIONS_PERSISTENCE
 )
 from . import base
+#protectedend
 
-
+#protectedstart classDeclaration
 class IAM(DefaultFacade):
+#protectedend
+
+#protectedstart classComments
     """the IAM facade provides the single point of entry to all the Autentication and
     authorization functions
     """
+#protectedend
+
 
     def __init__(
             self,
