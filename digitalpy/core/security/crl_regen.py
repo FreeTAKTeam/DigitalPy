@@ -1,16 +1,19 @@
 from OpenSSL import crypto
 import argparse
 
-CA_PEM_PATH = "ca.pem"
-CA_KEY_PATH = "ca.key"
-CRL_FILE = "FTS_CRL.json"
-
 class CertficateRevocationListController:
-    def __init__(ca_pem_path: str, ca_key_path: str, crl_file_path: str):
+    def __init__(self, ca_pem_path: str, ca_key_path: str, crl_file_path: str):
+        """CertficateRevocationListController constructor
+
+        Args:
+            ca_pem_path (str): path to the ca pem file of the crl
+            ca_key_path (str): path to the ca key file of the crl
+            crl_file_path (str): path to the crl file
+        """
         self.ca_pem_path = ca_pem_path
         self.ca_key_path = ca_key_path
-        self.ca_key = crypto.load_privatekey(crypto.FILETYPE_PEM, open(CA_KEY_PATH).read())
-        self.ca_pem = crypto.load_certificate(crypto.FILETYPE_PEM, open(CA_PEM_PATH, 'rb').read())
+        self.ca_key = crypto.load_privatekey(crypto.FILETYPE_PEM, open(ca_key_path).read())
+        self.ca_pem = crypto.load_certificate(crypto.FILETYPE_PEM, open(ca_pem_path, 'rb').read())
         self.crl_file_path = crl_file_path
 
     def regenerate_crl(self):
