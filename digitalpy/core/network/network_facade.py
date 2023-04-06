@@ -13,24 +13,25 @@ class NetworkFacade(Facade):
     """Facade class for the Component component. Responsible for handling all public
     routing. Forwards all requests to the internal router.
     """
- def __init__(self):
-    self.scanner = NetworkGeneralController()
-    self.tcp_ssl_socket = NetworkGeneralController()
-    self.server = NetworkGeneralController()
-    self.connection_status = NetworkGeneralController()
-    self.network_controller = NetworkGeneralController()
+    def __init__(self):
+        self.scanner = NetworkGeneralController()
+        self.tcp_ssl_socket = NetworkGeneralController()
+        self.server = NetworkGeneralController()
+        self.connection_status = NetworkGeneralController()
+        self.network_controller = NetworkGeneralController()
 
-  def scan_for_available_networks(self):
-    return self.scanner.scan()
+    def scan_for_available_networks(self):
+        return self.scanner.scan()
 
-  def open_tcp_ssl_socket(self, host, port):
-    return self.tcp_ssl_socket.open(host, port)
+    def open_tcp_ssl_socket(self, host, port):
+        return self.tcp_ssl_socket.open(host, port)
 
-  def listen_for_incoming_connections(self):
-    return self.server.listen()
+    def listen_for_incoming_connections(self):
+        return self.server.listen()
 
-  def get_connection_status(self):
-    return self.connection_status.check_status()
+    def get_connection_status(self):
+        return self.connection_status.check_status()
+
     def connect(self):
         return self.network_controller.connect()
     
@@ -56,4 +57,4 @@ class NetworkFacade(Facade):
         return self.network_controller.scan_for_available_networks()
     
     def connect_to_specific_network(self, network_name):
-        return self.network_controller.connect_to_specific_network(network_name
+        return self.network_controller.connect_to_specific_network(network_name)

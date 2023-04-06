@@ -18,16 +18,14 @@ class TelemetryFacade(Facade, Facade):
 # default constructor  def __init__(self):  
 
     def __init__(self):
-		self.get_telemetry_config = TelemetryGeneralController()
-		self.log = TelemetryGeneralController()
-		self.get_telemetry_data = TelemetryGeneralController()
-		self.set_telemetry_data = TelemetryGeneralController()
-		self.get_telemetry_alarms = TelemetryGeneralController()
-		self.dashboard_logs = TelemetryGeneralController()
-		self.telemetry = TelemetryGeneralController()
-		self.set_telemetry_config = TelemetryGeneralController()
-		self.metrics = TelemetryGeneralController()
-		self.telemetry = TelemetryGeneralController()
-		self.dashboard_runtime_and_connected_clients = TelemetryGeneralController()
-	
-
+        self.get_telemetry_config = TelemetryGeneralController()
+        self.log = TelemetryGeneralController()
+        self.get_telemetry_data = TelemetryGeneralController()
+        self.set_telemetry_data = TelemetryGeneralController()
+        self.get_telemetry_alarms = TelemetryGeneralController()
+        self.dashboard_logs = TelemetryGeneralController()
+        self.telemetry = TelemetryGeneralController()
+        self.set_telemetry_config = TelemetryGeneralController()
+        self.metrics = TelemetryGeneralController()
+        self.telemetry = TelemetryGeneralController()
+        self.dashboard_runtime_and_connected_clients = TelemetryGeneralController()

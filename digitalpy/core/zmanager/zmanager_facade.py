@@ -15,9 +15,7 @@ class ZManagerFacade(Facade, Facade):
       </ul>
     """
 	
-# default constructor  def __init__(self):  
+    # default constructor  def __init__(self):  
 
     def __init__(self):
-		self.routing = ZManagerGeneralController()
-	
-
+    		self.routing = ZManagerGeneralController()
