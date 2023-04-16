@@ -15,9 +15,7 @@ class QueriesFacade(Facade, Facade):
       </ul>
     """
 	
-# default constructor  def __init__(self):  
+    # default constructor  def __init__(self):  
 
     def __init__(self):
-		self.web_map_search_cot = QueriesGeneralController()
-	
-
+		    self.web_map_search_cot = QueriesGeneralController()
