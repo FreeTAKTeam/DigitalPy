@@ -66,7 +66,7 @@ Aphrodite 1.0 describes a monolithic architecture, to support a better modular d
 
 ![image](https://user-images.githubusercontent.com/60719165/201923460-71da92c0-f685-4f44-aa19-8dc53fe0119c.png)
 
- ## component Architecture
+ ## Component Architecture
 
 ![image](https://user-images.githubusercontent.com/60719165/201922624-5bcfbda3-8267-4f07-8200-4198db6b8589.png)
 ### Facade
@@ -106,7 +106,23 @@ EmergencyGeoFenceBreached = FreeTAKServer.components.extended.emergency.Emergenc
 This allows you to keep the implementation details of the emergency alert handling logic separate from the rest of the application, and makes it easier to maintain and modify the code in the future.
  ```
  
-
-
 ## DigitalPy package dependencies
 ![image](https://user-images.githubusercontent.com/60719165/201922228-a4a7842c-8425-437f-be1c-884ec8c852d1.png)
+
+
+## Routing
+Routing is the process of selecting the correct Controller for a given Request. DigitalPy distinguishes between internal and external routing.
+
+### Internal routing
+Internal routing is executed within the scope of a Component
+
+### External routing
+External routing can be executed Between:
+ -  a Service and a Component
+ -  Two Components
+ - a Core function and a component
+
+## Service
+A DP service exposes all the external communication to the outside world. Each service exposes typically a port.
+
+ 
