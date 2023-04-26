@@ -144,7 +144,7 @@ class DefaultRoutingWorker:
         response.set_format(format)
         response.set_id(request.get_id())
         service_id =  request.get_value("service_id")
-
+        request.clear_value("service_id")
         actionKeyProvider = ConfigActionKeyProvider(
             self.configuration, "actionmapping"
         )
