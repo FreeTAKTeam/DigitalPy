@@ -87,12 +87,12 @@ class DefaultFactory(Factory):
                     ):
                         continue
                     param_instance_key = param_name.lower().replace("_", "")
-                    if param_instance_key in self.instances:
-                        c_params[param_name] = self.instances[param_instance_key]
-                    elif param_name in configuration:
+                    if param_name in configuration:
                         c_params[param_name] = self.resolve_value(
                             configuration[param_name]
                         )
+                    elif param_instance_key in self.instances:
+                        c_params[param_name] = self.instances[param_instance_key]
                     elif self.configuration.has_section(param_name):
                         c_params[param_name] = self.get_instance(param_name)
                     elif self.configuration.has_section(param_instance_key):
