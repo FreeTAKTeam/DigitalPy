@@ -40,15 +40,20 @@ class ZMQPusher(Pusher):
         """
         self.pusher_socket.connect(f"tcp://{address}:{port}")
         
-    def subject_send_request(self, request: Request, protocol: str):
+    def subject_send_request(self, request: Request, protocol: str, service_id: str = None):
         """send the message to a Puller
 
         Args:
             request (Request): the request to be sent to the subject
             protocol (str): the protocol of the request to be sent
+            service_id (str): the id of the service to which the response
+                of the message is expected to be sent
         """
+        if service_id is None:
+            service_id = self.service_id
+            
         # set the service_id so it can be used to create the publish topic by the default routing worker
-        request.set_value("service_id", self.service_id)
+        request.set_value("service_id", service_id)
         self.pusher_formatter.serialize(request)
         self.pusher_socket.send(b",".join([request.get_sender().encode(), request.get_context().encode(), request.get_action().encode(), request.get_format().encode(), protocol.encode(), request.get_id().encode(), request.get_values()]))
     
