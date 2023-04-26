@@ -106,7 +106,7 @@ class DefaultActionMapper(ActionMapper):
             controllerClass = controllerDef
 
         # instantiate controller
-        controllerObj = ObjectFactory.get_instance_of(controllerClass)
+        controllerObj = ObjectFactory.get_instance_of(controllerClass, dynamic_configuration={"request": request, "response": response})
 
         # everything is right in place, start processing
 
