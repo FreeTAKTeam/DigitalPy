@@ -72,7 +72,7 @@ class DefaultFacade(Controller):
 
         if tracing_provider_instance is not None:
             self.tracer: Tracer = tracing_provider_instance.create_tracer(
-                component_name
+                self.component_name
             )
         else:
             self.tracer = None
