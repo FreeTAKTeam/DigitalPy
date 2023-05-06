@@ -47,6 +47,7 @@ class ZmqSubscriber(Subscriber):
         # add the connection to the connections list so it can be reconnected upon serialization
         self.subscriber_socket.connect(f"{integration_manager_protocol}://{integration_manager_address}:{integration_manager_port}")
         self.subscriber_socket.setsockopt_string(zmq.SUBSCRIBE, f"/messages/{service_identity}/")
+        # currently nothing is done with the commands endpoint but it will be used in future
         self.subscriber_socket.setsockopt_string(zmq.SUBSCRIBE, f"/commands/{service_identity}/")
         # unlimited as trunkating can result in unsent data and broken messages
         # TODO: determine a sane default
