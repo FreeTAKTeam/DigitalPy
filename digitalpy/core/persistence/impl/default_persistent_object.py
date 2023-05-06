@@ -128,3 +128,11 @@ class DefaultPersistentObject(PersistentObject):
 
     def get_oid(self):
         return self._oid
+
+    def get_type(self) -> str:
+        """the current class name
+
+        Returns:
+            str: class name
+        """
+        return self.__class__.__name__
