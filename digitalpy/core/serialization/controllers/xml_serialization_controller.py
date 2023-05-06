@@ -47,7 +47,7 @@ class XMLSerializationController(Controller):
             Union[str, Element]: the original call to this method returns a string representing the xml
                 the Element is only returned in the case of recursive calls
         """
-        xml = Element(tag_name)
+        xml = node.xml
         # handles text data within tag
         if hasattr(node, "text"):
             xml.text = node.text

@@ -45,5 +45,10 @@ class LoadConfiguration:
                         child_name = value["$ref"].split("/")[-1]
                         config[child_name]
                         config_entry.relationships[child_name] = Relationship(value.get("minItems", 0), value.get("maxItems", 1))
+                    elif value["type"] == "array":
+                        if "$ref" in value["items"]:
+                             child_name = value["items"]["$ref"].split("/")[-1]
+                        config[child_name]
+                        config_entry.relationships[child_name] = Relationship(value.get("minItems", 0), value.get("maxItems", "*"))
                 configuration.elements[class_name] = config_entry
         return configuration
