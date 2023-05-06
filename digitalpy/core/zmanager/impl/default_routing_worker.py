@@ -117,7 +117,10 @@ class DefaultRoutingWorker:
             try:
                 print("listening")
                 protocol, request = self.receive_request()
-                self.process_request(protocol, request)
+                service_id =  request.get_value("service_id")
+                request.clear_value("service_id")
+                response = self.process_request(protocol, request)
+                self.send_response(response, protocol=protocol, service_id=service_id)
                 
             except Exception as ex:
                 try:
@@ -143,8 +146,7 @@ class DefaultRoutingWorker:
         response.set_action(action)
         response.set_format(format)
         response.set_id(request.get_id())
-        service_id =  request.get_value("service_id")
-        request.clear_value("service_id")
+        
         actionKeyProvider = ConfigActionKeyProvider(
             self.configuration, "actionmapping"
         )
@@ -215,13 +217,10 @@ class DefaultRoutingWorker:
         # - if the next action key is the same as the previous one (to prevent recursion)
         terminate = len(nextActionKey) == 0 or actionKey == nextActionKey
         if terminate:
-            # stop processing
-            self.send_response(response, protocol, service_id=service_id)
-            return
+            return response
         
         self.process_next_request(controllerClass=controllerClass,response=response)
-
-        self.send_response(response, protocol=protocol, service_id=service_id)
+        return response
 
     def get_response_topic(self, response: Response, protocol: str, service_id: str) -> List[bytes]:
         """get the topic to which the response is to be sent
