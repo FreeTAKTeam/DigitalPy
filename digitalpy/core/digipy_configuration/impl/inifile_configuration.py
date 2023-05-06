@@ -102,19 +102,20 @@ class InifileConfiguration(Configuration):
             raise FileExistsError
         config_array = {}
         section_name = ""
-        lines = open(filename).readlines()
-        for line in lines:
-            line = line.strip()
-            if line == "" or line[0] == ";":
-                continue
-            if line.startswith("[") and line.endswith("]"):
-                section_name = line[1 : len(line) - 1]
-                config_array[section_name] = {}
-            else:
-                parts = line.split("=", 1)
-                key = parts[0].strip()
-                value = parts[1].strip()
-                config_array[section_name][key] = value
+        with open(filename) as f:
+            lines = f.readlines()
+            for line in lines:
+                line = line.strip()
+                if line == "" or line[0] == ";":
+                    continue
+                if line.startswith("[") and line.endswith("]"):
+                    section_name = line[1 : len(line) - 1]
+                    config_array[section_name] = {}
+                else:
+                    parts = line.split("=", 1)
+                    key = parts[0].strip()
+                    value = parts[1].strip()
+                    config_array[section_name][key] = value
 
         return config_array
 
