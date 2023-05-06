@@ -162,7 +162,7 @@ class Node(DefaultPersistentObject):
                     child_type
                 ]
                 children = self.get_children_ex(children_type=child_type)
-                if relationship_requirements["max_occurs"] == len(children):
+                if relationship_requirements.max_occurs == len(children):
                     return False
             return True
         raise TypeError("children must inherit from type Node")
@@ -466,65 +466,6 @@ class Node(DefaultPersistentObject):
                 this_role = None
             other.delete_node(self, this_role, False)
 
-    def filter(
-        node_list: list,
-        oid: ObjectId = None,
-        node_type: Any = None,
-        values: Any = None,
-        properties: Any = None,
-        use_regex: Any = True,
-    ) -> Any:
-        """Get Nodes that match given conditions from a list.
-           @param node_list An array of nodes to filter or a single Node.
-           @param oid The object id that the Nodes should match (optional, default:
-        _None_)
-           @param type The type that the Nodes should match (either fully qualified or
-        simple, if not ambiguous) (optional, default: _None_)
-           @param values An associative array holding key value pairs that the Node
-        values should match (values are interpreted as regular expression, optional,
-        default: _None_)
-           @param properties An associative array holding key value pairs that the
-        Node properties should match (values are interpreted as regular expression,
-        optional, default: _None_)
-           @param use_reg_exp Boolean whether to interpret the given values/properties
-        as regular expressions or not (default: _True_)
-           @return An Array holding references to the Nodes that matched.
-        """
-        return_array = []
-        for key, node in node_list.items():
-            if isinstance(node, PersistentObject):
-                match = True
-                # check id
-                if oid != None and node.get_oid() != oid:
-                    match = False
-                # check type
-                if node_type != None and node.get_type() != node_type:
-                    match = False
-                # check properties
-                if properties != None and isinstance(properties, dict):
-                    for key, value in properties.items():
-                        node_property = node.get_property(key)
-                        if use_regex and not re.match(
-                            "/" + value + "/m", node_property
-                        ):
-                            match = False
-                            break
-
-                        elif not hasattr(node, key) and not use_regex:
-                            match = False
-                            break
-
-                # check values
-                if values != None and isinstance(values, dict):
-                    for key, value in properties.items():
-                        node_value = self.get_value(key)
-                        if use_regex and not re.match("/" + value + "/m", node_value):
-                            match = False
-                            break
-                if match:
-                    return_array.append(node)
-        return return_array
-
     def get_added_nodes(self) -> Any:
         """Get the object ids of the nodes that were added since the node was loaded.
         Persistence mappers use this method when persisting the node relations.
@@ -532,66 +473,6 @@ class Node(DefaultPersistentObject):
         PersistentObject instances as values
         """
         return self.added_nodes
-
-    def get_children(self, mem_only: bool = True) -> Any:
-        """Get the Node's children.
-           @param mem_only Boolean whether to only get the loaded children or all
-        children (default: _True_).
-           @return Array PersistentObject instances.
-        """
-        return self.get_relatives("child", mem_only)
-
-    def get_children_ex(
-        self,
-        oid: ObjectId = None,
-        role: Any = None,
-        type: Any = None,
-        values: Any = None,
-        properties: Any = None,
-        use_reg_exp: Any = True,
-    ) -> Any:
-        """Get the children that match given conditions.
-           @note This method will only return objects that are already loaded, to get
-        all objects in the given relation (including proxies), use the Node.get_value()
-        method and filter the returned list afterwards.
-           @param oid The object id that the children should match (optional, default:
-        _None_).
-           @param role The role that the children should match (optional, default:
-        _None_).
-           @param type The type that the children should match (either fully qualified
-        or simple, if not ambiguous) (optional, default: _None_).
-           @param values An associative array holding key value pairs that the
-        children values should match (optional, default: _None_).
-           @param properties An associative array holding key value pairs that the
-        children properties should match (optional, default: _None_).
-           @param use_reg_exp Boolean whether to interpret the given values/properties
-        as regular expressions or not (default: _True_)
-           @return Array containing children Nodes that matched (proxies not included).
-        """
-        if role != None:
-            # nodes of a given role are requested
-            # make sure it is a child role
-            child_Roles = self.get_possible_children()
-            if not role in child_Roles:
-                raise ValueError("_No child role defined with name: " + role)
-
-            # we are only looking for nodes that are in memory already
-            nodes = super().get_value(role)
-            if not isinstance(nodes, list):
-                nodes = [nodes]
-
-            # sort out proxies
-            children = []
-            for node in nodes:
-                if isinstance(node, PersistentObject):
-                    children.append(node)
-
-            return self.filter(children, oid, type, values, properties, use_reg_exp)
-
-        else:
-            return self.filter(
-                self.get_children(), oid, type, values, properties, use_reg_exp
-            )
 
     def get_deleted_nodes(self) -> Any:
         """Get the object ids of the nodes that were deleted since the node was loaded.
