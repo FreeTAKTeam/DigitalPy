@@ -8,6 +8,7 @@
 # example of simplified component with no routing class
 #######################################################
 
+import traceback
 from typing import List
 from digitalpy.core.component_management.impl.default_facade import DefaultFacade
 from digitalpy.core.main.object_factory import ObjectFactory
@@ -94,6 +95,7 @@ class IAM(DefaultFacade):
                 self.response.set_values(response.get_values())
         except Exception as e:
             self.logger.fatal(str(e))
+            self.logger.debug(traceback.format_exc())
 
 
     def get_all_functions(self, **kwargs):
