@@ -1,6 +1,9 @@
 from typing import List, Tuple, Union
 import uuid
 import zmq
+import logging
+import traceback
+
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
 from digitalpy.core.main.object_factory import ObjectFactory
@@ -41,6 +44,7 @@ class DefaultRoutingWorker:
         self.integration_manager_address = integration_manager_address
         self.formatter = formatter
         self.worker_id = str(uuid.uuid4())
+        self.logger = logging.getLogger("DP-Default_Routing_Worker_DEBUG")
 
     def initiate_sockets(self):
         """initiate all socket connections
@@ -95,6 +99,7 @@ class DefaultRoutingWorker:
             protocol (str): the protocol of the message
         """
         response_topics = self.get_response_topic(response, protocol, service_id)
+        self.logger.debug("sending response \n id: %s \n values: %s \n topics: %s", str(response.get_id()), str(response.get_values()), str(response_topics))
         #self.formatter.serialize(response)
         #response_value = response.get_values()
         for response_topic in response_topics:
@@ -115,19 +120,17 @@ class DefaultRoutingWorker:
         self.initialize_tracing()
         while True:
             try:
-                print("listening")
                 protocol, request = self.receive_request()
                 service_id =  request.get_value("service_id")
                 request.clear_value("service_id")
                 response = self.process_request(protocol, request)
                 self.send_response(response, protocol=protocol, service_id=service_id)
-                
             except Exception as ex:
                 try:
                     self.send_error(ex)
-                except Exception as e:
+                except Exception as ex:
                     self.send_error(ex)
-                    print(str(e))
+                    logging.error(ex)
 
     def process_request(self, protocol: str, request: Request):
         """process a request made by the subject
@@ -198,12 +201,14 @@ class DefaultRoutingWorker:
         controllerObj.initialize(request, response)
 
         # execute controller
+        self.logger.info("sending action: %s to controller: %s", action, type(controllerObj))
         try:
             print("executing %s", action)
             controllerObj.execute(controllerMethod)
             print("%s executed", action)
         except Exception as ex:
-            pass
+            self.logger.error("error in default action mapper: %s", str(ex))
+            self.logger.debug("error traceback is %s", traceback.format_exc())
         # check if an action key exists for the return action
         nextActionKey = ActionKey.get_best_match(
             actionKeyProvider,
@@ -220,6 +225,7 @@ class DefaultRoutingWorker:
             return response
         
         self.process_next_request(controllerClass=controllerClass,response=response)
+        self.logger.debug("returned values: %s", str(response.get_values()))
         return response
 
     def get_response_topic(self, response: Response, protocol: str, service_id: str) -> List[bytes]:
@@ -287,7 +293,7 @@ class DefaultRoutingWorker:
             self.formatter.deserialize(request)
 
             
-
+            self.logger.debug("received request \n sender: %s \n context: %s \n action: %s \n format: %s \n protocol: %s \n id: %s \n values: %s", str(sender), str(context), str(action), format, protocol, id, request.get_values())
             # Return the topic sections, response topic, and request
             return protocol.decode(), request
 

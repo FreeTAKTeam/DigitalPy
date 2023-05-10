@@ -1,3 +1,4 @@
+import logging
 from digitalpy.core.digipy_configuration.action_key import ActionKey
 from digitalpy.core.persistence.application_event import ApplicationEvent
 from digitalpy.core.digipy_configuration.impl.config_action_key_provider import ConfigActionKeyProvider
@@ -28,6 +29,7 @@ class DefaultActionMapper(ActionMapper):
         self.configuration = configuration
         self.is_finished = False
         self.tracing_provider = None
+        self.logger = logging.getLogger("DefaultActionMapper")
 
     #
     # @see ActionMapper.processAction()
