@@ -1,5 +1,7 @@
 import zmq
 import multiprocessing
+import logging
+
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.digipy_configuration.configuration import Configuration
 
@@ -21,6 +23,7 @@ class Subject:
         self.frontend_pull_address = frontend_pull_address
         self.frontend_pub_address = frontend_pub_address
         self.backend_address = backend_address
+        self.logger = logging.getLogger("DP-Subject_DEBUG")
 
     def start_workers(self):
         for _ in range(self.worker_count):
@@ -43,8 +46,12 @@ class Subject:
         self.start_workers()
         self.initiate_sockets()
         while True:
-            message = self.frontend_pull.recv_multipart()
-            self.backend_pusher.send_multipart(message)
+            try:
+                message = self.frontend_pull.recv_multipart()
+                self.logger.debug("receieved %s",str(message))
+                self.backend_pusher.send_multipart(message)
+            except Exception as ex:
+                self.logger.fatal("exception thrown in subject %s", ex, exc_info=1)
 
     def __getstate__(self):
         """delete objects that cannot be pickled or generally serialized"""
