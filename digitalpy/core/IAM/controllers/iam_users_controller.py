@@ -16,26 +16,26 @@ class IAMUsersController(Controller):
     def __init__(self, request: Request, response: Response, action_mapper: ActionMapper, configuration: Configuration):
         super().__init__(request, response, action_mapper, configuration)
 
-    def connection(self, connection: Connection, **kargs):
+    def connection(self, logger, connection: Connection, **kargs):
         """handle the case of a connection connection to any digitalpy service
         
         Args:
             connection (Node): the Node object associated with the connected connection
         """
         con_oid = str(connection.get_oid())
-        self.logger.debug("adding %s to persistency", con_oid)
+        logger.debug("adding %s to persistency", con_oid)
         connections = self._load_persistency()
         # need to decode the pickled text so that it can be saved
         connections[con_oid] = connection
         self._update_persistency(connections=connections)
 
-    def disconnection(self, connection_id: str, **kwargs):
+    def disconnection(self, logger, connection_id: str, **kwargs):
         """handle the case of a connection disconnection from any digitalpy service
 
         Args:
             connection (str): the id of the connection to be disconnected
         """
-        self.logger.debug("removing %s from persistency", connection_id)
+        logger.debug("removing %s from persistency", connection_id)
         connections = self._load_persistency()
         del connections[connection_id]
         self._update_persistency(connections=connections)
