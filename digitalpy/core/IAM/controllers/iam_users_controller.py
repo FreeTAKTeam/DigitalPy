@@ -22,9 +22,11 @@ class IAMUsersController(Controller):
         Args:
             connection (Node): the Node object associated with the connected connection
         """
+        con_oid = str(connection.get_oid())
+        self.logger.debug("adding %s to persistency", con_oid)
         connections = self._load_persistency()
         # need to decode the pickled text so that it can be saved
-        connections[str(connection.get_oid())] = connection
+        connections[con_oid] = connection
         self._update_persistency(connections=connections)
 
     def disconnection(self, connection_id: str, **kwargs):
@@ -33,6 +35,7 @@ class IAMUsersController(Controller):
         Args:
             connection (str): the id of the connection to be disconnected
         """
+        self.logger.debug("removing %s from persistency", connection_id)
         connections = self._load_persistency()
         del connections[connection_id]
         self._update_persistency(connections=connections)
