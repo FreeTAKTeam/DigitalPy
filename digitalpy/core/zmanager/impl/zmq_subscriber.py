@@ -1,5 +1,6 @@
 import zmq
 from typing import List
+import logging
 
 from digitalpy.core.zmanager.subscriber import Subscriber
 from digitalpy.core.zmanager.response import Response
@@ -23,6 +24,7 @@ class ZmqSubscriber(Subscriber):
         self.subscriber_context = None
         self.subscriber_socket = None
         self.subscriber_formatter = formatter
+        self.logger = logging.getLogger(self.__class__.__name__)
 
     def broker_connect(self, integration_manager_address: str, integration_manager_port: int, integration_manager_protocol: str, service_identity: str, application_protocol: str):
         """Connect or reconnect to broker

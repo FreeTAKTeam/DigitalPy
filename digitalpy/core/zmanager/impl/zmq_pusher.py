@@ -1,3 +1,4 @@
+import logging
 import zmq
 from digitalpy.core.zmanager.pusher import Pusher
 from digitalpy.core.zmanager.request import Request
@@ -12,6 +13,7 @@ class ZMQPusher(Pusher):
         self.pusher_context = None
         self.pusher_socket = None
         self.pusher_formatter = formatter
+        self.logger = logging.getLogger(self.__class__.__name__)
 
     def initiate_connections(self, port: int, address: str, service_id: str):
         """initiate subject connection
@@ -55,7 +57,9 @@ class ZMQPusher(Pusher):
         # set the service_id so it can be used to create the publish topic by the default routing worker
         request.set_value("service_id", service_id)
         self.pusher_formatter.serialize(request)
-        self.pusher_socket.send(b",".join([request.get_sender().encode(), request.get_context().encode(), request.get_action().encode(), request.get_format().encode(), protocol.encode(), request.get_id().encode(), request.get_values()]))
+        request_msg = b",".join([request.get_sender().encode(), request.get_context().encode(), request.get_action().encode(), request.get_format().encode(), protocol.encode(), request.get_id().encode(), request.get_values()])
+        self.logger.debug("request message: %s", request_msg)
+        self.pusher_socket.send(request_msg)
     
     def __getstate__(self):
         state = self.__dict__
