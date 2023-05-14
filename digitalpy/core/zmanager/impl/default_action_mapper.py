@@ -30,6 +30,7 @@ class DefaultActionMapper(ActionMapper):
         self.is_finished = False
         self.tracing_provider = None
         self.logger = logging.getLogger("DefaultActionMapper")
+        self.logger.setLevel(logging.DEBUG)
 
     #
     # @see ActionMapper.processAction()
@@ -137,6 +138,7 @@ class DefaultActionMapper(ActionMapper):
             ),
         )
         try:
+            self.logger.debug("executing method %s on controller %s", str(controllerMethod), str(type(controllerObj)))
             controllerObj.execute(controllerMethod)
         except Exception as e:
             raise e

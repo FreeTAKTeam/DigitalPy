@@ -45,6 +45,7 @@ class DefaultRoutingWorker:
         self.formatter = formatter
         self.worker_id = str(uuid.uuid4())
         self.logger = logging.getLogger("DP-Default_Routing_Worker_DEBUG")
+        self.logger.setLevel(logging.DEBUG)
 
     def initiate_sockets(self):
         """initiate all socket connections

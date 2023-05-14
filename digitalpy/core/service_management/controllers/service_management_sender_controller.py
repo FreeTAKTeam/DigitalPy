@@ -53,15 +53,19 @@ class ServiceManagementSenderController(Controller):
 		# case in which a specific set of users are meant to receive a given message
 		if isinstance(recipients, list):
 			self.iam.get_connections_by_id(recipients)
+			for recipient_object in self.response.get_value("connections"):
+				recipient_main_topic = f"/{recipient_object.service_id}/{recipient_object.protocol}/{self.response.get_sender()}/{self.response.get_context()}/{self.response.get_action()}/{self.response.get_id()}/"
+				if recipient_main_topic in main_topics:
+					main_topics[recipient_main_topic]+= str(recipient_object.get_oid())+USER_DELIMITER
+				else:
+					main_topics[recipient_main_topic] = str(recipient_object.get_oid())+USER_DELIMITER
 		# case in which the message should be sent to all recipients
 		elif isinstance(recipients, str) and recipients == "*":
 			self.iam.get_all_connections()
-		for recipient_object in self.response.get_value("connections"):
-			recipient_main_topic = f"/{recipient_object.service_id}/{recipient_object.protocol}/{self.response.get_sender()}/{self.response.get_context()}/{self.response.get_action()}/{self.response.get_id()}/"
-			if recipient_main_topic in main_topics:
-				main_topics[recipient_main_topic]+= str(recipient_object.get_oid())+USER_DELIMITER
-			else:
-				main_topics[recipient_main_topic] = str(recipient_object.get_oid())+USER_DELIMITER
+			for recipient_object in self.response.get_value("connections"):
+				recipient_main_topic = f"/{recipient_object.service_id}/{recipient_object.protocol}/{self.response.get_sender()}/{self.response.get_context()}/{self.response.get_action()}/{self.response.get_id()}/"
+				if recipient_main_topic not in main_topics:
+					main_topics[recipient_main_topic] = ""
 		
 		# iterate the main topics dictionary,
 		# concatenate the ids and finally add them
