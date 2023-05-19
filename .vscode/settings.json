@@ -9,5 +9,8 @@
         "opentelemetry"
     ],
     "python.linting.pylintEnabled": true,
-    "python.linting.enabled": true
+    "python.linting.enabled": true,
+    "githubPullRequests.ignoredPullRequestBranches": [
+        "main"
+    ]
 }
