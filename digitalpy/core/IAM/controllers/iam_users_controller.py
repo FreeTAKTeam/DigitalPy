@@ -61,7 +61,7 @@ class IAMUsersController(Controller):
         """get all recorded connections and save them to the connections value
         """
         connections = self._load_persistency()
-        self.response.set_value("connections", connections.values())
+        self.response.set_value("connections", list(connections.values()))
 
     def _load_persistency(self) -> dict:
         """load the contents of the persistency file
