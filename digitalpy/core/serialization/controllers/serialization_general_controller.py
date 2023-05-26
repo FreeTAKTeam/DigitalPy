@@ -10,6 +10,7 @@
 from typing import List, Union
 from digitalpy.core.domain.node import Node
 from digitalpy.core.main.controller import Controller
+from .json_serialization_controller import JSONSerializationController
 
 from .xml_serialization_controller import XMLSerializationController
 from ..configuration.serialization_constants import Protocols
@@ -22,6 +23,8 @@ class SerializationGeneralController(Controller):
     def __init__(self, request, response, action_mapper, configuration):
         super().__init__(request, response, action_mapper, configuration)
         self.xml_serialization_controller = XMLSerializationController(
+               request, response, action_mapper, configuration)
+        self.json_serialization_controller = JSONSerializationController(
                request, response, action_mapper, configuration)
 
     def execute(self, method=None):
@@ -41,6 +44,13 @@ class SerializationGeneralController(Controller):
             if isinstance(message, list):
                 for m in message:
                     messages.append(self.xml_serialization_controller.serialize_node(m))
+            else:
+                raise ValueError("unsupported type passed in message value only list type support")
+        elif protocol.upper() == Protocols.JSON:
+            # handle case where message contains multiple messages
+            if isinstance(message, list):
+                for m in message:
+                    messages.append(self.json_serialization_controller.serialize_node(m))
             else:
                 raise ValueError("unsupported type passed in message value only list type support")
         else:
