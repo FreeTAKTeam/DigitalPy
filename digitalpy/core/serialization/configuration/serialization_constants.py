@@ -54,3 +54,4 @@ MANIFEST_PATH = str(
 class Protocols(enumerate):
     XML = "XML"
     PROTOBUF = "protobuf"
+    JSON = "JSON"
