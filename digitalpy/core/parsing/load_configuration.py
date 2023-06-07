@@ -40,7 +40,7 @@ class LoadConfiguration:
             configuration = Configuration()
             for class_name, class_values in config.items():
                 config_entry = ConfigurationEntry()
-                for child_name, value in class_values["properties"].items():
+                for child_name, value in class_values.get("properties", {}).items():
                     if "$ref" in value:
                         child_name = value["$ref"].split("/")[-1]
                         config[child_name]
