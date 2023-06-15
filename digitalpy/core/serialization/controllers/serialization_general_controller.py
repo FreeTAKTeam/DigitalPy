@@ -39,7 +39,13 @@ class SerializationGeneralController(Controller):
         """this is the general method used to serialize the component to a given format
         """
         messages = []
-        if protocol.upper() == Protocols.XML:
+        is_str_list = (isinstance(message, list) and len(message)>0 and (isinstance(message[0], str) or isinstance(message[0], bytes)))
+        is_str = (isinstance(message, str) or isinstance(message, bytes))
+        if is_str_list:
+            messages = message
+        elif is_str:
+            messages = [message]
+        elif protocol.upper() == Protocols.XML:
             # handle case where message contains multiple messages
             if isinstance(message, list):
                 for m in message:
