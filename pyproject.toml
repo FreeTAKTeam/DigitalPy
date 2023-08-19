@@ -1,12 +1,12 @@
 [tool.poetry]
-name = "FreeTAKServer"
+name = "DigitalPy"
 version = "0.3.13.3"
 description="A python implementation of the aphrodite's specification, heavily based on WCMF"
 authors = ["FreeTAKTeam <FreeTakTeam@gmail.com>"]
 packages = [
-    {include = "DigitalPy"}
+    {include = "digitalpy"}
     ]
-include = ["DigitalPy/**/*.json", "DigitalPy/**/*.py", "DigitalPy/**/*.ini", "DigitalPy/**/*.conf"]
+include = ["digitalpy/**/*.json", "digitalpy/**/*.py", "digitalpy/**/*.ini", "digitalpy/**/*.conf"]
 
 [tool.poetry.dependencies]
 rule-engine="*"
