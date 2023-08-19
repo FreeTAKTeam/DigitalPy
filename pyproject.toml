@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "DigitalPy"
-version = "0.3.13.3"
+version = "0.0.3.13.3"
 description="A python implementation of the aphrodite's specification, heavily based on WCMF"
 authors = ["FreeTAKTeam <FreeTakTeam@gmail.com>"]
 packages = [
