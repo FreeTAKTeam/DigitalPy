@@ -32,6 +32,8 @@ class Controller(ABC):
         action_mapper: ActionMapper,
         configuration: Configuration,
     ):
+        self.request = request
+        self.response = response
         self.action_mapper = action_mapper
         self.configuration = configuration
 

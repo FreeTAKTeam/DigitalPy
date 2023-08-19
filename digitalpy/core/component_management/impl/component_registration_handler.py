@@ -8,6 +8,7 @@ from digitalpy.core.main.registration_handler import RegistrationHandler
 from digitalpy.core.component_management.impl.default_facade import DefaultFacade
 from digitalpy.core.digipy_configuration.configuration import Configuration
 from digitalpy.core.digipy_configuration.impl.inifile_configuration import InifileConfiguration
+from digitalpy.core.main.object_factory import ObjectFactory
 
 MANIFEST = "manifest"
 DIGITALPY = "digitalpy"
@@ -16,12 +17,14 @@ NAME = "name"
 VERSION = "version"
 ID = "UUID"
 VERSION_DELIMITER = "."
-
+DEPENDENCIES = "dependencies"
 
 class ComponentRegistrationHandler(RegistrationHandler):
     """this class is used to manage component registration"""
 
     registered_components = {}
+
+    pending_components = {}
 
     @staticmethod
     def discover_components(component_folder_path: PurePath) -> List[str]:
@@ -72,19 +75,28 @@ class ComponentRegistrationHandler(RegistrationHandler):
                     ),
                     f"{''.join([name.capitalize() if name[0].isupper()==False else name for name in component_name.split('_')])}",
                 )
+                
                 facade_instance: DefaultFacade = component_facade(
-                    None, None, None, None
+                    ObjectFactory.get_instance("SyncActionMapper"), 
+                    ObjectFactory.get_new_instance("request"),
+                    ObjectFactory.get_new_instance("response"),
+                    config
                 )
-
-                if ComponentRegistrationHandler.validate_manifest(
-                    facade_instance.get_manifest(), component_name
-                ):
+                valid_manifest, pending = ComponentRegistrationHandler.validate_manifest(
+                    facade_instance.get_manifest(), component_name, facade_instance
+                )
+                ComponentRegistrationHandler.save_component(facade_instance, component_name)
+                if valid_manifest and not pending:
                     facade_instance.register(config)
+                    ComponentRegistrationHandler.register_pending(component_name, config)
+                    return True
+                elif valid_manifest and pending:
+                    return True
                 else:
                     return False
             else:
                 return False
-            ComponentRegistrationHandler.save_component(facade_instance.get_manifest(), component_name)
+
             return True
         except Exception as e:
             # must use a print because logger may not be available
@@ -92,12 +104,16 @@ class ComponentRegistrationHandler(RegistrationHandler):
             return False
 
     @staticmethod
-    def save_component(manifest: Configuration, component_name: str):
-        section = manifest.get_section(component_name + MANIFEST, include_meta=True)
-        ComponentRegistrationHandler.registered_components[section[NAME]] = section
+    def save_component(facade, component_name: str):
+        ComponentRegistrationHandler.registered_components[component_name] = facade
 
     @staticmethod
-    def validate_manifest(manifest: Configuration, component_name: str) -> bool:
+    def register_pending(component_name, config):
+        for facade_instance in ComponentRegistrationHandler.pending_components.pop(component_name, []):
+            facade_instance.register(config)
+
+    @staticmethod
+    def validate_manifest(manifest: Configuration, component_name: str, component_facade) -> bool:
         #TODO: determine better way to inform the caller that the manifest is invalid
         """validate that the component is compatible with the current digitalpy version
 
@@ -156,4 +172,19 @@ class ComponentRegistrationHandler(RegistrationHandler):
         ):
             return False
 
-        return True
+        pending = False
+
+        if (
+            section.get(DEPENDENCIES, None) is not None 
+            and section[DEPENDENCIES] != ""
+        ):
+            for dependency in section[DEPENDENCIES].split(","):
+                if dependency not in ComponentRegistrationHandler.registered_components:
+                    pending = True
+                    if ComponentRegistrationHandler.pending_components.get(dependency) is not None:
+                        ComponentRegistrationHandler.pending_components[dependency].append(component_facade)
+
+                    else:
+                        ComponentRegistrationHandler.pending_components[dependency] = [component_facade]
+
+        return True, pending

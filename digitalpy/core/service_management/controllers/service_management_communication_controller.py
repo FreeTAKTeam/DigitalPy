@@ -31,6 +31,7 @@ class ServiceManagementCommunicationController(Controller):
         Returns:
             _type_: _description_
         """
+        print("making request to service: " + str(self._service_id) + " with action: " + str(action) + " and context: " + str(context) + " and values: " + str(values))
         if target_service_name is None:
             target_service_name = self._service_id
 
