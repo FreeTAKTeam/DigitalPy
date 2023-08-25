@@ -33,7 +33,25 @@ class DefaultFactory(Factory):
         raise NotImplementedError("this method has not yet been implemented")
 
     def clear(self):
-        raise NotImplementedError("this method has not yet been implemented")
+        self.current_stack = []
+        self.instances = {}
+        DefaultFactory.required_interfaces = {
+            "event_manager": "digitalpy.core.main.event_manager.EventManager",
+            "logger": "logger.Logger",
+            "log_manager": "log_manager.LogManager",
+            "session": "session.Session",
+            "configuration": "digitalpy.core.configuration.Configuration",
+            "message": "message.Message",
+            "persistence_facade": "wcmf\lib\persistence\PersistenceFacade",
+            "concurrency_manager": "concurrency_manager.ConcurrencyManager",
+            "action_mapper": "digitalpy.core.zmanager.action_mapper.ActionMapper",
+            "request": "digitalpy.core.zmanager.request.Request",
+            "response": "digitalpy.core.zmanager.response.Response",
+            "list_strategies": "list_strategy.ListStrategy",
+            "formats": "digitalpy.core.parsing.format.Format",
+            "formatter": "digitalpy.core.parsing.formatter.Formatter",
+            "principal_factory": "principal_factory.PrincipalFactory",
+        }
 
     def get_instance(self, name, dynamic_configuration={}) -> object:
         instance = None

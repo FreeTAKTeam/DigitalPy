@@ -27,6 +27,11 @@ class ComponentRegistrationHandler(RegistrationHandler):
     pending_components = {}
 
     @staticmethod
+    def clear():
+        ComponentRegistrationHandler.registered_components = {}
+        ComponentRegistrationHandler.pending_components = {}
+
+    @staticmethod
     def discover_components(component_folder_path: PurePath) -> List[str]:
         """this method is used to discover all available components
 

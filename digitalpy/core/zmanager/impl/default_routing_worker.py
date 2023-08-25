@@ -1,3 +1,4 @@
+import time
 from typing import List, Tuple, Union
 import uuid
 import zmq
@@ -123,7 +124,6 @@ class DefaultRoutingWorker:
             try:
                 protocol, request = self.receive_request()
                 service_id =  request.get_value("service_id")
-                request.clear_value("service_id")
                 response = self.process_request(protocol, request)
                 self.send_response(response, protocol=protocol, service_id=service_id)
             except Exception as ex:

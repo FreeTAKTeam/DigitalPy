@@ -62,7 +62,7 @@ class Node(DefaultPersistentObject):
             relationship_name,
             relationship_def,
         ) in self._relationship_definition.relationships.items():
-            child_class = getattr(model, relationship_name)
+            child_class = model[relationship_name]
             child_instance = child_class(configuration, model)
             self.add_child(child_instance)
 

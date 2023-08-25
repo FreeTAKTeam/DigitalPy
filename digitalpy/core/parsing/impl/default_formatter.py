@@ -5,7 +5,7 @@ from digitalpy.core.zmanager.response import Response
 
 class DefaultFormatter(Formatter):
     
-    def __init__(self, formats: list):
+    def __init__(self, formats: dict):
         self.formats = formats
         
     def get_format(self, name) -> Format:

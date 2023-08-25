@@ -134,7 +134,7 @@ class AsyncActionMapper(ActionMapper):
     # @see ActionMapper.processAction()
     #
     def process_action(
-        self, request: Request, response: Response, return_listener: bool
+        self, request: Request, response: Response, return_listener: bool, protocol = ""
     ) -> zmq.Socket:
         """_summary_
 
@@ -168,24 +168,22 @@ class AsyncActionMapper(ActionMapper):
         else:
             routing_subscriber = None
 
-        self.submit_request(request)
+        self.submit_request(request, protocol)
 
         return routing_subscriber
 
-    def submit_request(self, request: Request):
+    def submit_request(self, request: Request, protocol):
         """send a request object to the routing publisher
 
         Args:
             request (Request): the request object
         """
         with self.get_routing_publisher() as routing_publisher:
-            routing_publisher.send_multipart(
-                [
-                    f"/routing/request/{request.get_sender()}/{request.get_context()}/{request.get_action()}/{request.get_format()}/{request.get_id()}".encode(
+            routing_publisher.send(
+                
+                    f"{request.get_sender()},{request.get_context()},{request.get_action()},{request.get_format()},{protocol},{request.get_id()},".encode(
                         "utf-8"
-                    ),
-                    request.get_values(),
-                ]
+                    )+ request.get_values()
             )
 
     def __getstate__(self):

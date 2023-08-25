@@ -38,6 +38,9 @@ class Subject:
         self.context = zmq.Context()
         self.backend_pusher = self.context.socket(zmq.PUSH)
         self.backend_pusher.bind(self.backend_address)
+        self.backend_pusher.setsockopt(zmq.HEARTBEAT_IVL, 1000)
+        self.backend_pusher.setsockopt(zmq.HEARTBEAT_TIMEOUT, 5000)
+        self.backend_pusher.setsockopt(zmq.HEARTBEAT_TTL, 5000)
 
         self.frontend_pull = self.context.socket(zmq.PULL)
         self.frontend_pull.bind(self.frontend_pull_address)

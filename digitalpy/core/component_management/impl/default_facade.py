@@ -95,6 +95,8 @@ class DefaultFacade(Controller):
         else:
             self.config_loader = None
 
+        self.injected_values = {"logger": self.logger, "config_loader": self.config_loader, "tracer": self.tracer}
+
     def initialize(self, request, response):
         super().initialize(request, response)
         self.request.set_sender(self.__class__.__name__)
@@ -128,25 +130,9 @@ class DefaultFacade(Controller):
         def wrapper(self, *args, **kwargs):
             # ensure that required values are passed by to controller
             # methods even if method isnt called through .execute method
-            if "logger" not in kwargs:
-                logger = getattr(self, "logger")
-            else:
-                logger = kwargs["logger"]
-                del kwargs["logger"]
-                
-            if "config_loader" not in kwargs:
-                config_loader = getattr(self, "config_loader")
-            else:
-                config_loader = kwargs["config_loader"]
-                del kwargs["config_loader"]
+            kwargs.update(self.injected_values)
 
-            if  "tracer" not in kwargs:
-                tracer = getattr(self, "tracer")
-            else:
-                tracer = kwargs["tracer"]
-                del kwargs["tracer"]
-
-            return func(self, logger=logger, config_loader=config_loader, tracer=tracer, *args, **kwargs)
+            return func(self, *args, **kwargs)
 
         return wrapper
 
