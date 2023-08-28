@@ -45,7 +45,7 @@ class DefaultBusinessRuleController(Controller):
             self.business_rules = json.load(business_rules_file)
 
     def evaluate_request(
-        self, matchable: Union[dict, object] = None, rule_dict: dict = None, **kwargs
+        self, matchable: Union[dict, object] = None, rule_dict: dict = None, *args, **kwargs
     ):
         """evaluate a given request based on the defined action rules
 
@@ -55,6 +55,10 @@ class DefaultBusinessRuleController(Controller):
         """
         if rule_dict is None:
             rule_dict = self.business_rules
+
+        for k, v in kwargs.items():
+            self.request.set_value(k, v)
+        
         self._evaluate_actions(rule_dict)
 
         if rule_dict.get("rules", None) is not None:
