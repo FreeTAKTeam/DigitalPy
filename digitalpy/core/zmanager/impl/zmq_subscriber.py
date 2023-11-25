@@ -56,20 +56,23 @@ class ZmqSubscriber(Subscriber):
         self.subscriber_socket.setsockopt(zmq.RCVHWM, 0)
         self.subscriber_socket.setsockopt(zmq.SNDHWM, 0)
         
-    def broker_receive(self, blocking: bool=False) -> List[Response]:
+    def broker_receive(self, blocking: bool=False, max_messages: int = 100) -> List[Response]:
         """Returns the reply message or None if there was no reply
         Args:
             blocking (False): whether or not the operation is blocking. Option defaults to False.
+            max_messages (100): the maximum number of messages to receive. Option defaults to 100.
         """
         responses = []
         try:
-            while True:
+            # TODO: move the range to a configuration file
+            # this protects against the case where messages are being sent faster than they can be received
+            for _ in range(max_messages):
                 if not blocking:
                     message = self.subscriber_socket.recv_multipart(flags=zmq.NOBLOCK)[0].split(b" ", 1)
                 else: 
                     message = self.subscriber_socket.recv_multipart()[0].split(b" ", 1)
                 # instantiate the response object
-                response = ObjectFactory.get_instance("response")
+                response = ObjectFactory.get_new_instance("response")
                 
                 # TODO: this is assuming that the message from the integration manager is pickled
                 response.set_format("pickled")
