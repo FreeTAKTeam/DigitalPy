@@ -2,8 +2,6 @@ import json
 import pathlib
 from string import Template
 
-COMPONENT_NAME = "ServiceManagement"
-
 CONFIGURATION_FORMAT = "json"
 
 CURRENT_COMPONENT_PATH = pathlib.Path(__file__).parent.parent.absolute()

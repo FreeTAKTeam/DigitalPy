@@ -7,6 +7,10 @@
 # Original author: Giu Platania
 # 
 #######################################################
+from digitalpy.core.main.impl.default_factory import DefaultFactory
+from digitalpy.core.main.object_factory import ObjectFactory
+from digitalpy.core.telemetry.tracing_provider import TracingProvider
+from digitalpy.core.telemetry.tracer import Tracer
 from digitalpy.core.zmanager.service import Service
 from digitalpy.core.zmanager.impl.zmq_subscriber import ZmqSubscriber
 from digitalpy.core.zmanager.impl.zmq_pusher import ZMQPusher
@@ -39,6 +43,22 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         self.integration_manager_port = integration_manager_port
         self.integration_manager_protocol = integration_manager_protocol
         self.service_id = service_id
+        self._tracer = None
+
+    @property
+    def tracer(self):
+        if self._tracer is None:
+            raise ValueError("Tracer has not been initialized")
+        else:
+            return self._tracer
+    
+    @tracer.setter
+    def tracer(self, value):
+        if self._tracer is not None:
+            raise ValueError("Tracer has already been initialized")
+        elif not isinstance(value, Tracer):
+            raise ValueError("Tracer must be an instance of TracingProvider")
+        self._tracer = value
 
     def discovery(self):
         """used to  inform the discoverer of the specifics of this service"""
@@ -59,6 +79,10 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         """
         ZMQPusher.initiate_connections(self, self.subject_port, self.subject_address, self.service_id)
         self.broker_connect(self.integration_manager_address, self.integration_manager_port, self.integration_manager_protocol, self.service_id, application_protocol)
+
+    def start(self, object_factory: DefaultFactory, tracing_provider: TracingProvider):
+        ObjectFactory.configure(object_factory)
+        self.tracer = tracing_provider.create_tracer(self.service_id)
 
     def __getstate__(self):
         ZmqSubscriber.__getstate__(self)

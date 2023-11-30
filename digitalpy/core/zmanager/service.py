@@ -1,5 +1,8 @@
 from abc import ABC, abstractmethod
 
+from digitalpy.core.main.impl.default_factory import DefaultFactory
+from digitalpy.core.telemetry.tracing_provider import TracingProvider
+
 class Service(ABC):
     def __init__(self):
         self.running = True
@@ -14,7 +17,7 @@ class Service(ABC):
         """send a heartbeat to inform the the service manager that it's alive"""
 
     @abstractmethod
-    def start(self):
+    def start(self, object_factory: DefaultFactory, tracing_provider: TracingProvider):
         """this method should be used to start the service as a process"""
     
     @abstractmethod

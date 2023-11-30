@@ -54,7 +54,7 @@ class Subject:
                 self.logger.debug("receieved %s",str(message))
                 self.backend_pusher.send_multipart(message)
             except Exception as ex:
-                self.logger.fatal("exception thrown in subject %s", ex, exc_info=1)
+                self.logger.fatal("exception thrown in subject %s", ex, exc_info=True)
 
     def __getstate__(self):
         """delete objects that cannot be pickled or generally serialized"""

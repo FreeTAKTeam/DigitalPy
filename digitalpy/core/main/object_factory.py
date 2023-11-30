@@ -1,5 +1,5 @@
 from digitalpy.core.main.factory import Factory
-
+from typing import Any
 
 class ObjectFactory:
     __factory = None
@@ -14,7 +14,7 @@ class ObjectFactory:
         return ObjectFactory.__factory != None
 
     @staticmethod
-    def get_instance(name, dynamic_configuration={}) -> object:
+    def get_instance(name, dynamic_configuration={}) -> Any:
         """Get an instance from the configuration. Instances created with this method
         might be shared (depending on the __shared configuration property)."""
         ObjectFactory.__check_config()

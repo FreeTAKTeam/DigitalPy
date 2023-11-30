@@ -11,6 +11,7 @@ include = ["digitalpy/**/*.json", "digitalpy/**/*.py", "digitalpy/**/*.ini", "di
 [tool.poetry.dependencies]
 rule-engine="*"
 pyzmq="*"
+opentelemetry-sdk="*"
 
 [tool.poetry.extras]
 dev = ["pytest"]
