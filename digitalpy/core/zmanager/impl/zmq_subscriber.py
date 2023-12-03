@@ -72,7 +72,7 @@ class ZmqSubscriber(Subscriber):
                 else: 
                     message = self.subscriber_socket.recv_multipart()[0].split(b" ", 1)
                 # instantiate the response object
-                response = ObjectFactory.get_new_instance("response")
+                response: Response = ObjectFactory.get_new_instance("response")
                 
                 # TODO: this is assuming that the message from the integration manager is pickled
                 response.set_format("pickled")

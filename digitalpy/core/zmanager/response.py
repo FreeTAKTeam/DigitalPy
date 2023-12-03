@@ -15,3 +15,6 @@ class Response(ControllerMessage):
 
     def get_body(self):
         raise NotImplementedError
+    
+    def set_format(self):
+        raise NotImplementedError

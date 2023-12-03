@@ -17,11 +17,14 @@ from digitalpy.core.digipy_configuration.impl.inifile_configuration import Inifi
 from digitalpy.core.component_management.impl.component_registration_handler import ComponentRegistrationHandler
 
 from digitalpy.core.zmanager.subject import Subject
+from digitalpy.core.zmanager.impl.zmq_pusher import ZMQPusher
+from digitalpy.core.zmanager.impl.zmq_subscriber import ZmqSubscriber
+
 from digitalpy.core.main.factory import Factory
 from digitalpy.core.main.impl.default_factory import DefaultFactory
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.service_management.controllers.service_management_main import ServiceManagementMain
-class DigitalPy:
+class DigitalPy(ZmqSubscriber, ZMQPusher):
     """this is the executable of the digitalPy framework, providing the starting point
     for a bare bone application.
     """
@@ -52,6 +55,18 @@ class DigitalPy:
         # the instances in the instance dictionary can be preserved when the
         # new object factory is instantiated in the sub-process
         ObjectFactory.register_instance("factory", self.factory)
+
+        ZmqSubscriber.__init__(self, ObjectFactory.get_instance("formatter"))
+        ZMQPusher.__init__(self, ObjectFactory.get_instance("formatter"))
+
+    def set_zmanager_address(self):
+        self.subject_address = self.configuration.get_value("Service", "subject_address")
+        self.subject_port = self.configuration.get_value("Service", "subject_port")
+        self.subject_protocol = self.configuration.get_value("Service", "subject_protocol")
+        self.integration_manager_address = self.configuration.get_value("Service", "integration_manager_address")
+        self.integration_manager_port = self.configuration.get_value("Service", "integration_manager_port")
+        self.integration_manager_protocol = self.configuration.get_value("Service", "integration_manager_protocol")
+        self.service_id = "DigitalPy"
 
     def register_components(self):
         """register all components of the application
@@ -176,6 +191,21 @@ class DigitalPy:
             self.service_manager: ServiceManagementMain = ObjectFactory.get_instance("ServiceManager")
             proc = multiprocessing.Process(target=self.service_manager.start, args=(ObjectFactory.get_instance("factory"), ObjectFactory.get_instance("tracingprovider")))
             proc.start()
+            return True
+        except Exception as ex:
+            raise ex
+
+    def start_service(self, service_name: str) -> bool:
+        """Starts a service.
+
+        Args:
+            service_name (str): The name of the service to start.
+
+        Returns:
+            bool: True if successful, False otherwise.
+        """
+        try:
+            
             return True
         except Exception as ex:
             raise ex
