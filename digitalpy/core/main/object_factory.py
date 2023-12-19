@@ -21,7 +21,7 @@ class ObjectFactory:
         return ObjectFactory.__factory.get_instance(name, dynamic_configuration)
 
     @staticmethod
-    def get_new_instance(name, dynamic_configuration={}):
+    def get_new_instance(name, dynamic_configuration={}) -> Any:
         """Get a new instance from the configuration. Instances created with this method are not shared."""
         ObjectFactory.__check_config()
         return ObjectFactory.__factory.get_new_instance(name, dynamic_configuration)

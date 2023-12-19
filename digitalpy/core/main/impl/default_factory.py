@@ -115,7 +115,7 @@ class DefaultFactory(Factory):
                         c_params[param_name] = self.get_instance(param_name)
                     elif self.configuration.has_section(param_instance_key):
                         c_params[param_name] = self.get_instance(param_instance_key)
-                    elif param_default == None:
+                    elif isinstance(param_default, inspect._empty):
                         raise Exception(
                             f"constructor parameter {param_name} in class {name} cannot be injected"
                         )
@@ -223,3 +223,8 @@ class DefaultFactory(Factory):
         configuration = {**dynamic_configuration, "__shared": False}
         instance = self.get_instance(name, configuration)
         return instance
+
+    def clear_instance(self, name):
+        instance_key = name.lower()
+        if instance_key in self.instances:
+            del self.instances[instance_key]

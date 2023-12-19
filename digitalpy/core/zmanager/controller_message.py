@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any
 class ControllerMessage(ABC):
     
     @abstractmethod
@@ -49,7 +50,7 @@ class ControllerMessage(ABC):
         """get all key value pairs at once"""
     
     @abstractmethod
-    def get_value(self, name, default=None):
+    def get_value(self, name, default=None) -> Any:
         """Get a value"""
     
     @abstractmethod

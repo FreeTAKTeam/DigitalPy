@@ -7,23 +7,99 @@ class ServiceDescription(Node):
     def __init__(self, node_type = "service_description", oid=None) -> None:
         super().__init__(node_type, oid=oid)
         # the pid of the service, changing depending on the status of the service
-        self._pid: int = None
-        # the id of the service (must be unique), consistent throughout the lifetime of the service
-        self._id: str = None
+        self._pid: int = None  # type: ignore
+        # the id of the service (must be unique), consistent throughout the lifetime of the service, this must be in the form, <component_name>.<service_name>
+        self._id: str = None  # type: ignore
         # the protocol of the service
-        self._protocol: str = None
+        self._protocol: str = None  # type: ignore
         # the status of the service in it's lifecycle
-        self._status: ServiceStatus = None
+        self._status: ServiceStatus = None  # type: ignore
         # the description of the service
-        self._description: str = None
+        self._description: str = None  # type: ignore
         # the human readable name of the service, should be unique but not required.
-        self._name: str = None
+        self._name: str = None  # type: ignore
         # when the last message from the service was received
-        self._last_message_time: dt = None
+        self._last_message_time: dt = None  # type: ignore
         # when the service was started
-        self._start_time: dt = None
+        self._start_time: dt = None  # type: ignore
         # the process of the service (if it is running)
-        self._process: Process = None
+        self._process: Process = None  # type: ignore
+        # host address if the process is attached to a network
+        self._host: str = None  # type: ignore
+        # port if the process is attached to a network
+        self._port: int = None  # type: ignore
+        # network interface if the process is attached to a network
+        self._network_interface: str = None  # type: ignore
+
+    @property
+    def network_interface(self) -> str:
+        """get the network interface of the service
+
+        Returns:
+            str: the network interface of the service
+        """
+        return self._network_interface
+    
+    @network_interface.setter
+    def network_interface(self, network_interface: str):
+        """set the network interface of the service
+
+        Args:
+            network_interface (str): the network interface of the service
+
+        Raises:
+            TypeError: if network_interface is not a string
+        """
+        if not isinstance(network_interface, str):
+            raise TypeError("'network_interface' must be a string")
+        
+        self._network_interface = network_interface
+
+    @property
+    def host(self) -> str:
+        """get the host of the service
+
+        Returns:
+            str: the host of the service
+        """
+        return self._host
+    
+    @host.setter
+    def host(self, host: str):
+        """set the host of the service
+
+        Args:
+            host (str): the host of the service
+
+        Raises:
+            TypeError: if host is not a string
+        """
+        if not isinstance(host, str):
+            raise TypeError("'host' must be a string")
+        self._host = host
+
+    @property
+    def port(self) -> int:
+        """get the port of the service
+
+        Returns:
+            int: the port of the service
+        """
+        return self._port
+    
+    @port.setter
+    def port(self, port: int):
+        """set the port of the service
+
+        Args:
+            port (int): the port of the service
+
+        Raises:
+            TypeError: if port is not an integer
+        """
+        if not isinstance(port, int):
+            raise TypeError("'port' must be an integer")
+        self._port = port
 
     @property
     def process(self) -> Process:

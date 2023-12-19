@@ -34,7 +34,6 @@ class Subject:
             self.workers.append(worker_process)
 
     def initiate_sockets(self):
-        print("initiate_sockets")
         self.context = zmq.Context()
         self.backend_pusher = self.context.socket(zmq.PUSH)
         self.backend_pusher.bind(self.backend_address)

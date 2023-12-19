@@ -31,7 +31,6 @@ class RoutingProxy:
             self.workers.append(worker_process)
 
     def initiate_sockets(self):
-        print("initiate_sockets")
         self.context = zmq.Context()
         self.backend_dealer = self.context.socket(zmq.DEALER)
         self.backend_dealer.bind(self.backend_address)

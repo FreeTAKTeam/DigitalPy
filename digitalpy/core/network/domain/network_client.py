@@ -6,12 +6,12 @@ class NetworkClient(Node):
     def __init__(self, node_type="network_client", oid=None) -> None:
         super().__init__(node_type, oid=oid)
         # the id of the client
-        self._id: int = 0
+        self._id: bytes
         # the status of the client
-        self._status: str = ClientStatus.CONNECTING
+        self._status: ClientStatus = ClientStatus.CONNECTING
 
     @property
-    def status(self) -> str:
+    def status(self) -> ClientStatus:
         """get the status of the client
 
         Returns:
@@ -20,7 +20,7 @@ class NetworkClient(Node):
         return self._status
     
     @status.setter
-    def status(self, status: str):
+    def status(self, status: ClientStatus):
         """set the status of the client
 
         Args:
@@ -31,25 +31,21 @@ class NetworkClient(Node):
         self._status = status
 
     @property
-    def id(self) -> int:
+    def id(self) -> bytes:
         """get the id of the client
 
         Returns:
-            int: the id of the client
+            bytes: the id of the client
         """
         return self._id
     
     @id.setter
-    def id(self, id: int):
+    def id(self, id: bytes):
         """set the id of the client
 
         Args:
-            id (int): the id of the client
+            id (bytes): the id of the client
         """
-        if not isinstance(id, int):
+        if not isinstance(id, bytes):
             raise TypeError("'id' must be an instance of int")
-        if id < 0:
-            raise ValueError("'id' must be greater than or equal to 0")
-        if self._id != None:
-            raise ValueError("'id' cannot be changed once set")
         self._id = id

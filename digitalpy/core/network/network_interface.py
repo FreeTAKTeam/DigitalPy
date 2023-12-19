@@ -1,12 +1,11 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import List
 from digitalpy.core.network.domain.network_client import NetworkClient
-from digitalpy.core.network.network_interface import NetworkInterface
 from digitalpy.core.zmanager.request import Request
 
 
-class NetworkAsyncInterface(NetworkInterface):
-    """Network Async Interface class. Defines the interface for implementations of asynchronous networking
+class NetworkInterface(ABC):
+    """Network  Interface class. Defines the interface for all networking implementations
     """
 
     @abstractmethod
@@ -49,7 +48,7 @@ class NetworkAsyncInterface(NetworkInterface):
         """send a message to the network
         Args:
             message (Request): the message to send
-            client_id (int): the id of the client to send the message to
+            client (NetworkClient): the network client to send the message to
 
         Raises:
             ValueError: if the client_id is not valid

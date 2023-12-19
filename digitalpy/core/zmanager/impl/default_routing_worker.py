@@ -16,7 +16,7 @@ from digitalpy.core.digipy_configuration.impl.config_action_key_provider import 
 from digitalpy.core.parsing.formatter import Formatter
 from digitalpy.core.main.factory import Factory
 from digitalpy.core.telemetry.impl.opentel_metrics_provider import OpenTelMetricsProvider
-
+from digitalpy.core.service_management.digitalpy_service import COMMAND_PROTOCOL
 
 class DefaultRoutingWorker:
     def __init__(
@@ -124,8 +124,14 @@ class DefaultRoutingWorker:
             try:
                 protocol, request = self.receive_request()
                 service_id =  request.get_value("service_id")
-                response = self.process_request(protocol, request)
-                self.send_response(response, protocol=protocol, service_id=service_id)
+                # if the protocol is COMMAND_PROTOCOL, then the request is a command to a service and should
+                # be sent directly to integration_manager so that it can be processed by the service
+                if protocol == COMMAND_PROTOCOL:
+                    self.send_response(request, protocol, request.get_value("service_id"))
+
+                else:
+                    response = self.process_request(protocol, request)
+                    self.send_response(response, protocol=protocol, service_id=service_id)
             except Exception as ex:
                 try:
                     self.send_error(ex)

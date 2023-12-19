@@ -27,3 +27,7 @@ class Factory(ABC):
     @abstractmethod
     def clear(self):
         """Delete all created instances"""
+
+    @abstractmethod
+    def clear_instance(self, name):
+        """Delete a specific instance"""

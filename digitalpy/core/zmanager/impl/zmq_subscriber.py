@@ -21,8 +21,8 @@ class ZmqSubscriber(Subscriber):
         # being unpickled
         self.__subscriber_socket_connections = []
 
-        self.subscriber_context = None
-        self.subscriber_socket = None
+        self.subscriber_context: zmq.Context = None # type: ignore
+        self.subscriber_socket: zmq.Socket = None # type: ignore
         self.subscriber_formatter = formatter
         self.logger = logging.getLogger(self.__class__.__name__)
 
@@ -55,6 +55,15 @@ class ZmqSubscriber(Subscriber):
         # TODO: determine a sane default
         self.subscriber_socket.setsockopt(zmq.RCVHWM, 0)
         self.subscriber_socket.setsockopt(zmq.SNDHWM, 0)
+    
+    def broker_disconnect(self):
+        """Disconnect from broker
+        """
+        for connection in self.__subscriber_socket_connections:
+            self.subscriber_socket.disconnect(connection)
+        self.subscriber_socket.close()
+        self.subscriber_context.term()
+        self.subscriber_context.destroy()
         
     def broker_receive(self, blocking: bool=False, max_messages: int = 100) -> List[Response]:
         """Returns the reply message or None if there was no reply
@@ -95,7 +104,8 @@ class ZmqSubscriber(Subscriber):
                     response.set_value("recipients", recipients.split(RECIPIENT_DELIMITER)[:-1])
 
                 responses.append(response)
-
+            return response
+        
         except zmq.ZMQError as ex:
             return responses
 

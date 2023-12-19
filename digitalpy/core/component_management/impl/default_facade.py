@@ -3,6 +3,8 @@ from digitalpy.core.domain.node import Node
 from digitalpy.core.parsing.load_configuration import LoadConfiguration
 from digitalpy.core.digipy_configuration.impl.inifile_configuration import InifileConfiguration
 from digitalpy.core.zmanager.impl.default_action_mapper import DefaultActionMapper
+from digitalpy.core.zmanager.request import Request
+from digitalpy.core.zmanager.response import Response
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.main.log_manager import LogManager
 from digitalpy.core.main.impl.default_file_logger import DefaultFileLogger
@@ -21,8 +23,8 @@ class DefaultFacade(Controller):
         type_mapping=None,
         action_mapper: DefaultActionMapper = None,
         base=object,
-        request=None,
-        response=None,
+        request:Request=None, # type: ignore
+        response:Response=None, # type: ignore
         configuration=None,
         configuration_path_template=None,
         tracing_provider_instance=None,

@@ -19,11 +19,13 @@ from digitalpy.core.component_management.impl.component_registration_handler imp
 from digitalpy.core.zmanager.subject import Subject
 from digitalpy.core.zmanager.impl.zmq_pusher import ZMQPusher
 from digitalpy.core.zmanager.impl.zmq_subscriber import ZmqSubscriber
-
+from digitalpy.core.zmanager.request import Request
 from digitalpy.core.main.factory import Factory
 from digitalpy.core.main.impl.default_factory import DefaultFactory
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.service_management.controllers.service_management_main import ServiceManagementMain
+from digitalpy.core.service_management.digitalpy_service import COMMAND_PROTOCOL, COMMAND_ACTION
+
 class DigitalPy(ZmqSubscriber, ZMQPusher):
     """this is the executable of the digitalPy framework, providing the starting point
     for a bare bone application.
@@ -60,12 +62,12 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
         ZMQPusher.__init__(self, ObjectFactory.get_instance("formatter"))
 
     def set_zmanager_address(self):
-        self.subject_address = self.configuration.get_value("Service", "subject_address")
-        self.subject_port = self.configuration.get_value("Service", "subject_port")
-        self.subject_protocol = self.configuration.get_value("Service", "subject_protocol")
-        self.integration_manager_address = self.configuration.get_value("Service", "integration_manager_address")
-        self.integration_manager_port = self.configuration.get_value("Service", "integration_manager_port")
-        self.integration_manager_protocol = self.configuration.get_value("Service", "integration_manager_protocol")
+        self.subject_address: str = self.configuration.get_value("subject_address", "Service")
+        self.subject_port: int = int(self.configuration.get_value( "subject_port", "Service"))
+        self.subject_protocol: str = self.configuration.get_value("subject_protocol", "Service")
+        self.integration_manager_address: str = self.configuration.get_value("integration_manager_address", "Service")
+        self.integration_manager_port: int = int(self.configuration.get_value("integration_manager_port", "Service"))
+        self.integration_manager_protocol: str = self.configuration.get_value("integration_manager_protocol", "Service")
         self.service_id = "DigitalPy"
 
     def register_components(self):
@@ -105,17 +107,25 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
             try:
                 self.event_loop()
             except Exception as ex:
-                self.handle_errors(ex)
+                self.handle_exception(ex)
 
-    def handle_errors(self, error):
+    def handle_exception(self, error: Exception):
         """Deal with errors that occur during the execution of the application
         """
-        pass
+        print("error thrown :" + str(error))
 
     def start_services(self):
+        self.set_zmanager_address()
         self.start_integration_manager_service()
         self.start_routing_proxy_service()
         self.start_service_manager()
+        self.initialize_connections()
+
+    def initialize_connections(self):
+        ZMQPusher.initiate_connections(
+            self, self.subject_port, self.subject_address, self.service_id)
+        self.broker_connect(self.integration_manager_address, self.integration_manager_port,
+                            self.integration_manager_protocol, self.service_id, COMMAND_PROTOCOL)
 
     def start_routing_proxy_service(self):
         """this function is responsible for starting the routing proxy service"""
@@ -189,23 +199,71 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
 
             # begin the service_manager
             self.service_manager: ServiceManagementMain = ObjectFactory.get_instance("ServiceManager")
-            proc = multiprocessing.Process(target=self.service_manager.start, args=(ObjectFactory.get_instance("factory"), ObjectFactory.get_instance("tracingprovider")))
+            proc = multiprocessing.Process(target=self.service_manager.start, args=(ObjectFactory.get_instance("factory"), ObjectFactory.get_instance("tracingprovider"), ComponentRegistrationHandler.component_index))
             proc.start()
             return True
         except Exception as ex:
             raise ex
 
-    def start_service(self, service_name: str) -> bool:
+    def start_service(self, service_id: str) -> bool:
         """Starts a service.
 
         Args:
-            service_name (str): The name of the service to start.
+            service_id (str): The unique id of the service to start.
 
         Returns:
             bool: True if successful, False otherwise.
         """
         try:
-            
+            req: Request = ObjectFactory.get_new_instance("Request")
+            req.set_action("StartServer")
+            req.set_context(self.configuration.get_value("service_id", "ServiceManager"))
+            req.set_value("command", "start_service")
+            req.set_value("target_service_id", service_id)
+            req.set_format("pickled")
+            self.subject_send_request(req, COMMAND_PROTOCOL, self.configuration.get_value("service_id", "ServiceManager"))
+            return True
+        except Exception as ex:
+            raise ex
+
+    def stop_service(self, service_id: str) -> bool:
+        """Starts a service.
+
+        Args:
+            service_id (str): The unique id of the service to start.
+
+        Returns:
+            bool: True if successful, False otherwise.
+        """
+        try:
+            req: Request = ObjectFactory.get_new_instance("Request")
+            req.set_action(COMMAND_ACTION)
+            req.set_context(self.configuration.get_value("service_id", "ServiceManager"))
+            req.set_value("command", "stop_service")
+            req.set_value("target_service_id", service_id)
+            req.set_format("pickled")
+            self.subject_send_request(req, COMMAND_PROTOCOL, self.configuration.get_value("service_id", "ServiceManager"))
+            return True
+        except Exception as ex:
+            raise ex
+
+    def restart_service(self, service_id: str) -> bool:
+        """Starts a service.
+
+        Args:
+            service_id (str): The unique id of the service to start.
+
+        Returns:
+            bool: True if successful, False otherwise.
+        """
+        try:
+            req: Request = ObjectFactory.get_new_instance("Request")
+            req.set_action(COMMAND_ACTION)
+            req.set_context(self.configuration.get_value("service_id", "ServiceManager"))
+            req.set_value("command", "restart_service")
+            req.set_value("target_service_id", service_id)
+            req.set_format("pickled")
+            self.subject_send_request(req, COMMAND_PROTOCOL, self.configuration.get_value("service_id", "ServiceManager"))
             return True
         except Exception as ex:
             raise ex

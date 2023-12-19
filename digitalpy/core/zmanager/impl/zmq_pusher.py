@@ -10,9 +10,9 @@ class ZMQPusher(Pusher):
         # list of connection to which the socket should reconnect after
         # being unpickled
         self.__pusher_socket_connections = []
-        self.pusher_context = None
-        self.pusher_socket = None
-        self.pusher_formatter = formatter
+        self.pusher_context: zmq.Context = None # type: ignore
+        self.pusher_socket: zmq.Socket = None # type: ignore
+        self.pusher_formatter: Formatter = formatter
         self.logger = logging.getLogger(self.__class__.__name__)
 
     def initiate_connections(self, port: int, address: str, service_id: str):
@@ -33,6 +33,17 @@ class ZMQPusher(Pusher):
         # add the connection to the connections list so it can be reconnected upon serialization
         self.__pusher_socket_connections.append(f"tcp://{address}:{port}")
 
+    def teardown_connections(self):
+        """teardown subject connection
+        """
+        for connection in self.__pusher_socket_connections:
+            self.pusher_socket.disconnect(connection)
+        self.pusher_socket.close()
+        self.pusher_context.term()
+        self.pusher_context.destroy()
+        self.pusher_socket = None # type: ignore
+        self.pusher_context = None # type: ignore
+
     def subject_bind(self, address: int, port: str):
         """create the ZMQ zocket
 
@@ -42,14 +53,13 @@ class ZMQPusher(Pusher):
         """
         self.pusher_socket.connect(f"tcp://{address}:{port}")
         
-    def subject_send_request(self, request: Request, protocol: str, service_id: str = None):
+    def subject_send_request(self, request: Request, protocol: str, service_id: str = None): # type: ignore
         """send the message to a Puller
 
         Args:
             request (Request): the request to be sent to the subject
             protocol (str): the protocol of the request to be sent
-            service_id (str): the id of the service to which the response
-                of the message is expected to be sent
+            service_id (str, optional): the service_id of the request to be sent. Defaults to the id of the current service.
         """
         if service_id is None:
             service_id = self.service_id
