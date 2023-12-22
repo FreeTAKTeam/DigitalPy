@@ -32,7 +32,8 @@ class DefaultPersistentObject(PersistentObject):
         data = {}
         self.attribute_descriptions = self.get_mapper().get_attributes()
         for cur_attribute_desc in self.attribute_descriptions:
-            data[cur_attribute_desc.get_name()] = cur_attribute_desc.get_default_value()
+            data[cur_attribute_desc.get_name(
+            )] = cur_attribute_desc.get_default_value()
 
         if initial_data is not None:
             data = {**data, **initial_data}
@@ -45,7 +46,8 @@ class DefaultPersistentObject(PersistentObject):
         self._set_oid_internal(oid, False)
 
     def __initialize_mapper(self):
-        self.persistence_facade = ObjectFactory.get_instance("persistencefacade")
+        self.persistence_facade = ObjectFactory.get_instance(
+            "persistencefacade")
         if self.persistence_facade.is_known_type(self.__type):
             self.mapper = self.persistence_facade.get_mapper(self.__type)
         else:
@@ -69,7 +71,8 @@ class DefaultPersistentObject(PersistentObject):
         old_value = self.get_property(name)
         self._properties[name] = value
         ObjectFactory.get_instance("eventManager").dispatch(
-            PropertyChangeEvent.NAME, PropertyChangeEvent(self, name, old_value, value)
+            PropertyChangeEvent.NAME, PropertyChangeEvent(
+                self, name, old_value, value)
         )
 
     def get_properties(self):
@@ -108,7 +111,8 @@ class DefaultPersistentObject(PersistentObject):
             if name in self.get_mapper().get_pk_names():
                 self.update_oid()
             if track_change:
-                DefaultPersistentObject.set_state(DefaultPersistentObject.STATE_DIRTY)
+                DefaultPersistentObject.set_state(
+                    DefaultPersistentObject.STATE_DIRTY)
                 self.changed_attributes[name] = True
                 ObjectFactory.get_instance("eventManager").dispatch(
                     ValueChangeEvent.NAME,

@@ -1,10 +1,11 @@
 from abc import abstractmethod, ABC
+from typing import Any
 
 
 class Factory(ABC):
     
     @abstractmethod
-    def get_instance(self, name, dynamic_configuration={}) -> object:
+    def get_instance(self, name, dynamic_configuration={}) -> Any:
         """Get an instance from the configuration. Instances created with this method
         might be shared (depending on the __shared configuration property)."""
     
