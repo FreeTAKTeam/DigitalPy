@@ -5,15 +5,19 @@ The class has methods for initializing the network (`intialize_network`) and con
 The class also maintains a dictionary of clients connected to the network, with their identities as keys.
 """
 
-from typing import Dict, List
+from typing import Dict, List, TYPE_CHECKING, Union
 import zmq
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.network.domain.client_status import ClientStatus
+from digitalpy.core.domain.object_id import ObjectId
 
 from digitalpy.core.network.network_async_interface import NetworkAsyncInterface
-from digitalpy.core.network.domain.network_client import NetworkClient
+from digitalpy.core.domain.domain.network_client import NetworkClient
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
+
+if TYPE_CHECKING:
+    from digitalpy.core.domain.domain_facade import Domain
 
 
 class TCPNetwork(NetworkAsyncInterface):
@@ -26,9 +30,8 @@ class TCPNetwork(NetworkAsyncInterface):
         self.port: int = None  # type: ignore
         self.socket: zmq.Socket = None  # type: ignore
         self.context: zmq.Context = None  # type: ignore
-        self.clients: Dict[bytes, NetworkClient] = {}
+        self.clients: Dict[str, NetworkClient] = {}
 
-    # TODO: introduce the implementation for client_factory
     def intialize_network(self, host: str, port: int):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.STREAM)
@@ -41,13 +44,13 @@ class TCPNetwork(NetworkAsyncInterface):
         Args:
             identity (bytes): the identity of the client
         """
-        client = self.initialize_new_client(identity)
+        client = self.handle_client_connection(identity)
 
-        self.clients[identity] = client
+        self.clients[str(client.id)] = client
 
         return client
 
-    def disconnect_client(self, client: NetworkClient):
+    def handle_client_disconnection(self, client: NetworkClient):
         """disconnect a client from the server
 
         Args:
@@ -55,19 +58,21 @@ class TCPNetwork(NetworkAsyncInterface):
         """
         client.status = ClientStatus.DISCONNECTED
 
-        return self.clients.pop(client.id)
+        return self.clients.pop(str(client.id))
 
-    def handle_empty_msg(self, identity: bytes) -> NetworkClient:
+    def handle_empty_msg(self, identity: bytes, request: Request) -> NetworkClient:
         """handle an empty message from the client
 
         Args:
             client (NetworkClient): the client that sent the empty message
         """
-        client = self.clients.get(identity)
+        client = self.clients.get(str(identity))
         if not client:
+            request.set_value("action", "connection")
             return self.connect_client(identity)
         else:
-            return self.disconnect_client(client)
+            request.set_value("action", "disconnection")
+            return self.handle_client_disconnection(client)
 
     def service_connections(self, max_requests=1000) -> List[Request]:
         """service all connections to the server and return a list of requests
@@ -85,17 +90,18 @@ class TCPNetwork(NetworkAsyncInterface):
                 identity = self.receive_message()
                 msg = self.receive_message()
 
+                # construct a request
+                req: Request = ObjectFactory.get_new_instance("Request")
+                req.set_value("data", msg)
+
                 if msg == b'':
-                    client = self.handle_empty_msg(identity)
+                    client = self.handle_empty_msg(identity, req)
 
                 else:
-                    client = self.clients.get(identity)
+                    client = self.clients.get(str(identity))
 
-                # construct a request and add it to the list of requests
-                resp: Request = ObjectFactory.get_new_instance("Request")
-                resp.set_value("data", msg)
-                resp.set_value("client", client)
-                requests.append(resp)
+                req.set_value("client", client)
+                requests.append(req)
 
         # receive messages should throw an exception when there are no messages to receive
         except zmq.Again:
@@ -115,22 +121,39 @@ class TCPNetwork(NetworkAsyncInterface):
             msg = self.socket.recv()
         return msg
 
-    def initialize_new_client(self, identity) -> NetworkClient:
-        client = NetworkClient()
-        client.id = identity
+    def handle_client_connection(self, network_id: bytes) -> NetworkClient:
+        """handle a client connection
+        """
+        oid = ObjectId("network_client", id=str(network_id))
+        client: NetworkClient = ObjectFactory.get_new_instance(
+            "DefaultClient", dynamic_configuration={"oid": oid})
+        client.id = network_id
         client.status = ClientStatus.CONNECTED
         return client
 
     def receive_message_from_client(self, client: NetworkClient, blocking: bool = False) -> Request:
         # Implement logic to receive a message from a specific client
-        return None # type: ignore
+        return None  # type: ignore
 
     def send_message_to_client(self, message: Response, client: NetworkClient):
         try:
-            self.socket.send_multipart([client.id, b'', message.get_value("data")])
+            for message_data in message.get_value("message"):
+                self.socket.send_multipart(
+                    [client.id, message_data])
         except Exception as e:
             raise IOError(
-                f"Failed to send message to client {client}: {str(e)}")
+                f"Failed to send message to client {client}: {str(e)}") from e
+
+    def send_message_to_clients(self, message: Response, clients: Union[List[NetworkClient], List[str]]):
+        for client in clients:
+            if isinstance(client, str):
+                oid = ObjectId.parse(client)
+                if oid is None:
+                    raise ValueError(f"Invalid client id: {client}")
+                client = self.clients.get(oid.get_id()[0])
+                if client is None:
+                    raise ValueError(f"Client not found: {client}")
+            self.send_message_to_client(message, client)
 
     def send_message_to_all_clients(self, message: Response, suppress_failed_sending: bool = False):
         for client in self.clients.values():

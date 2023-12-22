@@ -1,12 +1,24 @@
 from abc import ABC, abstractmethod
-from typing import List
-from digitalpy.core.network.domain.network_client import NetworkClient
+from typing import List, Union
+from digitalpy.core.main.object_factory import ObjectFactory
+from digitalpy.core.domain.domain.network_client import NetworkClient
 from digitalpy.core.zmanager.request import Request
+from digitalpy.core.zmanager.response import Response
 
 
 class NetworkInterface(ABC):
     """Network  Interface class. Defines the interface for all networking implementations
     """
+
+    @abstractmethod
+    def handle_client_connection(self, network_id) -> NetworkClient:
+        """handle a client connection
+        """
+
+    @abstractmethod
+    def handle_client_disconnection(self, client: NetworkClient):
+        """handle a client disconnection
+        """
 
     @abstractmethod
     def service_connections(self) -> List[Request]:
@@ -44,7 +56,7 @@ class NetworkInterface(ABC):
         """
 
     @abstractmethod
-    def send_message_to_client(self, message: Request, client: NetworkClient):
+    def send_message_to_clients(self, message: Response, clients: Union[List[NetworkClient], List[str]]):
         """send a message to the network
         Args:
             message (Request): the message to send
@@ -56,7 +68,7 @@ class NetworkInterface(ABC):
         """
 
     @abstractmethod
-    def send_message_to_all_clients(self, message: Request, suppress_failed_sending: bool = False):
+    def send_message_to_all_clients(self, message: Response, suppress_failed_sending: bool = False):
         """ send a message to all clients on the network
         Args:
             message (Request): the message to send

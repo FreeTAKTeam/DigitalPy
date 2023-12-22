@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from typing import List
-from digitalpy.core.network.domain.network_client import NetworkClient
+from digitalpy.core.domain.domain.network_client import NetworkClient
 from digitalpy.core.network.network_interface import NetworkInterface
 from digitalpy.core.zmanager.request import Request
 

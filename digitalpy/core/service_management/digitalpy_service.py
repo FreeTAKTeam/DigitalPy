@@ -19,7 +19,6 @@ The `__getstate__` and `__setstate__` methods are used for pickling and unpickli
 # Original author: Giu Platania
 #
 #######################################################
-from abc import abstractmethod
 from typing import List
 from digitalpy.core.main.impl.default_factory import DefaultFactory
 from digitalpy.core.main.object_factory import ObjectFactory
@@ -32,9 +31,13 @@ from digitalpy.core.zmanager.impl.zmq_pusher import ZMQPusher
 from digitalpy.core.parsing.formatter import Formatter
 from digitalpy.core.network.network_interface import NetworkInterface
 from digitalpy.core.zmanager.response import Response
+from digitalpy.core.IAM.IAM_facade import IAM
+from digitalpy.core.domain.domain.network_client import NetworkClient
+from digitalpy.core.zmanager.request import Request
 
 COMMAND_PROTOCOL = "command"
 COMMAND_ACTION = "ServiceCommand"
+
 
 class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
     # on the reception of messages from the subscriber interface or the socket
@@ -70,6 +73,34 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         self.network = network
         self.protocol = protocol
         self.response_queue: List[Response] = []
+        self.iam_facade: IAM = ObjectFactory.get_instance("IAM")
+
+    def handle_connection(self, client: NetworkClient, req: Request):
+        """register a client with the server. This method should be called when a client connects to the server
+        so that it can be registered with the IAM component.
+        Args:
+            client (NetworkClient): the client to register
+        """
+
+        resp = ObjectFactory.get_new_instance("Response")
+        client.service_id = self.service_id
+        client.protocol = self.protocol
+        self.iam_facade.initialize(req, resp)
+        req.set_value("connection", client)
+        self.iam_facade.execute("connection")
+        return
+
+    def handle_disconnection(self, client: NetworkClient, req: Request):
+        """unregister a client from the server. This method should be called when a client disconnects from the server
+        so that it can be unregistered from the IAM component.
+        Args:
+            client (NetworkClient): the client to unregister
+        """
+        resp = ObjectFactory.get_new_instance("Response")
+        req.set_value("connection_id", str(client.get_oid()))
+        self.iam_facade.initialize(req, resp)
+        self.iam_facade.execute("disconnection")
+        return
 
     @property
     def protocol(self):
@@ -132,6 +163,17 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         for response in responses:
             if response.get_action() == COMMAND_ACTION:
                 self.handle_command(response)
+            else:
+                self.handle_response(response)
+
+    def handle_response(self, response: Response):
+        """used to handle a response. Should be overriden by inheriting classes"""
+        if self.network:
+            if response.get_value("recipients") == "*":
+                self.network.send_message_to_all_clients(response)
+            else:
+                self.network.send_message_to_clients(
+                    response, response.get_value("recipients"))
 
     def event_loop(self):
         """used to run the service. Should be overriden by inheriting classes"""
@@ -161,7 +203,7 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         if isinstance(exception, SystemExit):
             self.status = ServiceStatus.STOPPED
             return
-        
+
     def start(self, object_factory: DefaultFactory, tracing_provider: TracingProvider, host: str = "", port: int = 0):
         """used to start the service and initialize the network if provided
 
@@ -184,6 +226,10 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
             raise ValueError(
                 "network has been injected but host and port have not been provided")
         self.status = ServiceStatus.RUNNING
+        self.execute_main_loop()
+
+    def execute_main_loop(self):
+        """used to execute the main loop of the service"""
         while self.status == ServiceStatus.RUNNING:
             try:
                 self.event_loop()
@@ -191,7 +237,7 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
                 self.handle_exception(ex)
         if self.status == ServiceStatus.STOPPED:
             exit(0)
-            
+
     def __getstate__(self):
         ZmqSubscriber.__getstate__(self)
         ZMQPusher.__getstate__(self)
