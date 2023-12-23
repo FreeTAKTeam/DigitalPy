@@ -105,16 +105,21 @@ class DefaultFactory(Factory):
                     ):
                         continue
                     param_instance_key = param_name.lower().replace("_", "")
+                    # first check the configuration section for the parameter
                     if param_name in configuration:
                         c_params[param_name] = self.resolve_value(
                             configuration[param_name]
                         )
+                    # then check if a parameter has already been initialized
                     elif param_instance_key in self.instances:
                         c_params[param_name] = self.instances[param_instance_key]
+                    # check if a section with the name of the parameter exists
                     elif self.configuration.has_section(param_name):
                         c_params[param_name] = self.get_instance(param_name)
+                    # check if a section with the name of the parameter in lowercase exists
                     elif self.configuration.has_section(param_instance_key):
-                        c_params[param_name] = self.get_instance(param_instance_key)
+                        c_params[param_name] = self.get_instance(
+                            param_instance_key)
                     elif isinstance(param_default, inspect._empty):
                         raise Exception(
                             f"constructor parameter {param_name} in class {name} cannot be injected"
