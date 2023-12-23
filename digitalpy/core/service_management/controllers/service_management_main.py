@@ -143,7 +143,9 @@ class ServiceManagementMain(DigitalPyService):
         """This method is used to get the health of all services"""
         service_health = {}
         for service_id in self._service_index:
-            service_health[service_id] = self.get_service_health(service_id)
+            if self._service_index[service_id].status == ServiceStatus.RUNNING:
+                service_health[service_id] = self.get_service_health(service_id)
+                
         return service_health
 
     def get_service_health(self, service_id: str):
