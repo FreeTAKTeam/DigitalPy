@@ -19,7 +19,10 @@ The `__getstate__` and `__setstate__` methods are used for pickling and unpickli
 # Original author: Giu Platania
 #
 #######################################################
+from datetime import datetime
 from typing import List
+import time
+from digitalpy.core.domain.domain.service_health import ServiceHealth
 from digitalpy.core.main.impl.default_factory import DefaultFactory
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.service_management.domain.service_status import ServiceStatus
@@ -34,6 +37,8 @@ from digitalpy.core.zmanager.response import Response
 from digitalpy.core.IAM.IAM_facade import IAM
 from digitalpy.core.domain.domain.network_client import NetworkClient
 from digitalpy.core.zmanager.request import Request
+from digitalpy.core.health.domain.service_health_category import ServiceHealthCategory
+from digitalpy.core.digipy_configuration.configuration import Configuration
 
 COMMAND_PROTOCOL = "command"
 COMMAND_ACTION = "ServiceCommand"
@@ -41,9 +46,18 @@ COMMAND_ACTION = "ServiceCommand"
 
 class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
     # on the reception of messages from the subscriber interface or the socket
-    # TODO: what is the service manager supposed to do? is this going to be a new service
 
-    def __init__(self, service_id: str, subject_address: str, subject_port: int, subject_protocol: str, integration_manager_address: str, integration_manager_port: int, integration_manager_protocol: str, formatter: Formatter, network: NetworkInterface, protocol: str):
+    def __init__(self, service_id: str,
+                 subject_address: str,
+                 subject_port: int,
+                 subject_protocol: str,
+                 integration_manager_address: str,
+                 integration_manager_port: int,
+                 integration_manager_protocol: str,
+                 formatter: Formatter,
+                 network: NetworkInterface,
+                 protocol: str,
+                 error_threshold: float = 0.1):
         """the constructor for the digitalpy service class
 
         Args:
@@ -74,6 +88,11 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         self.protocol = protocol
         self.response_queue: List[Response] = []
         self.iam_facade: IAM = ObjectFactory.get_instance("IAM")
+
+        self.total_requests = 0
+        self.total_errors = 0
+        self.total_request_processing_time = 0
+        self.error_threshold = error_threshold
 
     def handle_connection(self, client: NetworkClient, req: Request):
         """register a client with the server. This method should be called when a client connects to the server
@@ -197,12 +216,45 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         """used to handle a command. Should be overriden by inheriting classes"""
         if command.get_value("command") == "stop_service":
             self.stop()
+        elif command.get_value("command") == "get_health":
+            service_health = self.get_health()
+            conf: Configuration = ObjectFactory.get_instance("Configuration")
+            resp = ObjectFactory.get_new_instance("Response")
+            resp.set_value("message", service_health)
+            resp.set_action("publish")
+            resp.set_format("pickled")
+            resp.set_id(command.get_id())
+            self.subject_send_request(resp, COMMAND_PROTOCOL, conf.get_value(
+                "service_id", "ServiceManager"))
+
+    def get_health(self):
+        """used to get the health of the service."""
+        service_health: ServiceHealth = ServiceHealth()
+        if self.total_requests == 0:
+            service_health.error_percentage = 0
+            service_health.average_request_time = 0
+        else:
+            service_health.error_percentage = self.total_errors/self.total_requests
+            service_health.average_request_time = self.total_request_processing_time/self.total_requests
+        service_health.service_id = self.service_id
+        service_health.status = self.calculate_health(service_health)
+        service_health.timestamp = datetime.now()
+        return service_health
+
+    def calculate_health(self, service_health: ServiceHealth):
+        """used to calculate the health of the service."""
+        if service_health.error_percentage > self.error_threshold:
+            return ServiceHealthCategory.DEGRADED
+        else:
+            return ServiceHealthCategory.OPERATIONAL
 
     def handle_exception(self, exception: Exception):
         """used to handle an exception. Should be overriden by inheriting classes"""
         if isinstance(exception, SystemExit):
             self.status = ServiceStatus.STOPPED
             return
+        else:
+            self.total_errors += 1
 
     def start(self, object_factory: DefaultFactory, tracing_provider: TracingProvider, host: str = "", port: int = 0):
         """used to start the service and initialize the network if provided
