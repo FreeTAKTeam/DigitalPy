@@ -1,5 +1,6 @@
 """This module is used to manage the services running on the zmanager"""
-from typing import Dict, List
+from datetime import datetime
+from typing import Dict, List, TYPE_CHECKING
 
 from digitalpy.core.main.impl.default_factory import DefaultFactory
 from digitalpy.core.zmanager.request import Request
@@ -14,6 +15,8 @@ from digitalpy.core.parsing.formatter import Formatter
 from digitalpy.core.service_management.domain.service_description import ServiceDescription
 from digitalpy.core.digipy_configuration.configuration import Configuration
 from digitalpy.core.zmanager.response import Response
+from digitalpy.core.domain.domain.service_health import ServiceHealth
+from digitalpy.core.health.domain.service_health_category import ServiceHealthCategory
 
 
 class ServiceManagementMain(DigitalPyService):
@@ -114,6 +117,7 @@ class ServiceManagementMain(DigitalPyService):
 
     def handle_command(self, command: Response):
         """This method is used to handle a command"""
+        from digitalpy.core.main.DigitalPy import DigitalPy
 
         if command.get_value("command") == "start_service":
             self.start_service(command.get_value("target_service_id"))
@@ -124,6 +128,45 @@ class ServiceManagementMain(DigitalPyService):
         elif command.get_value("command") == "restart_service":
             self.stop_service(command.get_value("target_service_id"))
             self.start_service(command.get_value("target_service_id"))
+
+        elif command.get_value("command") == "get_all_service_health":
+            all_service_health = self.get_all_service_health()
+            resp = ObjectFactory.get_new_instance("Response")
+            resp.set_value("message", all_service_health)
+            resp.set_action("publish")
+            resp.set_format("pickled")
+            resp.set_id(command.get_id())
+            self.subject_send_request(
+                resp, COMMAND_PROTOCOL, DigitalPy.service_id)
+
+    def get_all_service_health(self):
+        """This method is used to get the health of all services"""
+        service_health = {}
+        for service_id in self._service_index:
+            service_health[service_id] = self.get_service_health(service_id)
+        return service_health
+
+    def get_service_health(self, service_id: str):
+        """This method is used to get the health of a service"""
+        req: Request = ObjectFactory.get_new_instance("Request")
+        req.set_action(COMMAND_ACTION)
+        req.set_context(service_id)
+        req.set_value("command", "get_health")
+        req.set_value("target_service_id", service_id)
+        req.set_format("pickled")
+        self.subject_send_request(req, COMMAND_PROTOCOL, service_id)
+        resp = self.broker_receive_response(request_id=req.get_id(), timeout=5)
+
+        if resp is None:
+            service_health: ServiceHealth = ServiceHealth()
+            service_health.status = ServiceHealthCategory.UNRESPONSIVE
+            service_health.service_id = service_id
+            service_health.timestamp = datetime.now()
+
+        else:
+            service_health = resp.get_value("message")
+
+        return service_health
 
     def listen_for_commands(self) -> List[Response]:
         """this method is responsible for waiting for the response, enabling

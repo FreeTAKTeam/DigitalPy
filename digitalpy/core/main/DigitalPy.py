@@ -14,7 +14,7 @@ import pathlib
 import sys
 from threading import Event
 from time import sleep
-from typing import Callable
+from typing import Callable, TYPE_CHECKING
 import signal
 
 from digitalpy.core.digipy_configuration.configuration import Configuration
@@ -22,6 +22,7 @@ from digitalpy.core.digipy_configuration.impl.inifile_configuration import Inifi
 from digitalpy.core.component_management.impl.component_registration_handler import ComponentRegistrationHandler
 from digitalpy.core.telemetry.tracer import Tracer
 from digitalpy.core.telemetry.tracing_provider import TracingProvider
+from digitalpy.core.zmanager.response import Response
 
 from digitalpy.core.zmanager.subject import Subject
 from digitalpy.core.zmanager.impl.zmq_pusher import ZMQPusher
@@ -33,11 +34,16 @@ from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.service_management.controllers.service_management_main import ServiceManagementMain
 from digitalpy.core.service_management.digitalpy_service import COMMAND_PROTOCOL, COMMAND_ACTION
 
+if TYPE_CHECKING:
+    from digitalpy.core.domain.domain.service_health import ServiceHealth
+
 
 class DigitalPy(ZmqSubscriber, ZMQPusher):
     """this is the executable of the digitalPy framework, providing the starting point
     for a bare bone application.
     """
+
+    service_id = "digitalpy"
 
     def __init__(self):
         # Set up necessary resources and configurations for the application to run
@@ -72,14 +78,21 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
         ZmqSubscriber.__init__(self, ObjectFactory.get_instance("formatter"))
         ZMQPusher.__init__(self, ObjectFactory.get_instance("formatter"))
 
+        self.responses: dict[str, Response] = {}
+
     def set_zmanager_address(self):
-        self.subject_address: str = self.configuration.get_value("subject_address", "Service")
-        self.subject_port: int = int(self.configuration.get_value( "subject_port", "Service"))
-        self.subject_protocol: str = self.configuration.get_value("subject_protocol", "Service")
-        self.integration_manager_address: str = self.configuration.get_value("integration_manager_address", "Service")
-        self.integration_manager_port: int = int(self.configuration.get_value("integration_manager_port", "Service"))
-        self.integration_manager_protocol: str = self.configuration.get_value("integration_manager_protocol", "Service")
-        self.service_id = "DigitalPy"
+        self.subject_address: str = self.configuration.get_value(
+            "subject_address", "Service")
+        self.subject_port: int = int(
+            self.configuration.get_value("subject_port", "Service"))
+        self.subject_protocol: str = self.configuration.get_value(
+            "subject_protocol", "Service")
+        self.integration_manager_address: str = self.configuration.get_value(
+            "integration_manager_address", "Service")
+        self.integration_manager_port: int = int(
+            self.configuration.get_value("integration_manager_port", "Service"))
+        self.integration_manager_protocol: str = self.configuration.get_value(
+            "integration_manager_protocol", "Service")
 
     def initialize_tracing(self):
         # the central tracing provider
@@ -264,6 +277,25 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
             else:
                 self.service_manager_process.join()
             return True
+        except Exception as ex:
+            raise ex
+
+    def get_all_service_health(self) -> dict[str, 'ServiceHealth']:
+        """Gets the health of all services from the service manager."""
+        try:
+            req: Request = ObjectFactory.get_new_instance("Request")
+            req.set_action("GetAllServiceHealth")
+            req.set_context(self.configuration.get_value(
+                "service_id", "ServiceManager"))
+            req.set_value("command", "get_all_service_health")
+            req.set_format("pickled")
+            self.subject_send_request(req, COMMAND_PROTOCOL, self.configuration.get_value(
+                "service_id", "ServiceManager"))
+            response = self.broker_receive_response(req.get_id(), timeout=10)
+            if response is None:
+                raise IOError(
+                    "No response received from the service manager in time")
+            return response.get_value("message")
         except Exception as ex:
             raise ex
 
