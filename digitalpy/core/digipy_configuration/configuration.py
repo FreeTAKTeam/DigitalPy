@@ -28,7 +28,7 @@ class Configuration(ABC):
         """Parses the given configuration and merges it with already added configurations."""
 
     @abstractmethod
-    def get_sections(self)-> list:
+    def get_sections(self)-> list[str]:
         """Get all section names."""
         
 

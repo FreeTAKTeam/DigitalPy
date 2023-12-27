@@ -25,6 +25,7 @@ import time
 from digitalpy.core.domain.domain.service_health import ServiceHealth
 from digitalpy.core.main.impl.default_factory import DefaultFactory
 from digitalpy.core.main.object_factory import ObjectFactory
+from digitalpy.core.service_management.domain.service_operations import ServiceOperations
 from digitalpy.core.service_management.domain.service_status import ServiceStatus
 from digitalpy.core.telemetry.tracing_provider import TracingProvider
 from digitalpy.core.telemetry.tracer import Tracer
@@ -175,7 +176,8 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         ZMQPusher.initiate_connections(
             self, self.subject_port, self.subject_address, self.service_id)
         self.broker_connect(self.integration_manager_address, self.integration_manager_port,
-                            self.integration_manager_protocol, self.service_id, application_protocol)
+                            self.integration_manager_protocol, self.service_id, 
+                            application_protocol)
 
     def response_handler(self, responses: List[Response]):
         """used to handle a response. Should be overriden by inheriting classes"""
@@ -200,6 +202,13 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         self.response_handler(responses)
 
     def stop(self):
+        """
+        Stops the service by performing necessary cleanup operations.
+
+        This method sets the service status to STOPPING, tears down the network if it exists,
+        disconnects the broker, tears down connections, sets the service status to STOPPED,
+        and raises SystemExit to exit the program.
+        """
         self.status = ServiceStatus.STOPPING
 
         if self.network:
@@ -214,9 +223,9 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
 
     def handle_command(self, command: Response):
         """used to handle a command. Should be overriden by inheriting classes"""
-        if command.get_value("command") == "stop_service":
+        if command.get_value("command") == ServiceOperations.STOP.value:
             self.stop()
-        elif command.get_value("command") == "get_health":
+        elif command.get_value("command") == ServiceOperations.GET_HEALTH.value:
             service_health = self.get_health()
             conf: Configuration = ObjectFactory.get_instance("Configuration")
             resp = ObjectFactory.get_new_instance("Response")

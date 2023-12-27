@@ -23,6 +23,7 @@ from digitalpy.core.component_management.impl.component_registration_handler imp
 from digitalpy.core.telemetry.tracer import Tracer
 from digitalpy.core.telemetry.tracing_provider import TracingProvider
 from digitalpy.core.zmanager.response import Response
+from digitalpy.core.service_management.domain.service_manager_operations import ServiceManagerOperations
 
 from digitalpy.core.zmanager.subject import Subject
 from digitalpy.core.zmanager.impl.zmq_pusher import ZMQPusher
@@ -313,7 +314,8 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
             req.set_action("StartServer")
             req.set_context(self.configuration.get_value(
                 "service_id", "ServiceManager"))
-            req.set_value("command", "start_service")
+            req.set_value(
+                "command", ServiceManagerOperations.START_SERVICE.value)
             req.set_value("target_service_id", service_id)
             req.set_format("pickled")
             self.subject_send_request(req, COMMAND_PROTOCOL, self.configuration.get_value(
@@ -336,7 +338,8 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
             req.set_action(COMMAND_ACTION)
             req.set_context(self.configuration.get_value(
                 "service_id", "servicemanager"))
-            req.set_value("command", "stop_service")
+            req.set_value(
+                "command", ServiceManagerOperations.STOP_SERVICE.value)
             req.set_value("target_service_id", service_id)
             req.set_format("pickled")
             self.subject_send_request(req, COMMAND_PROTOCOL, self.configuration.get_value(
@@ -359,7 +362,8 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
             req.set_action(COMMAND_ACTION)
             req.set_context(self.configuration.get_value(
                 "service_id", "ServiceManager"))
-            req.set_value("command", "restart_service")
+            req.set_value(
+                "command", ServiceManagerOperations.RESTART_SERVICE.value)
             req.set_value("target_service_id", service_id)
             req.set_format("pickled")
             self.subject_send_request(req, COMMAND_PROTOCOL, self.configuration.get_value(

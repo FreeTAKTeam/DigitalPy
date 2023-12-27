@@ -48,3 +48,6 @@ PERSISTENCE_PATH = str(
 MANIFEST_PATH = str(
     pathlib.PurePath(CURRENT_COMPONENT_PATH, "configuration/manifest.ini")
 )
+
+# time to wait until a service is manually terminated
+SERVICE_WAIT_TIME = 10
