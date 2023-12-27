@@ -31,8 +31,9 @@ respectively.
 #
 #######################################################
 from datetime import datetime
+import traceback
 from typing import List
-import time
+
 from digitalpy.core.domain.domain.service_health import ServiceHealth
 from digitalpy.core.main.impl.default_factory import DefaultFactory
 from digitalpy.core.main.object_factory import ObjectFactory
@@ -156,7 +157,7 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         return
 
     @property
-    def protocol(self)->str:
+    def protocol(self) -> str:
         """get the protocol of the service
 
         Returns:
@@ -187,7 +188,7 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         self._status = status
 
     @property
-    def tracer(self)->Tracer:
+    def tracer(self) -> Tracer:
         """get the tracer of the service
 
         Raises:
@@ -230,8 +231,9 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         # to define the format for this service.
 
     def initialize_controllers(self):
-        """used to initialize the controllers once the service is started. Should be overriden by inheriting classes"""
-        pass
+        """used to initialize the controllers once the service is started. Should be overriden 
+        by inheriting classes
+        """
 
     def initialize_connections(self, application_protocol: str):
         """initialize connections to the subject and the integration manager within the
@@ -267,8 +269,17 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
 
     def event_loop(self):
         """used to run the service. Should be overriden by inheriting classes"""
+        if self.network:
+            self.handle_network()
+
         responses = self.broker_receive()
         self.response_handler(responses)
+
+    def handle_network(self):
+        """used to handle the network."""
+        requests = self.network.service_connections()
+        for request in requests:
+            self.handle_inbound_message(request)
 
     def stop(self):
         """
@@ -289,6 +300,28 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         self.status = ServiceStatus.STOPPED
 
         raise SystemExit
+
+    def handle_inbound_message(self, message: Request) -> bool:
+        """This function is used to handle inbound messages from other services. 
+        It is intiated by the event loop.
+
+        Args:
+            message (Request): the message to handle
+
+        Returns:
+            bool: True if the message was handled successfully, False otherwise
+        """
+
+        # TODO: discuss this with giu and see if we should move the to the action mapping system?
+        if message.get_value("action") == "connection":
+            self.handle_connection(message.get_value("client"), message)
+            return True
+
+        elif message.get_value("action") == "disconnection":
+            self.handle_disconnection(message.get_value("client"), message)
+            return True
+
+        return False
 
     def handle_command(self, command: Response):
         """used to handle a command. Should be overriden by inheriting classes"""
@@ -327,11 +360,15 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
             return ServiceHealthCategory.OPERATIONAL
 
     def handle_exception(self, exception: Exception):
-        """used to handle an exception. Should be overriden by inheriting classes"""
+        """This function is used to handle exceptions that occur in the service. 
+        It is intiated by the event loop.
+        """
         if isinstance(exception, SystemExit):
             self.status = ServiceStatus.STOPPED
-            return
+            raise SystemExit
         else:
+            traceback.print_exc()
+            print("An exception occurred: " + str(exception))
             self.total_errors += 1
 
     def start(self, object_factory: DefaultFactory, tracing_provider: TracingProvider, host: str = "", port: int = 0):
