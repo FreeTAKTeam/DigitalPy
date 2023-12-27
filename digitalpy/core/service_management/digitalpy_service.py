@@ -1,14 +1,25 @@
-"""This file defines a class `DigitalPyService` that inherits from `Service`, `ZmqSubscriber`, and `ZMQPusher`. This class is used to create a service that can subscribe to messages, push messages, and perform service-related operations.
+"""
+This file defines a class `DigitalPyService` that inherits from `Service`, `ZmqSubscriber`, 
+and `ZMQPusher`. This class is used to create a service that can subscribe to messages, push messages, 
+and perform service-related operations.
 
-The class constructor takes several parameters including service id, addresses, ports, protocols, a formatter, and a network interface. It initializes the parent classes and sets up various properties.
+The class constructor takes several parameters including service id, addresses, ports, protocols, 
+a formatter, and a network interface. It initializes the parent classes and sets up various 
+properties.
 
-The class has several properties with their respective getters and setters, such as `protocol`, `status`, and `tracer`.
+The class has several properties with their respective getters and setters, such as 
+`protocol`, `status`, and `tracer`.
 
-The class also defines several methods, some of which are abstract and must be implemented by any class that inherits from `DigitalPyService`. These include `event_loop`, `handle_command`, and `handle_exception`.
+The class also defines several methods, some of which are abstract and must be implemented 
+by any class that inherits from `DigitalPyService`. These include `event_loop`, 
+`handle_command`, and `handle_exception`.
 
-The `start` method is used to start the service. It configures the object factory, initializes the tracer, initializes the controllers, and starts the event loop. If a network is provided, it also initializes the network.
+The `start` method is used to start the service. It configures the object factory, 
+initializes the tracer, initializes the controllers, and starts the event loop. 
+If a network is provided, it also initializes the network.
 
-The `__getstate__` and `__setstate__` methods are used for pickling and unpickling the object, respectively.
+The `__getstate__` and `__setstate__` methods are used for pickling and unpickling the object, 
+respectively.
 """
 #######################################################
 #
@@ -46,7 +57,27 @@ COMMAND_ACTION = "ServiceCommand"
 
 
 class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
-    # on the reception of messages from the subscriber interface or the socket
+    """
+    Represents a DigitalPy service.
+
+    This class is responsible for managing the lifecycle and behavior of a DigitalPy service.
+    It inherits from the Service, ZmqSubscriber, and ZMQPusher classes.
+
+    Args:
+        service_id (str): The unique ID of the service inheriting from DigitalPyService.
+        subject_address (str): The address of the zmanager "subject".
+        subject_port (int): The port of the zmanager "subject".
+        subject_protocol (str): The protocol of the zmanager "subject".
+        integration_manager_address (str): The address of the zmanager "integration_manager".
+        integration_manager_port (int): The port of the zmanager "integration_manager".
+        integration_manager_protocol (str): The protocol of the zmanager "integration_manager".
+        formatter (Formatter): The formatter used by the service to serialize the request 
+            values to and from messages.
+        network (NetworkInterface): The network interface used by the service to send and 
+            receive messages.
+        protocol (str): The protocol of the service.
+        error_threshold (float, optional): The error threshold for the service. Defaults to 0.1.
+    """
 
     def __init__(self, service_id: str,
                  subject_address: str,
@@ -100,6 +131,7 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         so that it can be registered with the IAM component.
         Args:
             client (NetworkClient): the client to register
+            req (Request): the request from the client containing connection data
         """
 
         resp = ObjectFactory.get_new_instance("Response")
@@ -115,6 +147,7 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         so that it can be unregistered from the IAM component.
         Args:
             client (NetworkClient): the client to unregister
+            req (Request): the request from the client containing disconnection data
         """
         resp = ObjectFactory.get_new_instance("Response")
         req.set_value("connection_id", str(client.get_oid()))
@@ -123,15 +156,30 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         return
 
     @property
-    def protocol(self):
+    def protocol(self)->str:
+        """get the protocol of the service
+
+        Returns:
+            str: the protocol of the service
+        """
         return self._protocol
 
     @protocol.setter
     def protocol(self, protocol: str):
+        """set the protocol of the service
+
+        Args:
+            protocol (str): the protocol of the service
+        """
         self._protocol = protocol
 
     @property
-    def status(self):
+    def status(self) -> ServiceStatus:
+        """get the status of the service
+
+        Returns:
+            ServiceStatus: the status of the service
+        """
         return self._status
 
     @status.setter
@@ -139,14 +187,31 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         self._status = status
 
     @property
-    def tracer(self):
+    def tracer(self)->Tracer:
+        """get the tracer of the service
+
+        Raises:
+            ValueError: if the tracer has not been initialized it will raise a value error
+
+        Returns:
+            Tracer: the tracer of the service
+        """
         if self._tracer is None:
             raise ValueError("Tracer has not been initialized")
         else:
             return self._tracer
 
     @tracer.setter
-    def tracer(self, value):
+    def tracer(self, value: Tracer):
+        """set the tracer of the service
+
+        Args:
+            value (Tracer): the tracer of the service
+
+        Raises:
+            ValueError: if the tracer has already been initialized it will raise a value error
+            ValueError: if the value is not an instance of Tracer it will raise a value error
+        """
         if self._tracer is not None:
             raise ValueError("Tracer has already been initialized")
         elif not isinstance(value, Tracer):
@@ -166,9 +231,13 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
 
     def initialize_controllers(self):
         """used to initialize the controllers once the service is started. Should be overriden by inheriting classes"""
+        pass
 
     def initialize_connections(self, application_protocol: str):
-        """initialize connections to the subject and the integration manager
+        """initialize connections to the subject and the integration manager within the
+        zmanager architecture. The topic subscribed to by the subject is as follows:
+        /messages/<service_id>
+        /commands/<service_id>
 
         Args:
             application_protocol (str): the application protocol of the service
@@ -176,7 +245,7 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         ZMQPusher.initiate_connections(
             self, self.subject_port, self.subject_address, self.service_id)
         self.broker_connect(self.integration_manager_address, self.integration_manager_port,
-                            self.integration_manager_protocol, self.service_id, 
+                            self.integration_manager_protocol, self.service_id,
                             application_protocol)
 
     def response_handler(self, responses: List[Response]):

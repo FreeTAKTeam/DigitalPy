@@ -15,7 +15,8 @@ class Service(ABC):
     @abstractmethod
     def send_heart_beat(self):
         """send a heartbeat to inform the the service manager that it's alive"""
-
+        # TODO: this is seemingly replaced by the implementation of the health check
+        
     @abstractmethod
     def start(self, object_factory: DefaultFactory, tracing_provider: TracingProvider):
         """this method should be used to start the service as a process"""
