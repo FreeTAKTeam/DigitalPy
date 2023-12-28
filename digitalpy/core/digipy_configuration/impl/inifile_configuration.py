@@ -47,7 +47,7 @@ class InifileConfiguration(Configuration):
             return
 
         if not os.path.exists(filename):
-            raise ValueError("Could not find configuration file")
+            raise ValueError("Could not find configuration file "+str(filename))
 
         self.__added_files.append(filename)
         result = self.process_file(filename, self.config_array, self.contained_files)
@@ -186,7 +186,7 @@ class InifileConfiguration(Configuration):
                 return {
                     key: val
                     for key, val in self.config_array[lookup_entry[0]].items()
-                    if re.match("/^__/", key)
+                    if not re.match("/^__/", key)
                 }
 
     def _lookup(self, section, key=""):

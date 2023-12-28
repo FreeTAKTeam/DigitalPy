@@ -2,8 +2,6 @@ import json
 import pathlib
 from string import Template
 
-COMPONENT_NAME = "ServiceManagement"
-
 CONFIGURATION_FORMAT = "json"
 
 CURRENT_COMPONENT_PATH = pathlib.Path(__file__).parent.parent.absolute()
@@ -50,3 +48,6 @@ PERSISTENCE_PATH = str(
 MANIFEST_PATH = str(
     pathlib.PurePath(CURRENT_COMPONENT_PATH, "configuration/manifest.ini")
 )
+
+# time to wait until a service is manually terminated
+SERVICE_WAIT_TIME = 10

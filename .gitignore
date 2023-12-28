@@ -127,3 +127,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+digitalpy/core/network/impl/stream_tcp_test.py
+digitalpy/core/IAM/persistence/connections.json

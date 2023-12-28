@@ -49,4 +49,5 @@ class DefaultRequest(Request, AbstractControllerMessage):
         """
         return self.method
 
-    
+    def set_format(self, format_: str):
+        self.format = format_

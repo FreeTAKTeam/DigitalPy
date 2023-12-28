@@ -1,7 +1,7 @@
 import importlib
 import os
 from pathlib import PurePath
-from typing import List
+from typing import Dict, List
 import pkg_resources
 
 from digitalpy.core.main.registration_handler import RegistrationHandler
@@ -22,9 +22,11 @@ DEPENDENCIES = "dependencies"
 class ComponentRegistrationHandler(RegistrationHandler):
     """this class is used to manage component registration"""
 
-    registered_components = {}
+    registered_components: Dict[str, DefaultFacade] = {}
 
     pending_components = {}
+
+    component_index: Dict[str, Configuration] = {}
 
     @staticmethod
     def clear():
@@ -109,8 +111,9 @@ class ComponentRegistrationHandler(RegistrationHandler):
             return False
 
     @staticmethod
-    def save_component(facade, component_name: str):
+    def save_component(facade: DefaultFacade, component_name: str):
         ComponentRegistrationHandler.registered_components[component_name] = facade
+        ComponentRegistrationHandler.component_index[component_name] = facade.get_manifest()
 
     @staticmethod
     def register_pending(component_name, config):
@@ -118,7 +121,7 @@ class ComponentRegistrationHandler(RegistrationHandler):
             facade_instance.register(config)
 
     @staticmethod
-    def validate_manifest(manifest: Configuration, component_name: str, component_facade) -> bool:
+    def validate_manifest(manifest: Configuration, component_name: str, component_facade) -> tuple[bool, bool]:
         #TODO: determine better way to inform the caller that the manifest is invalid
         """validate that the component is compatible with the current digitalpy version
 
@@ -130,7 +133,7 @@ class ComponentRegistrationHandler(RegistrationHandler):
             ValueError: raised if the manifest section is missing from the manifest configuration
 
         Returns:
-            bool: whether the component is compatible with the current digitalpy installation
+            tuple[bool, bool]: whether the component is compatible with the current digitalpy installation and whether the component has any pending dependencies
         """
         # retrieve the current digitalpy version based on the setup.py
         digitalpy_version = pkg_resources.require(DIGITALPY)[0].version
@@ -148,7 +151,7 @@ class ComponentRegistrationHandler(RegistrationHandler):
 
         # validate the component name matches the name specified in the manifest
         if component_name != section[NAME]:
-            return False
+            return False, False
 
         # iterate the delimited version number and compare it to the digitalpy version
         for i in range(len(section[REQUIRED_ALFA_VERSION].split(VERSION_DELIMITER))):
@@ -159,7 +162,7 @@ class ComponentRegistrationHandler(RegistrationHandler):
             elif int(digitalpy_version_number)==int(section[REQUIRED_ALFA_VERSION].split(VERSION_DELIMITER)[i]):
                 continue
             else:
-                return False
+                return False, False
             
         # dont approve the manifest if the component has already been registered
         if (
@@ -167,7 +170,7 @@ class ComponentRegistrationHandler(RegistrationHandler):
             and section[VERSION]
             != ComponentRegistrationHandler.registered_components[component_name][VERSION]
         ):
-            return False
+            return False, False
 
         # dont approve the manifest if a component with the same name but a different ID already exists
         if (
@@ -175,7 +178,7 @@ class ComponentRegistrationHandler(RegistrationHandler):
             and ComponentRegistrationHandler.registered_components[component_name][ID]
             != section[ID]
         ):
-            return False
+            return False, False
 
         pending = False
 

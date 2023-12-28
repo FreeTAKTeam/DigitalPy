@@ -8,21 +8,14 @@ from lxml.etree import Element  # pylint: disable=no-name-in-module
 from lxml import etree
 import xmltodict
 
+
 class XMLSerializationController(Controller):
     def __init__(self, request, response, action_mapper, configuration) -> None:
         super().__init__(request, response, action_mapper, configuration)
-    
+
     def execute(self, method=None):
         getattr(self, method)(**self.request.get_values())
         return self.response
-
-    def convert_xml_to_dict(self, message: str, **kwargs):
-        """converts the provided xml string to a dictionary
-
-        Args:
-            message (str): xml string to be converted to a dictionary
-        """
-        self.response.set_value("dict", xmltodict.parse(message))
 
     def serialize_node(self, node, **kwargs):
         """converts the provided node to an xml string
@@ -47,7 +40,11 @@ class XMLSerializationController(Controller):
             Union[str, Element]: the original call to this method returns a string representing the xml
                 the Element is only returned in the case of recursive calls
         """
-        xml = node.xml
+        if node.extended:
+            xml = etree.fromstring(xmltodict.unparse(node.extended))
+        else:
+            xml = etree.Element(tag_name)
+
         # handles text data within tag
         if hasattr(node, "text"):
             xml.text = str(node.text)
@@ -56,7 +53,8 @@ class XMLSerializationController(Controller):
             # below line is required because get_all_properties function returns only cot property names
             value = getattr(node, attribName)
             if hasattr(value, "__dict__"):
-                tagElement = self._serialize_node(value, attribName, level=level + 1)
+                tagElement = self._serialize_node(
+                    value, attribName, level=level + 1)
                 # TODO: modify so double underscores are handled differently
                 try:
                     if attribName[0] == "_":

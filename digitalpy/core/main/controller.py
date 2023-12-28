@@ -32,8 +32,8 @@ class Controller(ABC):
         action_mapper: ActionMapper,
         configuration: Configuration,
     ):
-        self.request = request
-        self.response = response
+        self.request: Request = request
+        self.response: Response = response
         self.action_mapper = action_mapper
         self.configuration = configuration
 
@@ -73,10 +73,10 @@ class Controller(ABC):
     def get_response(self):
         return self.response
 
-    def execute_sub_action(self, action):
+    def execute_sub_action(self, action) -> Response:
         cur_request = self.get_request()
         cur_response = self.get_response()
-        sub_request = ObjectFactory.get_new_instance("request")
+        sub_request: Request = ObjectFactory.get_new_instance("request")
         sub_request.set_sender(self.__class__.__name__)
         sub_request.set_context(cur_request.get_context())
         sub_request.set_action(action)

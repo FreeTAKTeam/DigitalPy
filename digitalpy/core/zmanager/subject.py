@@ -34,7 +34,6 @@ class Subject:
             self.workers.append(worker_process)
 
     def initiate_sockets(self):
-        print("initiate_sockets")
         self.context = zmq.Context()
         self.backend_pusher = self.context.socket(zmq.PUSH)
         self.backend_pusher.bind(self.backend_address)
@@ -54,7 +53,7 @@ class Subject:
                 self.logger.debug("receieved %s",str(message))
                 self.backend_pusher.send_multipart(message)
             except Exception as ex:
-                self.logger.fatal("exception thrown in subject %s", ex, exc_info=1)
+                self.logger.fatal("exception thrown in subject %s", ex, exc_info=True)
 
     def __getstate__(self):
         """delete objects that cannot be pickled or generally serialized"""

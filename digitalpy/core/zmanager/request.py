@@ -1,8 +1,9 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
 from digitalpy.core.zmanager.response import Response
 
 from digitalpy.core.zmanager.controller_message import ControllerMessage
+
 
 class Request(ControllerMessage):
 
@@ -16,4 +17,8 @@ class Request(ControllerMessage):
 
     @abstractmethod
     def get_method(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def set_format(self, format_: str):
         raise NotImplementedError

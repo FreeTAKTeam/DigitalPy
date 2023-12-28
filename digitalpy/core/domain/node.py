@@ -1,8 +1,8 @@
 import uuid
 import re
-from typing import Dict, Any
+from typing import Dict, Any, Union
 from digitalpy.core.persistence.impl.default_persistent_object import DefaultPersistentObject
-from digitalpy.core.parsing.load_configuration import Configuration
+from digitalpy.core.parsing.load_configuration import ModelConfiguration
 from digitalpy.core.domain.object_id import ObjectId
 from digitalpy.core.persistence.persistent_object import PersistentObject
 from digitalpy.core.persistence.persistent_object_proxy import PersistentObjectProxy
@@ -30,9 +30,9 @@ class Node(DefaultPersistentObject):
 
     def __init__(
         self,
-        node_type,
-        configuration: Configuration = Configuration(),
-        model = None,
+        node_type="node",
+        model_configuration: Union[ModelConfiguration, None] = None,
+        model=None,
         oid: ObjectId = None,
         initial_data=None,
     ) -> None:
@@ -46,18 +46,34 @@ class Node(DefaultPersistentObject):
             initial_data (_type_, optional): _description_. Defaults to None.
         """
         super().__init__(oid, initial_data)
+        if model_configuration is None:
+            model_configuration = ModelConfiguration()
         self._children: Dict[str, Node] = {}
         self._parents: Dict[str, Node] = {}
         self._depth = -1
         self._path = ""
+        # any extended domain objects which are not defined in the domain
+        self._extended = {}
         # default the elements to an empty dictionary if the class configuration doesn't exist
-        self._relationship_definition = configuration.elements.get(self.__class__.__name__, None)
-        
+        self._relationship_definition = model_configuration.elements.get(
+            self.__class__.__name__, None)
+
         # check that the value of _relationship_definition is not none
         if self._relationship_definition != None:
-            self._add_relationships(configuration, model)
+            self._add_relationships(model_configuration, model)
 
-    def _add_relationships(self, configuration: Configuration, model) -> None:
+    @property
+    def extended(self) -> dict:
+        """this property returns the extended domain objects which are not defined in the domain
+        """
+        return self._extended
+
+    @extended.setter
+    def extended(self, value: dict):
+        """this property sets the extended domain objects which are not defined in the domain"""
+        self._extended = value
+
+    def _add_relationships(self, configuration: ModelConfiguration, model) -> None:
         for (
             relationship_name,
             relationship_def,
@@ -295,7 +311,8 @@ class Node(DefaultPersistentObject):
         as regular expressions or not (default: _True_)
            @return Node instance or None.
         """
-        parents = self.get_parents_ex(None, role, type, values, properties, use_regex)
+        parents = self.get_parents_ex(
+            None, role, type, values, properties, use_regex)
         if len(parents) > 0:
             return parents[0]
 
@@ -398,7 +415,8 @@ class Node(DefaultPersistentObject):
             else:
                 None
 
-            result_2 = other.add_node(self, this_role, force_set, track_change, False)
+            result_2 = other.add_node(
+                self, this_role, force_set, track_change, False)
 
         return result_1 & result_2
 
@@ -693,7 +711,8 @@ class Node(DefaultPersistentObject):
 
             self.relation_states[name] = self.RELATION_STATE_INITIALIZING
             mapper = self.get_mapper()
-            all_relatives = mapper.load_relation([self], name, BuildDepth.PROXIES_ONLY)
+            all_relatives = mapper.load_relation(
+                [self], name, BuildDepth.PROXIES_ONLY)
             oid_str = str(self.get_oid())
             if oid_str in all_relatives:
                 relatives = all_relatives[oid_str]
@@ -741,7 +760,8 @@ class Node(DefaultPersistentObject):
             self.load_relations([role], build_depth)
 
         else:
-            self.load_relations(self.get_possible_children().keys(), build_depth)
+            self.load_relations(
+                self.get_possible_children().keys(), build_depth)
 
     def load_parents(
         self, role: Any = None, build_depth: Any = BuildDepth.SINGLE
@@ -757,7 +777,8 @@ class Node(DefaultPersistentObject):
             self.load_relations([role], build_depth)
 
         else:
-            self.load_relations(self.get_possible_parents().keys(), build_depth)
+            self.load_relations(
+                self.get_possible_parents().keys(), build_depth)
 
     def load_relations(self, roles: list, build_depth: Any = BuildDepth.SINGLE) -> Any:
         """Load all objects in the given set of relations"""
@@ -776,7 +797,8 @@ class Node(DefaultPersistentObject):
                             if isinstance(cur_relative, PersistentObjectProxy):
                                 # resolve proxies
                                 cur_relative.resolve(build_depth)
-                                relatives.append(cur_relative.get_real_subject())
+                                relatives.append(
+                                    cur_relative.get_real_subject())
 
                             else:
                                 relatives.append(cur_relative)
@@ -784,7 +806,8 @@ class Node(DefaultPersistentObject):
                 # otherwise load the objects directly
                 else:
                     mapper = self.get_mapper()
-                    all_relatives = mapper.load_relation([self], cur_role, build_depth)
+                    all_relatives = mapper.load_relation(
+                        [self], cur_role, build_depth)
                     oid_str = self.get_o_i_d().__toString()
                     if oid_str in all_relatives:
                         relatives = all_relatives[oid_str]
@@ -852,10 +875,12 @@ class Node(DefaultPersistentObject):
             existing_value = self.parent_get_value_method.invoke_args(
                 self, [value_name]
             )
-            new_value = self.parent_get_value_method.invoke_args(object, [value_name])
+            new_value = self.parent_get_value_method.invoke_args(object, [
+                                                                 value_name])
             if new_value != None:
                 if cur_relation_desc.is_multi_valued():
-                    merge_result = self.merge_object_lists(existing_value, new_value)
+                    merge_result = self.merge_object_lists(
+                        existing_value, new_value)
                     new_value = merge_result["result"]
 
                 self.set_value_internal(value_name, new_value)
@@ -905,7 +930,8 @@ class Node(DefaultPersistentObject):
             for i in range(len(value)):
                 cur_value = value[i]
                 if cur_value != None:
-                    result &= self.add_node(cur_value, name, force_set, track_change)
+                    result &= self.add_node(
+                        cur_value, name, force_set, track_change)
 
             self.relation_states[name] = self.RELATION_STATE_INITIALIZED
             return result
