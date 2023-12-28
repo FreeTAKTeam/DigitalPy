@@ -9,7 +9,10 @@
 #######################################################
 
 import traceback
-from typing import List
+from typing import List, TYPE_CHECKING
+from digitalpy.core.IAM.controllers.iam_filter_controller import IAMFilterController
+from digitalpy.core.IAM.controllers.iam_persistence_controller import IAMPersistenceController
+
 from digitalpy.core.component_management.impl.default_facade import DefaultFacade
 from digitalpy.core.main.object_factory import ObjectFactory
 
@@ -26,6 +29,9 @@ from .configuration.iam_constants import (
 )
 from . import base
 
+if TYPE_CHECKING:
+    from digitalpy.core.IAM.IAM_filter_strategy import IAMFilterStrategy
+
 
 class IAM(DefaultFacade):
     """the IAM facade provides the single point of entry to all the Autentication and
@@ -33,15 +39,16 @@ class IAM(DefaultFacade):
     """
 
     def __init__(
-            self,
-            iam_action_mapper,
-            request,
-            response,
-            configuration,
-            log_file_path: str = LOG_FILE_PATH,
-        ):
+        self,
+        iam_action_mapper,
+        request,
+        response,
+        configuration,
+        iam_filter_strategy: 'IAMFilterStrategy' = None,
+        log_file_path: str = LOG_FILE_PATH,
+    ):
         super().__init__(
-                        # the path to the external action mapping
+            # the path to the external action mapping
             action_mapping_path=ACTION_MAPPING_PATH,
             # the path to the internal action mapping
             internal_action_mapping_path=INTERNAL_ACTION_MAPPING_PATH,
@@ -64,11 +71,16 @@ class IAM(DefaultFacade):
             # the path for log files to be stored
             log_file_path=log_file_path
         )
-        #self.function_controller = IAMController()
-        self.group_controller = IAMGroupController(request, response, sync_action_mapper=iam_action_mapper, configuration=configuration)
-        self.users_controller = IAMUsersController(request=request, response=response, action_mapper=iam_action_mapper, configuration=configuration)
-        #self.group_permissions_controller = IAMController()
-        #self.system_user_controller = IAMController()
+        # self.function_controller = IAMController()
+        self.persistence_controller = IAMPersistenceController(request, response, iam_action_mapper, configuration)
+        self.group_controller = IAMGroupController(
+            request, response, sync_action_mapper=iam_action_mapper, configuration=configuration)
+        self.users_controller = IAMUsersController(
+            request=request, response=response, action_mapper=iam_action_mapper, configuration=configuration)
+        self.filter_controller = IAMFilterController(
+            request=request, response=response, sync_action_mapper=iam_action_mapper, configuration=configuration, iam_filter_strategy=iam_filter_strategy)
+        # self.group_permissions_controller = IAMController()
+        # self.system_user_controller = IAMController()
         self.functions = {}
         self.groups = {}
         self.group_permissions = {}
@@ -77,11 +89,17 @@ class IAM(DefaultFacade):
     def initialize(self, request, response):
         self.request = request
         self.response = response
-        #self.function_controller.initialize(request, response)
+        # self.function_controller.initialize(request, response)
         self.group_controller.initialize(request, response)
         self.users_controller.initialize(request, response)
-        #self.group_permissions_controller.initialize(request, response)
-        #self.system_user_controller.initialize(request, response)
+        self.filter_controller.initialize(request, response)
+        self.persistence_controller.initialize(request, response)
+        # self.group_permissions_controller.initialize(request, response)
+        # self.system_user_controller.initialize(request, response)
+
+    def register(self, *args, **kwargs):
+        super().register(*args, **kwargs)
+        self.persistence_controller.clear_users()
 
     def execute(self, method):
         self.request.set_value("logger", self.logger)
@@ -96,7 +114,6 @@ class IAM(DefaultFacade):
         except Exception as e:
             self.logger.fatal(str(e))
             self.logger.debug(traceback.format_exc())
-
 
     def get_all_functions(self, **kwargs):
         return self.function_controller.get_all_functions()
@@ -176,3 +193,8 @@ class IAM(DefaultFacade):
         """a wrapper to call the users controller
         """
         self.users_controller.disconnection(*args, **kwargs)
+
+    def filter_recipients(self, *args, **kwargs):
+        """filter recipients based on the request
+        """
+        self.filter_controller.filter_recipients(*args, **kwargs)
