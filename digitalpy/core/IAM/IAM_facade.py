@@ -9,12 +9,11 @@
 #######################################################
 
 import traceback
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING
 from digitalpy.core.IAM.controllers.iam_filter_controller import IAMFilterController
 from digitalpy.core.IAM.controllers.iam_persistence_controller import IAMPersistenceController
 
 from digitalpy.core.component_management.impl.default_facade import DefaultFacade
-from digitalpy.core.main.object_factory import ObjectFactory
 
 from .controllers.iam_group_controller import IAMGroupController
 from .controllers.iam_users_controller import IAMUsersController
@@ -25,7 +24,6 @@ from .configuration.iam_constants import (
     MANIFEST_PATH,
     CONFIGURATION_PATH_TEMPLATE,
     LOG_FILE_PATH,
-    CONNECTIONS_PERSISTENCE
 )
 from . import base
 

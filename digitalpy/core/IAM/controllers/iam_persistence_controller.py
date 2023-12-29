@@ -1,6 +1,9 @@
 from typing import TYPE_CHECKING
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
+from digitalpy.core.IAM.persistence.group import Group
+from digitalpy.core.IAM.persistence.permission import Permission
+from digitalpy.core.IAM.persistence.role import Role
 
 from digitalpy.core.IAM.persistence.user import User
 from digitalpy.core.main.controller import Controller
@@ -103,6 +106,46 @@ class IAMPersistenceController(Controller):
         system.
         """
         self.ses.query(User).delete()
+        self.ses.commit()
+
+    def create_group(self, group: Group, *args, **kwargs):
+        """this function is responsible for creating a group in the IAM
+        system.
+
+        Args:
+            group (str): the group to be created
+        """
+        if not isinstance(group, Group):
+            raise TypeError("'group' must be an instance of Group")
+        if not group.roles:
+            raise ValueError("group must have at least one role")
+        self.ses.add(group)
+        self.ses.commit()
+
+    def create_role(self, role: Role, *args, **kwargs):
+        """this function is responsible for creating a role in the IAM
+        system.
+
+        Args:
+            role (Role): the role to be created
+        """
+        if not isinstance(role, Role):
+            raise TypeError("'role' must be an instance of Role")
+        if not role.permissions:
+            raise ValueError("role must have at least one permission")
+        self.ses.add(role)
+        self.ses.commit()
+
+    def create_permission(self, permission: Permission, *args, **kwargs):
+        """this function is responsible for creating a permission in the IAM
+        system.
+
+        Args:
+            permission (Permission): the permission to be created
+        """
+        if not isinstance(permission, Permission):
+            raise TypeError("'permission' must be an instance of Permission")
+        self.ses.add(permission)
         self.ses.commit()
 
     def __getstate__(self) -> object:

@@ -3,11 +3,10 @@
 from sqlalchemy import Column, String
 from sqlalchemy.orm import relationship
 
-
 from . import IAMBase
 
 
-class Group(IAMBase):
+class Group(IAMBase): # pylint: disable=too-few-public-methods
     """
     Represents a group in the IAM component.
 
@@ -23,3 +22,4 @@ class Group(IAMBase):
     id = Column(String(50), primary_key=True)
     name = Column(String(50))
     users = relationship("user", back_populates="group")
+    roles = relationship("role", back_populates="group")
