@@ -64,7 +64,7 @@ class ServiceManagement(DefaultFacade):
         # instantiating the sync_action_mapper for use by the service management sender controller to call external 
         sync_action_mapper = ObjectFactory.get_instance("syncactionmapper")
         self.sender_controller = ServiceManagementSenderController(request, response, service_management_action_mapper, sync_action_mapper, configuration)
-    
+
     def initialize(self, request, response):
         self.request = request
         self.response = response
@@ -85,3 +85,8 @@ class ServiceManagement(DefaultFacade):
 
     def publish(self, *args, **kwargs):
         self.sender_controller.publish(*args, **kwargs)
+
+    def start_service(self, *args, **kwargs):
+        """This method is used to initialize the service process and start the service
+        """
+        self.service_m

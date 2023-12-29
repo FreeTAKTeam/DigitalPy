@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 class Configuration(ABC):
     """Implementations of Configuration give access to the application
@@ -27,7 +28,7 @@ class Configuration(ABC):
         """Parses the given configuration and merges it with already added configurations."""
 
     @abstractmethod
-    def get_sections(self)-> list:
+    def get_sections(self)-> list[str]:
         """Get all section names."""
         
 
@@ -47,7 +48,7 @@ class Configuration(ABC):
         
     
     @abstractmethod
-    def get_value(self, key: str, section: str):
+    def get_value(self, key: str, section: str) -> Any:
         """Get a configuration value."""
         
 

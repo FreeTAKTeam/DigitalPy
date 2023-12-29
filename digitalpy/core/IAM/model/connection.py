@@ -3,8 +3,8 @@ from digitalpy.core.domain.node import Node
 class Connection(Node):
     def __init__(self, node_type = "connection", oid=None) -> None:
         super().__init__(node_type, oid=oid)
-        self._service_id = None
-        self._protocol = None
+        self._service_id: str = None
+        self._protocol: str = None
 
     @property
     def service_id(self):

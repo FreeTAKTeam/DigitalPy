@@ -4,19 +4,19 @@ from typing import List
 
 from digitalpy.core.main.controller import Controller
 from digitalpy.core.domain.node import Node
+from digitalpy.core.domain.domain.network_client import NetworkClient
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
 from digitalpy.core.zmanager.action_mapper import ActionMapper
 from digitalpy.core.digipy_configuration.configuration import Configuration
 
 from ..configuration.iam_constants import COMPONENT_NAME, CONNECTIONS_PERSISTENCE
-from ..model.connection import Connection
 
 class IAMUsersController(Controller):
     def __init__(self, request: Request, response: Response, action_mapper: ActionMapper, configuration: Configuration):
         super().__init__(request, response, action_mapper, configuration)
 
-    def connection(self, logger, connection: Connection, **kargs):
+    def connection(self, logger, connection: NetworkClient, **kargs):
         """handle the case of a connection connection to any digitalpy service
         
         Args:

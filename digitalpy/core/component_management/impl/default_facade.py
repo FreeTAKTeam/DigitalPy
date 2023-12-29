@@ -1,12 +1,19 @@
+# pylint: disable=unused-argument
+"""This is the default facade module. It is used to create a facade for a component. It is a simple example of a DigitalPyFacade.
+"""
+from types import ModuleType
 from digitalpy.core.main.controller import Controller
 from digitalpy.core.domain.node import Node
 from digitalpy.core.parsing.load_configuration import LoadConfiguration
 from digitalpy.core.digipy_configuration.impl.inifile_configuration import InifileConfiguration
 from digitalpy.core.zmanager.impl.default_action_mapper import DefaultActionMapper
+from digitalpy.core.zmanager.request import Request
+from digitalpy.core.zmanager.response import Response
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.main.log_manager import LogManager
 from digitalpy.core.main.impl.default_file_logger import DefaultFileLogger
-from digitalpy.core.main.controller import Controller
+from digitalpy.core.digipy_configuration.configuration import Configuration
+
 from digitalpy.core.telemetry.tracer import Tracer
 
 
@@ -19,11 +26,11 @@ class DefaultFacade(Controller):
         log_file_path,
         component_name=None,
         type_mapping=None,
-        action_mapper: DefaultActionMapper = None,
-        base=object,
-        request=None,
-        response=None,
-        configuration=None,
+        action_mapper: DefaultActionMapper = None,  # type: ignore
+        base=ModuleType,
+        request: Request = None,  # type: ignore
+        response: Response = None,  # type: ignore
+        configuration: Configuration = None,  # type: ignore
         configuration_path_template=None,
         tracing_provider_instance=None,
         manifest_path=None,
@@ -75,7 +82,7 @@ class DefaultFacade(Controller):
                 self.component_name
             )
         else:
-            self.tracer = None
+            self.tracer = None  # type: ignore
         # load the manifest file as a configuration
         if manifest_path is not None:
             self.manifest = InifileConfiguration("")
@@ -95,16 +102,19 @@ class DefaultFacade(Controller):
         else:
             self.config_loader = None
 
-        self.injected_values = {"logger": self.logger, "config_loader": self.config_loader, "tracer": self.tracer}
+        self.injected_values = {
+            "logger": self.logger, "config_loader": self.config_loader, "tracer": self.tracer}
 
     def initialize(self, request, response):
         super().initialize(request, response)
         self.request.set_sender(self.__class__.__name__)
 
-    def execute(self, method):
+    def execute(self, method=None) -> None:
         self.request.set_value("logger", self.logger)
         self.request.set_value("config_loader", self.config_loader)
         self.request.set_value("tracer", self.tracer)
+        if not method:
+            return
         try:
             if hasattr(self, method):
                 # pass all request values as keyword arguments
@@ -127,6 +137,7 @@ class DefaultFacade(Controller):
         facade methods being called directly. it's role is to
         inject internal attributes into the wrapped function which
         would generally be injected by the execute method"""
+
         def wrapper(self, *args, **kwargs):
             # ensure that required values are passed by to controller
             # methods even if method isnt called through .execute method
@@ -151,7 +162,7 @@ class DefaultFacade(Controller):
         internal_config.add_configuration(self.internal_action_mapping_path)
         ObjectFactory.register_instance(
             f"{self.component_name.lower()}actionmapper",
-            self.base.ActionMapper(
+            self.base.ActionMapper(  # type: ignore
                 ObjectFactory.get_instance("event_manager"),
                 internal_config,
             ),
@@ -178,7 +189,8 @@ class DefaultFacade(Controller):
             request.set_action("RegisterHumanToMachineMapping")
             # reverse the mapping and save the reversed mapping
             request.set_value(
-                "human_to_machine_mapping", {k: v for v, k in self.type_mapping.items()}
+                "human_to_machine_mapping", {
+                    k: v for v, k in self.type_mapping.items()}
             )
 
             actionmapper = ObjectFactory.get_instance("SyncActionMapper")
@@ -187,3 +199,16 @@ class DefaultFacade(Controller):
 
     def accept_visitor(self, node: Node, visitor, **kwargs):
         return node.accept_visitor(visitor)
+
+    def __setstate__(self, state: dict) -> None:
+        from .. import base
+        self.__dict__ = state
+        if "base" in state:
+            self.base = base
+
+    def __getstate__(self) -> dict:
+        tmp = self.__dict__
+        set_base = tmp.get("base", None)
+        if set_base is not None:
+            tmp["base"] = True
+        return tmp
