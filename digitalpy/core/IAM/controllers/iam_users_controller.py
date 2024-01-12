@@ -1,5 +1,3 @@
-import pickle
-import json
 from typing import List
 from digitalpy.core.IAM.controllers.iam_persistence_controller import IAMPersistenceController
 from digitalpy.core.IAM.persistence.user import User
@@ -34,7 +32,7 @@ class IAMUsersController(Controller):
             connection (Node): the Node object associated with the connected connection
         """
         con_oid = str(connection.get_oid())
-        user = User(id=con_oid, status=connection.status.value,
+        user = User(uid=con_oid, status=connection.status.value,
                     service_id=connection.service_id, protocol=connection.protocol)
         self.persistence_controller.save_user(user)
 
@@ -53,13 +51,8 @@ class IAMUsersController(Controller):
         Args:
             connection_ids (List[str]): a list of IDs to be queries against the persistency layer
         """
-        queried_connections: List[Node] = []
-
-        for connection_id in connection_ids:
-
-            user = self.persistence_controller.get_user(connection_id)
-            connection = self._convert_user_to_network_client(user)
-            queried_connections.append(connection)
+        queried_connections: List[Node] = [self._convert_user_to_network_client(self.persistence_controller.get_user(connection_id)) \
+                                           for connection_id in connection_ids]
 
         self.response.set_value("connections", queried_connections)
 
@@ -69,11 +62,7 @@ class IAMUsersController(Controller):
         """get all recorded connections and save them to the connections value
         """
         users = self.persistence_controller.get_all_users()
-        connections = []
-
-        for user in users:
-            connection = self._convert_user_to_network_client(user)
-            connections.append(connection)
+        connections = [self._convert_user_to_network_client(user) for user in users]
 
         self.response.set_value("connections", connections)
 
@@ -86,7 +75,7 @@ class IAMUsersController(Controller):
         Returns:
             NetworkClient: the converted user
         """
-        oid = ObjectId.parse(user.id)
+        oid = ObjectId.parse(user.uid)
         if oid is None:
             raise ValueError("Invalid user id")
 

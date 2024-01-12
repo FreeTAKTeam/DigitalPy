@@ -23,8 +23,9 @@ class User(IAMBase):
     callsign = Column(Text, nullable=True)
     CN = Column(Text, nullable=True)
     IP = Column(Text, nullable=True)
-    CoT_id = Column(Text, nullable=True)
-
+    protocol = Column(Text, nullable=False)
+    service_id = Column(Text, nullable=False)
+    status = Column(Text)
     # relationships
     system_user_uid = Column(Text, ForeignKey(SystemUser.uid))
     system_user: SystemUser = relationship('SystemUser', back_populates='users')
@@ -32,4 +33,4 @@ class User(IAMBase):
     session_contacts: List['SessionContact'] = relationship('SessionContact', back_populates='users')
 
     def __repr__(self) -> str:
-        return super().__repr__() + f"uid={self.uid}, callsign={self.callsign}, CN={self.CN}, IP={self.IP}, CoT_id={self.CoT_id}"
+        return super().__repr__() + f"uid={self.uid}, callsign={self.callsign}, CN={self.CN}, IP={self.IP}, service_id={self.service_id}"
