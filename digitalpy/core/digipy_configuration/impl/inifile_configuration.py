@@ -73,11 +73,17 @@ class InifileConfiguration(Configuration):
         if filename not in parsed_files:
             parsed_files.append(filename)
             content = self.parse_ini_file(filename)
-            merged = self._merge_dictionaries(content, config_array)
+            # merge the config sections giving the new content precedence over the config array
+            merged = self._merge_dictionaries(config_array, content)
             return {"config": merged, "files": parsed_files}
 
     def _merge_dictionaries(self, dict_one, dict_two):
-        """merge two dictionaries"""
+        """merge two dictionaries, recursively
+        
+        Args:
+            dict_one (dict): the subject dictionary
+            dict_two (dict): the primary dictionary which takes precedence over dict_one
+        """
         for k, v in dict_two.items():
             if isinstance(v, collections.abc.Mapping):
                 dict_one[k] = self._merge_dictionaries(dict_one.get(k, {}), v)
@@ -138,10 +144,12 @@ class InifileConfiguration(Configuration):
         for section, entry in self.config_array.items():
             lookup_section_key = section.lower() + ":"
             self.lookup_table[lookup_section_key] = [section]
-            for key, value in entry.items():
-                lookup_key = lookup_section_key.lower() + key.lower()
-                self.lookup_table[lookup_key] = [section, key]
-
+            try:
+                for key, value in entry.items():
+                    lookup_key = lookup_section_key.lower() + key.lower()
+                    self.lookup_table[lookup_key] = [section, key]
+            except Exception as ex:
+                raise ValueError(f"section: {section} is invalid with error: {str(ex)}") from ex
     def has_value(self, key, section):
         return self._lookup(section, key) != None
 
