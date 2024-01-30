@@ -257,15 +257,12 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
                 self.handle_command(response)
             else:
                 self.handle_response(response)
-
+                
     def handle_response(self, response: Response):
         """used to handle a response. Should be overriden by inheriting classes"""
         if self.network:
-            if response.get_value("recipients") == "*":
-                self.network.send_message_to_all_clients(response)
-            else:
-                self.network.send_message_to_clients(
-                    response, response.get_value("recipients"))
+            response.set_value("client", response.get_value("recipients"))
+            self.network.send_response(response)
 
     def event_loop(self):
         """used to run the service. Should be overriden by inheriting classes"""
