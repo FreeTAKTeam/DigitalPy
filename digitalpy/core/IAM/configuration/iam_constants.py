@@ -60,3 +60,7 @@ DB_PATH = "sqlite:///"+str(
 MANIFEST_PATH = str(
     pathlib.PurePath(CURRENT_COMPONENT_PATH, "configuration/manifest.ini")
 )
+
+AUTHENTICATED_USERS = "authenticated_users"
+
+UNAUTHENTICATED_USERS = "unauthenticated_users"
