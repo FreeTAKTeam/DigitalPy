@@ -3,7 +3,7 @@
 from sqlalchemy import Text, Column
 from sqlalchemy.orm import relationship
 
-from . import IAMBase
+from .iam_base import IAMBase
 
 class Permissions(IAMBase):
     """this class represents a permissions in the IAM component

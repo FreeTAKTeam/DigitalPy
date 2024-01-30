@@ -3,10 +3,8 @@ from typing import TYPE_CHECKING
 from sqlalchemy import Text, Column, ForeignKey
 from sqlalchemy.orm import relationship
 
-from . import IAMBase
+from .iam_base import IAMBase
 from .system_group import SystemGroup
-from .system_user import SystemUser
-
 
 class SystemUserGroups(IAMBase):
     """
@@ -22,12 +20,12 @@ class SystemUserGroups(IAMBase):
     uid = Column(Text, primary_key=True)
 
     # relationships
-    system_user_uid = Column(Text, ForeignKey(SystemUser.uid))
+    system_user_uid = Column(Text, ForeignKey("SystemUser.uid"))
     system_users = relationship(
         "SystemUser", back_populates="system_user_groups")
 
     system_group_uid = Column(Text, ForeignKey(SystemGroup.uid))
-    system_groups = relationship(
+    system_groups: SystemGroup = relationship(
         "SystemGroup", back_populates="system_user_groups")
 
     def __repr__(self) -> str:

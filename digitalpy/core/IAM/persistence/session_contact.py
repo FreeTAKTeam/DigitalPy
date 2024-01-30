@@ -4,7 +4,7 @@ relationship between a user and a session"""
 from sqlalchemy import Text, Column, ForeignKey
 from sqlalchemy.orm import relationship
 
-from . import IAMBase
+from .iam_base import IAMBase
 from .session import Session
 from .user import User
 

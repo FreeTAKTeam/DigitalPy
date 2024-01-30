@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from digitalpy.core.IAM.persistence.system_group_permission import SystemGroupPermission
     from digitalpy.core.IAM.persistence.system_user_groups import SystemUserGroups
 
-from . import IAMBase
+from .iam_base import IAMBase
 
 class SystemGroup(IAMBase):
     """ this class represents a system group in the IAM component

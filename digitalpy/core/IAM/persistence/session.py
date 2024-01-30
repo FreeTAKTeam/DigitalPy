@@ -4,7 +4,7 @@ from sqlalchemy import Text, Column
 from sqlalchemy.orm import relationship
 from typing import TYPE_CHECKING
 
-from . import IAMBase
+from .iam_base import IAMBase
 
 if TYPE_CHECKING:
     from .session_contact import SessionContact

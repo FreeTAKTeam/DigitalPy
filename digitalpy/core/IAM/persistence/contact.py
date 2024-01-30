@@ -3,7 +3,7 @@
 from sqlalchemy import Text, Column, ForeignKey
 from sqlalchemy.orm import relationship
 
-from . import IAMBase
+from .iam_base import IAMBase
 
 class Contact(IAMBase):
     """

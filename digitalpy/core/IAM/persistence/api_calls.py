@@ -4,7 +4,7 @@ from sqlalchemy import Text, Column, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 
 from .system_user import SystemUser
-from . import IAMBase
+from .iam_base import IAMBase
 
 class ApiCalls(IAMBase):
     """

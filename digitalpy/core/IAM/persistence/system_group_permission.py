@@ -3,7 +3,7 @@
 from sqlalchemy import Text, Column, ForeignKey
 from sqlalchemy.orm import relationship
 
-from . import IAMBase
+from .iam_base import IAMBase
 
 from .system_group import SystemGroup
 from .permissions import Permissions
@@ -25,4 +25,4 @@ class SystemGroupPermission(IAMBase):
     system_groups = relationship("SystemGroup", back_populates="system_group_permissions")
 
     permission_id = Column(Text, ForeignKey(Permissions.PermissionID))
-    permissions = relationship("Permissions", back_populates="system_group_permissions")
+    permissions: Permissions = relationship("Permissions", back_populates="system_group_permissions")

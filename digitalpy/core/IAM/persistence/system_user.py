@@ -4,13 +4,13 @@ from typing import TYPE_CHECKING, List
 from sqlalchemy import Text, Column, ForeignKey
 from sqlalchemy.orm import relationship
 
-from . import IAMBase
+from .iam_base import IAMBase
 from .contact import Contact
 
 if TYPE_CHECKING:
-    from .system_user_groups import SystemUserGroups
     from .user import User
     from .api_calls import ApiCalls
+    from .system_user_groups import SystemUserGroups
 
 
 class SystemUser(IAMBase):
@@ -32,7 +32,6 @@ class SystemUser(IAMBase):
     name = Column(Text, nullable=True)
     token = Column(Text, nullable=True)
     password = Column(Text, nullable=True)
-    group = Column(Text, nullable=True)
     device_type = Column(Text, nullable=True)
     certificate_package_name = Column(Text, nullable=True)
 
@@ -49,5 +48,5 @@ class SystemUser(IAMBase):
     
     def __repr__(self) -> str:
         return super().__repr__() + f"uid={self.uid}, name={self.name}, token={self.token}, \
-          password={self.password}, group={self.group}, device_type={self.device_type}, \
+          password={self.password}, device_type={self.device_type}, \
           certificate_package_name={self.certificate_package_name}"

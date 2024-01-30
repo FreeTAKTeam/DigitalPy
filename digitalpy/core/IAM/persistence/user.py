@@ -2,9 +2,10 @@ from sqlalchemy import Text, Column, ForeignKey
 from sqlalchemy.orm import relationship
 from typing import TYPE_CHECKING, List
 
-from . import IAMBase
-from .system_user import SystemUser
+from .iam_base import IAMBase
+
 if TYPE_CHECKING:
+    from digitalpy.core.IAM.persistence.system_user import SystemUser
     from .session_contact import SessionContact
 
 class User(IAMBase):
@@ -27,8 +28,8 @@ class User(IAMBase):
     service_id = Column(Text, nullable=False)
     status = Column(Text)
     # relationships
-    system_user_uid = Column(Text, ForeignKey(SystemUser.uid))
-    system_user: SystemUser = relationship('SystemUser', back_populates='users')
+    system_user_uid = Column(Text, ForeignKey("SystemUser.uid"))
+    system_user: 'SystemUser' = relationship('SystemUser', back_populates='users')
 
     session_contacts: List['SessionContact'] = relationship('SessionContact', back_populates='users')
 
