@@ -10,8 +10,11 @@
 
 import traceback
 from typing import TYPE_CHECKING
+import uuid
 from digitalpy.core.IAM.controllers.iam_filter_controller import IAMFilterController
 from digitalpy.core.IAM.controllers.iam_persistence_controller import IAMPersistenceController
+from digitalpy.core.IAM.persistence.system_group import SystemGroup
+from digitalpy.core.IAM.persistence.system_user_groups import SystemUserGroups
 
 from digitalpy.core.component_management.impl.default_facade import DefaultFacade
 
@@ -19,16 +22,19 @@ from .controllers.iam_group_controller import IAMGroupController
 from .controllers.iam_users_controller import IAMUsersController
 from .configuration.iam_constants import (
     ACTION_MAPPING_PATH,
+    AUTHENTICATED_USERS,
     LOGGING_CONFIGURATION_PATH,
     INTERNAL_ACTION_MAPPING_PATH,
     MANIFEST_PATH,
     CONFIGURATION_PATH_TEMPLATE,
     LOG_FILE_PATH,
+    UNAUTHENTICATED_USERS,
 )
 from . import base
 
 if TYPE_CHECKING:
-    from digitalpy.core.IAM.IAM_filter_strategy import IAMFilterStrategy
+    from digitalpy.core.IAM.IAM_recipient_filter_strategy import IAMRecipientFilterStrategy
+    from digitalpy.core.IAM.IAM_action_filter_strategy import IAMActionFilterStrategy
 
 
 class IAM(DefaultFacade):
@@ -42,7 +48,8 @@ class IAM(DefaultFacade):
         request,
         response,
         configuration,
-        iam_filter_strategy: 'IAMFilterStrategy' = None,
+        iam_recipient_filter_strategy: 'IAMRecipientFilterStrategy' = None,
+        iam_action_filter_strategy: 'IAMActionFilterStrategy' = None,
         log_file_path: str = LOG_FILE_PATH,
     ):
         super().__init__(
@@ -76,7 +83,12 @@ class IAM(DefaultFacade):
         self.users_controller = IAMUsersController(
             request=request, response=response, action_mapper=iam_action_mapper, configuration=configuration)
         self.filter_controller = IAMFilterController(
-            request=request, response=response, sync_action_mapper=iam_action_mapper, configuration=configuration, iam_filter_strategy=iam_filter_strategy)
+            request=request, 
+            response=response, 
+            sync_action_mapper=iam_action_mapper, 
+            configuration=configuration, 
+            iam_recipient_filter_strategy=iam_recipient_filter_strategy, 
+            iam_action_filter_strategy=iam_action_filter_strategy)
         # self.group_permissions_controller = IAMController()
         # self.system_user_controller = IAMController()
         self.functions = {}
@@ -98,6 +110,21 @@ class IAM(DefaultFacade):
     def register(self, *args, **kwargs):
         super().register(*args, **kwargs)
         self.persistence_controller.clear_users()
+        self.persistence_controller.create_group(
+            SystemGroup(
+                name=AUTHENTICATED_USERS,
+                description="The group of all authenticated users",
+                uid=str(uuid.uuid4())
+            )
+        )
+        self.persistence_controller.create_group(
+            SystemGroup(
+                name=UNAUTHENTICATED_USERS,
+                description="The group of all unauthenticated users",
+                uid=str(uuid.uuid4())
+            )
+        )
+        self.persistence_controller.create_default_system_user()
 
     def execute(self, method):
         self.request.set_value("logger", self.logger)
@@ -134,6 +161,9 @@ class IAM(DefaultFacade):
     def get_group_by_id(self, group_id, **kwargs):
         return self.group_controller.get_group_by_id(group_id)
 
+    def get_group_by_name(self, group_name, *args, **kwargs):
+        return self.persistence_controller.get_group_by_name(group_name)
+
     def create_group(self, group, **kwargs):
         return self.group_controller.create_group(group)
 
@@ -149,8 +179,8 @@ class IAM(DefaultFacade):
     def get_group_permissions_by_id(self, group_permissions_id, **kwargs):
         return self.group_permissions_controller.get_group_permissions_by_id(group_permissions_id)
 
-    def create_group_permissions(self, group_permissions, **kwargs):
-        return self.group_permissions_controller.create_group_permissions(group_permissions)
+    def create_group_permission(self, group_permission, **kwargs):
+        return self.persistence_controller.create_group_permission(group_permission)
 
     def update_group_permissions(self, group_permissions_id, updated_group_permissions, **kwargs):
         return self.group_permissions_controller.update_group_permissions(group_permissions_id, updated_group_permissions)
@@ -182,6 +212,19 @@ class IAM(DefaultFacade):
     def ValidateUsers(self, **kwargs):
         self.group_controller.validate_users(**kwargs)
 
+    def validate_request(self, *args, **kwargs):
+        self.users_controller.validate_request(*args, **kwargs)
+
+    def create_permission(self, *args, **kwargs):
+        """a wrapper to call the persistence controller
+        """
+        self.persistence_controller.create_permission(*args, **kwargs)
+    
+    def create_group_permission(self, *args, **kwargs):
+        """a wrapper to call the persistence controller
+        """
+        self.persistence_controller.create_group_permission(*args, **kwargs)
+
     def connection(self, *args, **kwargs):
         """a wrapper to call the users controller
         """
@@ -196,3 +239,13 @@ class IAM(DefaultFacade):
         """filter recipients based on the request
         """
         self.filter_controller.filter_recipients(*args, **kwargs)
+
+    def filter_action(self, *args, **kwargs):
+        """filter actions based on the request
+        """
+        return self.filter_controller.filter_action(*args, **kwargs)
+
+    def authenticate(self, *args, **kwargs):
+        """authenticate the user
+        """
+        self.users_controller.authenticate_system_user(*args, **kwargs)

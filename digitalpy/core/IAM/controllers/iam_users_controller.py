@@ -57,6 +57,39 @@ class IAMUsersController(Controller):
         self.response.set_value("connections", queried_connections)
 
         return queried_connections
+    
+    def authenticate_system_user(self, name: 'str', password: 'str', user_id: 'str', *args, **kwargs) -> bool:
+        """authenticate a system user
+
+        Args:
+            user_id (User): the id of the user to be authenticated
+        """
+
+        if name is None or password is None:
+            self.response.set_value("authenticated", False)
+            return False
+
+        system_user = self.persistence_controller.get_system_user_by_name(name)
+        user = self.persistence_controller.get_user(user_id)
+        if system_user is None:
+            self.response.set_value("authenticated", False)
+            return False
+
+        if system_user.password != password:
+            self.response.set_value("authenticated", False)
+            return False
+        
+        self.response.set_value("authenticated", True)
+        self.persistence_controller.add_user_to_system_user(user, system_user)
+        return True
+
+    def validate_request(self, user: 'User', request: 'Request', action_key: str, *args, **kwargs) -> bool:
+        """validate the request to ensure that the request is valid
+        """
+        for group in user.system_user.system_user_groups:
+            for permission in group.system_groups.system_group_permissions:
+                if permission.permissions.PermissionName == action_key:
+                    return True
 
     def get_all_connections(self, *args, **kwargs) -> List[Node]:
         """get all recorded connections and save them to the connections value

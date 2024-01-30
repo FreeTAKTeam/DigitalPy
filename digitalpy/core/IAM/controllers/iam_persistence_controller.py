@@ -2,13 +2,21 @@ from typing import TYPE_CHECKING
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-# import tables
+# import tables in initialization order
+from digitalpy.core.IAM.persistence.session_contact import SessionContact
+from digitalpy.core.IAM.persistence.system_group_permission import SystemGroupPermission
+from digitalpy.core.IAM.persistence.system_user_groups import SystemUserGroups
+from digitalpy.core.IAM.persistence.system_group import SystemGroup
+from digitalpy.core.IAM.persistence.system_user import SystemUser
 from digitalpy.core.IAM.persistence.user import User
+from digitalpy.core.IAM.persistence.api_calls import ApiCalls
+from digitalpy.core.IAM.persistence.contact import Contact
+
 from digitalpy.core.IAM.persistence.permissions import Permissions
 
 from digitalpy.core.main.controller import Controller
-from ..persistence import IAMBase
-from ..configuration.iam_constants import DB_PATH
+from ..persistence.iam_base import IAMBase
+from ..configuration.iam_constants import AUTHENTICATED_USERS, DB_PATH
 if TYPE_CHECKING:
     from digitalpy.core.zmanager.request import Request
     from digitalpy.core.zmanager.response import Response
@@ -108,7 +116,37 @@ class IAMPersistenceController(Controller):
         self.ses.query(User).delete()
         self.ses.commit()
 
-    def create_permissions(self, permission: Permissions, *args, **kwargs):
+    def create_default_system_user(self, *args, **kwargs) -> SystemUser:
+        """this function is responsible for creating a default system user in the IAM
+        system.
+
+        Returns:
+            SystemUser: the system user created
+        """
+        if self.get_system_user_by_name("default"):
+            return self.get_system_user_by_name("default")
+        
+        system_user = SystemUser(
+            uid="default",
+            name="default",
+            token="default",
+            password="default",
+            device_type="default",
+            certificate_package_name="default",
+        )
+        authed_users = self.get_group_by_name(AUTHENTICATED_USERS)
+        system_user_groups = SystemUserGroups(
+            uid="default",
+            system_groups=authed_users,
+            system_users=system_user,
+        )
+        system_user.system_user_groups.append(system_user_groups)
+        self.ses.add(system_user_groups)
+        self.ses.add(system_user)
+        self.ses.commit()
+        return system_user
+
+    def create_permission(self, permission: Permissions, *args, **kwargs):
         """this function is responsible for creating a permission in the IAM
         system.
 
@@ -118,6 +156,71 @@ class IAMPersistenceController(Controller):
         if not isinstance(permission, Permissions):
             raise TypeError("'permissions' must be an instance of Permissions")
         self.ses.add(permission)
+        self.ses.commit()
+
+    def create_group(self, group: SystemGroup, *args, **kwargs):
+        """this function is responsible for creating a group in the IAM
+        system.
+
+        Args:
+            group (SystemUserGroups): the group to be created
+        """
+        if not isinstance(group, SystemGroup):
+            raise TypeError("'group' must be an instance of SystemUserGroups")
+        self.ses.add(group)
+        self.ses.commit()
+
+    def get_group_by_name(self, group_name: str, *args, **kwargs) -> SystemGroup:
+        """this function is responsible for getting a group from the IAM
+        system.
+
+        Args:
+            group_name (str): the name of the group to be retrieved
+
+        Returns:
+            SystemUserGroups: the group retrieved
+        """
+        if not isinstance(group_name, str):
+            raise TypeError("'group_name' must be an instance of str")
+        return self.ses.query(SystemGroup).filter(SystemGroup.name == group_name).first()
+
+    def create_group_permission(self, group_permission: SystemGroupPermission, *args, **kwargs):
+        """this function is responsible for creating a group permission in the IAM
+        system.
+
+        Args:
+            group_permission (SystemGroupPermission): the group permission to be created
+        """
+        if not isinstance(group_permission, SystemGroupPermission):
+            raise TypeError("'group_permission' must be an instance of SystemGroupPermission")
+        self.ses.add(group_permission)
+        self.ses.commit()
+
+    def get_system_user_by_name(self, system_user_name: str, *args, **kwargs) -> SystemUser:
+        """this function is responsible for creating a system user in the IAM
+        system.
+
+        Args:
+            system_user (SystemUser): the system user to be created
+        """
+        if not isinstance(system_user_name, str):
+            raise TypeError("'system_user' must be an instance of SystemUser")
+        return self.ses.query(SystemUser).filter(SystemUser.name == system_user_name).first()
+
+    def add_user_to_system_user(self, user: User, system_user: SystemUser, *args, **kwargs):
+        """this function is responsible for adding a user to a system user in the IAM
+        system.
+
+        Args:
+            user (User): the user to be added
+            system_user (SystemUser): the system user to be added to
+        """
+        if not isinstance(user, User):
+            raise TypeError("'user' must be an instance of User")
+        if not isinstance(system_user, SystemUser):
+            raise TypeError("'system_user' must be an instance of SystemUser")
+        system_user.users.append(user)
+        user.system_user = system_user
         self.ses.commit()
 
     def __getstate__(self) -> object:
