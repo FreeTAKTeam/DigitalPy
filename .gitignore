@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 digitalpy/core/network/impl/stream_tcp_test.py
 digitalpy/core/IAM/persistence/connections.json
+digitalpy/core/IAM/persistence/IAMRecords.db
