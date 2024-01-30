@@ -1,7 +1,6 @@
 import uuid
 from digitalpy.core.domain.node import Node
 from digitalpy.core.domain.object_id import ObjectId
-
 from ...network.domain.client_status import ClientStatus
 
 
@@ -102,5 +101,5 @@ class NetworkClient(Node):
             id (bytes): the id of the client
         """
         if not isinstance(id, bytes):
-            raise TypeError("'id' must be an instance of int")
+            raise TypeError("'id' must be an instance of bytes")
         self._id = id
