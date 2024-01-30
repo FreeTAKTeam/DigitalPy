@@ -10,6 +10,7 @@
 from typing import List, Union, TYPE_CHECKING
 
 from digitalpy.core.main.object_factory import ObjectFactory
+from digitalpy.core.zmanager.configuration.zmanager_constants import ZMANAGER_MESSAGE_DELIMITER
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
 from digitalpy.core.main.controller import Controller
@@ -76,7 +77,7 @@ class ServiceManagementSenderController(Controller):
             formatter = ObjectFactory.get_instance("formatter")
             formatter.serialize(sub_response)
             return_topics.append(main_topic.encode() +
-                                 ids.encode()+b","+sub_response.get_values())
+                                 ids.encode()+ZMANAGER_MESSAGE_DELIMITER+sub_response.get_values())
         if self.response.get_value("topics") is not None:
             self.response.get_value("topics").extend(return_topics)
         else:
@@ -87,7 +88,7 @@ class ServiceManagementSenderController(Controller):
 
         # filter the recipients based on the request
         self.iam.filter_recipients(
-            self.request, self.response.get_value("connections"))
+            self.response.get_value("connections"))
 
         for recipient_object in self.response.get_value("connections"):
             recipient_main_topic = f"/{recipient_object.service_id}/{recipient_object.protocol}/{self.response.get_sender()}/{self.response.get_context()}/{self.response.get_action()}/{self.response.get_id()}/"
