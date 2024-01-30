@@ -60,7 +60,8 @@ class SerializationGeneralController(Controller):
             else:
                 raise ValueError("unsupported type passed in message value only list type support")
         else:
-            raise Exception("unsupported protocol "+protocol)
+            self.request.set_context(protocol.upper())
+            messages = self.execute_sub_action("serialize").get_value("message")
 
         self.response.set_value("message", messages)
 
