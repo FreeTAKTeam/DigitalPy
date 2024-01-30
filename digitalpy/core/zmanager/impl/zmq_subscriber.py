@@ -1,7 +1,8 @@
 import time
 import zmq
-from typing import List, Union
+from typing import List, Union, Dict
 import logging
+from digitalpy.core.zmanager.configuration.zmanager_constants import ZMANAGER_MESSAGE_DELIMITER
 
 from digitalpy.core.zmanager.subscriber import Subscriber
 from digitalpy.core.zmanager.response import Response
@@ -28,7 +29,7 @@ class ZmqSubscriber(Subscriber):
         self.subscriber_socket: zmq.Socket = None  # type: ignore
         self.subscriber_formatter = formatter
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.responses: list[str] = []
+        self.responses: Dict[str, Response] = {}
 
     def broker_connect(self, integration_manager_address: str, integration_manager_port: int, integration_manager_protocol: str, service_identity: str, application_protocol: str):
         """Connect or reconnect to broker
@@ -73,11 +74,11 @@ class ZmqSubscriber(Subscriber):
         self.subscriber_context.term()
         self.subscriber_context.destroy()
 
-    def broker_receive_response(self, request_id: str, blocking: bool = True, timeout=1) -> Union[Response, None]:
+    def broker_receive_response(self, request_id: str, blocking: bool = True, timeout=1, retry=0) -> Union[Response, None]:
         """Returns the reply message or None if there was no reply"""
         try:
             s_time = time.time()
-            while s_time + timeout > time.time():
+            while s_time + timeout > time.time() and retry >= 0:
                 if not blocking:
                     message = self.subscriber_socket.recv_multipart(flags=zmq.NOBLOCK)[
                         0].split(b" ", 1)
@@ -93,7 +94,7 @@ class ZmqSubscriber(Subscriber):
                 response.set_format("pickled")
 
                 # get the values returned from the routing proxy and serialize them to
-                values = message[1].strip(b",")
+                values = message[1].strip(ZMANAGER_MESSAGE_DELIMITER)
                 response.set_values(values)
                 self.subscriber_formatter.deserialize(response)
 
@@ -112,7 +113,8 @@ class ZmqSubscriber(Subscriber):
                 if response.get_id() == request_id:
                     return response
                 else:
-                    self.responses.append(response)
+                    self.responses[response.get_id()] = response
+                    retry -= 1
             return None
         except zmq.ZMQError as ex:
             return None
@@ -125,8 +127,8 @@ class ZmqSubscriber(Subscriber):
         """
         responses = []
         try:
-            for _ in self.responses:
-                responses.append(self.responses.pop())
+            for _ in list(self.responses.values()):
+                responses.append(list(self.responses.values()).pop(0))
             # TODO: move the range to a configuration file
             # this protects against the case where messages are being sent faster than they can be received
             for _ in range(max_messages):
@@ -143,7 +145,7 @@ class ZmqSubscriber(Subscriber):
                 response.set_format("pickled")
 
                 # get the values returned from the routing proxy and serialize them to
-                values = message[1].strip(b",")
+                values = message[1].strip(ZMANAGER_MESSAGE_DELIMITER)
                 response.set_values(values)
                 self.subscriber_formatter.deserialize(response)
 
@@ -159,6 +161,8 @@ class ZmqSubscriber(Subscriber):
                 if len(recipients.split(RECIPIENT_DELIMITER)) > 1:
                     response.set_value("recipients", recipients.split(
                         RECIPIENT_DELIMITER)[:-1])
+                else:
+                    response.set_value("recipients", "*")
 
                 responses.append(response)
             return responses
