@@ -1,23 +1,14 @@
-from abc import ABC, abstractmethod
-from typing import List, Union
-from digitalpy.core.main.object_factory import ObjectFactory
+from abc import abstractmethod
+from typing import List
 from digitalpy.core.domain.domain.network_client import NetworkClient
+from digitalpy.core.network.network_interface import NetworkInterface
 from digitalpy.core.zmanager.request import Request
-from digitalpy.core.zmanager.response import Response
 
 
-class NetworkInterface(ABC):
-    """Network  Interface class. Defines the interface for all networking implementations
+class NetworkSyncInterface(NetworkInterface):
+    """Network Async Interface class. Defines the interface for implementations of asynchronous networking
     """
-
-    @abstractmethod
-    def service_connections(self) -> List[Request]:
-        """service all connections to the server and return a list of Requests
-
-        Returns:
-            List[Request]: _description_
-        """
-
+    
     @abstractmethod
     def intialize_network(self, host: str, port: int):
         """initialize the network connection, bind to the port and host.
@@ -38,10 +29,9 @@ class NetworkInterface(ABC):
         """
 
     @abstractmethod
-    def send_response(self, response: Response):
-        """send a response to the network
+    def receive_message_from_client(self, client: NetworkClient, blocking: bool = False) -> Request:
+        """receive the next queued message from the network from a specific client
         Args:
-            response (Response): the response to send
-        Raises:
-            IOError: if the response cannot be sent
+            client_id (int): the id of the client to receive the message from
+            blocking (bool, optional): whether or not to block until a message is received. Defaults to False.
         """
