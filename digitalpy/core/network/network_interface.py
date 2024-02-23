@@ -19,7 +19,7 @@ class NetworkInterface(ABC):
         """
 
     @abstractmethod
-    def intialize_network(self, host: str, port: int):
+    def intialize_network(self, host: str, port: int, *args, **kwargs):
         """initialize the network connection, bind to the port and host.
         """
 

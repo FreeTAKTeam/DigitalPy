@@ -47,6 +47,7 @@ from digitalpy.core.zmanager.response import Response
 from digitalpy.core.domain.domain.service_health import ServiceHealth
 from digitalpy.core.health.domain.service_health_category import ServiceHealthCategory
 
+
 class ServiceManagementMain(DigitalPyService):
     """The Service Management component in DigitalPy is a core function designed 
     to manage the lifecycle and operations of various services within the framework. 
@@ -74,6 +75,9 @@ class ServiceManagementMain(DigitalPyService):
             integration_manager_port (int): the port of the zmanager "integration_manager"
             formatter (Formatter): _description_
         """
+
+        service_desc = ServiceDescription()
+
         super().__init__(
             service_id,
             subject_address,
@@ -84,7 +88,8 @@ class ServiceManagementMain(DigitalPyService):
             integration_manager_protocol,
             formatter,
             protocol=COMMAND_PROTOCOL,
-            network=None  # type: ignore
+            network=None,  # type: ignore
+            service_desc=service_desc
         )
 
         # the service index is used to keep track of all registered services,
@@ -92,7 +97,8 @@ class ServiceManagementMain(DigitalPyService):
         self._service_index: Dict[str, ServiceDescription] = {}
         self.process_controller: ServiceManagementProcessController
         # get the central configuration
-        self.configuration: Configuration = ObjectFactory.get_instance("configuration")
+        self.configuration: Configuration = ObjectFactory.get_instance(
+            "configuration")
 
     def initialize_controllers(self):
         """
@@ -251,18 +257,18 @@ class ServiceManagementMain(DigitalPyService):
 
     def start_service(self, service_section_name: str):
         """This method is used to initialize the service process and start the service
-        
+
         Args:
             service_section_name (str): the section of the service in the configuration file
         """
         # get the service configuration
-        service_section: dict = self.configuration.get_section(service_section_name)
+        service_section: dict = self.configuration.get_section(
+            service_section_name)
         service_id = service_section.get("service_id")
 
         # check if the service is already running
         if self.is_service_running(service_id):
             return
-
 
         # initialize the service description
         service_description = self.initialize_service_description(
@@ -270,7 +276,7 @@ class ServiceManagementMain(DigitalPyService):
 
         # initialize the service class
         service_class = self.initialize_service_class(
-            service_section, service_section_name)
+            service_section, service_section_name, service_desc=service_description)
 
         # start the service process
         self.process_controller.start_process(
@@ -290,7 +296,7 @@ class ServiceManagementMain(DigitalPyService):
         return self._service_index[service_id].status == ServiceStatus.RUNNING
 
     def initialize_service_class(self, service_configuration: dict,
-                                 service_section_name: str) -> DigitalPyService:
+                                 service_section_name: str, service_desc: ServiceDescription) -> DigitalPyService:
         """This method is used to initialize a service class
 
         Args:
@@ -307,7 +313,9 @@ class ServiceManagementMain(DigitalPyService):
             "configuration")
 
         service_configuration.update(base_config.get_section("Service"))
-        
+
+        service_configuration["service_desc"] = service_desc
+
         # initialize the service class
         service_class: DigitalPyService = ObjectFactory.get_instance(
             service_section_name, service_configuration)

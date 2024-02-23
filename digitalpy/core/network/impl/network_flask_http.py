@@ -13,6 +13,7 @@ import pickle
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.network.domain.client_status import ClientStatus
 from digitalpy.core.domain.object_id import ObjectId
+from digitalpy.core.service_management.domain.service_description import ServiceDescription
 
 from digitalpy.core.network.network_sync_interface import NetworkSyncInterface
 from digitalpy.core.domain.domain.network_client import NetworkClient
@@ -35,14 +36,16 @@ class FlaskHTTPNetwork(NetworkSyncInterface):
         self.port: int = None  # type: ignore
         self.app: Flask = None  # type: ignore
         self.app_proc: threading.Thread = None  # type: ignore
-        self.clients: Dict[int, NetworkClient] = {}
+        self.clients: Dict[bytes, NetworkClient] = {}
         self.local_context: zmq.Context
         self.sink: zmq.Socket
         self.publisher: zmq.Socket
-        self.push_sockets: Dict[str, zmq.Socket] = {}
-        self.sub_sockets: Dict[str, zmq.Socket] = {}
-        
-    def intialize_network(self, host: str, port: int, available_endpoints: List[str] = []):
+        self.push_sockets: Dict[int, zmq.Socket] = {}
+        self.sub_sockets: Dict[int, zmq.Socket] = {}
+        self.service_desc: ServiceDescription = None  # type: ignore
+
+    def intialize_network(self, host: str, port: int, available_endpoints: List[str],  service_desc: ServiceDescription):
+        self.service_desc = service_desc
         self.app = Flask(f"{host}:{port}")
         self.app.secret_key = str(uuid.uuid4())
         self.host = host
@@ -56,14 +59,15 @@ class FlaskHTTPNetwork(NetworkSyncInterface):
         self.publisher_addr = self.publisher.getsockopt(zmq.LAST_ENDPOINT)
 
         for endpoint in available_endpoints:
-            self.app.add_url_rule(rule = "/"+endpoint, endpoint=endpoint, view_func=self.handle_request)
+            self.app.add_url_rule(
+                rule="/"+endpoint, endpoint=endpoint, view_func=self.handle_request, methods=["GET", "POST", "PUT", "DELETE"])
         self.app_thread = threading.Thread(target=self._start_app, daemon=True)
         self.app_thread.start()
 
     def _start_app(self):
         self.app.run()
-    
-    def service_connections(self, max_requests = 1000):
+
+    def service_connections(self, max_requests=1000):
         requests = []
         for _ in range(max_requests):
             try:
@@ -72,7 +76,7 @@ class FlaskHTTPNetwork(NetworkSyncInterface):
             except zmq.Again:
                 return requests
         return requests
-    
+
     def teardown_network(self):
         return super().teardown_network()
 
@@ -92,24 +96,34 @@ class FlaskHTTPNetwork(NetworkSyncInterface):
             "DefaultClient", dynamic_configuration={"oid": oid})
         client.id = bytes(network_id)
         client.status = ClientStatus.CONNECTED
+        client.service_id = self.service_desc.id
+        client.protocol = self.service_desc.protocol
+
         self.clients[network_id] = client
 
         return client
 
-    def handle_request(self):
+    def handle_request(self, **kwargs):
         req: Request = ObjectFactory.get_new_instance("Request")
         req.set_value("data", flask_request.get_data())
+        req.set_value("url", flask_request.endpoint)
+        req.set_value("method", flask_request.method)
+        req.set_value("headers", dict(flask_request.headers))
+
         client = self._get_client(self._get_id(), req)
         req.set_value("client", client)
         for key, value in flask_request.args.items():
             req.set_value(key, value)
-        
+
+        for key, value in kwargs.items():
+            req.set_value(key, value)
+
         resp: Response = self._forward_request(req)
         return resp.get_value("message")
 
     def send_response(self, response: Response):
         self.publisher.send_multipart(
-                [self._get_message_topic(message=response), pickle.dumps(response)])
+            [self._get_message_topic(message=response), pickle.dumps(response)])
 
     def _forward_request(self, request: Request) -> Response:
         p_s = self._get_push_socket()
@@ -120,7 +134,7 @@ class FlaskHTTPNetwork(NetworkSyncInterface):
         resp = pickle.loads(resp_raw[1])
         s_s.unsubscribe(self._get_message_topic(request))
         return resp
-    
+
     def _get_push_socket(self) -> zmq.Socket:
         thread_id = threading.get_native_id()
 
@@ -130,7 +144,7 @@ class FlaskHTTPNetwork(NetworkSyncInterface):
             self.push_sockets[thread_id] = sock
 
         return self.push_sockets[thread_id]
-    
+
     def _get_sub_socket(self) -> zmq.Socket:
         thread_id = threading.get_native_id()
 
@@ -140,7 +154,7 @@ class FlaskHTTPNetwork(NetworkSyncInterface):
 
         return self.sub_sockets[thread_id]
 
-    def _get_client(self, network_id: str, request: 'Request') -> NetworkClient:
+    def _get_client(self, network_id: bytes, request: 'Request') -> NetworkClient:
         if network_id not in self.clients:
             client = self.handle_connection(request, network_id)
             self.clients[network_id] = client
@@ -151,6 +165,6 @@ class FlaskHTTPNetwork(NetworkSyncInterface):
             id = uuid.uuid4().bytes
             session["network_id"] = id
         return session["network_id"]
-    
-    def _get_message_topic(self, message: Union[Request, Response]) -> str:
+
+    def _get_message_topic(self, message: Union[Request, Response]) -> bytes:
         return str(message.get_id()).encode()
