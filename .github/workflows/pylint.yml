@@ -25,6 +25,7 @@ jobs:
       - name: Install the project dependencies
         run: |
           sudo apt-get install libxml2-dev libxslt1-dev
+          pip install lxml
           poetry install --no-root
           poetry install --with dev
     
