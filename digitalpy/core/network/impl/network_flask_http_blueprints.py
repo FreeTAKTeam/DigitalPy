@@ -1,15 +1,25 @@
-"""This file defines a class `TCPNetwork` that implements the `NetworkAsyncInterface`. This class is used to establish a network communication using the TCP protocol. It uses the ZeroMQ library for creating the socket and context for communication. 
 
-The class has methods for initializing the network (`intialize_network`) and connecting a client to the server (`connect_client`). The `initialize_network` method sets up the ZeroMQ context and socket, binds it to the provided host and port. The `connect_client` method is used to connect a client to the server using the client's identity. 
+"""
+This module defines two classes: `NetworkFlaskHTTPBlueprints` and `BlueprintCommunicator`. 
 
-The class also maintains a dictionary of clients connected to the network, with their identities as keys.
+These classes implement the `NetworkSyncInterface` and are used to establish network 
+communication using the TCP protocol with the help of the ZeroMQ library. 
+
+The `NetworkFlaskHTTPBlueprints` class has methods for initializing the network 
+and registering new client connections to the network. It also maintains a dictionary 
+of clients connected to the network, with their identities as keys.
+
+The `BlueprintCommunicator` class is not described in the initial excerpt, so its functionality 
+will need to be documented once its methods and purpose are clear.
+
+This module also imports necessary modules and types from Flask, typing, uuid, pickle, and various 
+components from the `digitalpy` package.
 """
 import threading
-from typing import Dict, List, TYPE_CHECKING, Union
-import uuid
-from flask import Blueprint, Flask, request as flask_request, session
 import pickle
-from digitalpy.core.digipy_configuration.configuration import Configuration
+import uuid
+from typing import Dict, List, TYPE_CHECKING, Union
+from flask import Blueprint, Flask, session
 
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.network.domain.client_status import ClientStatus
@@ -28,7 +38,21 @@ if TYPE_CHECKING:
 
 
 class BlueprintCommunicator:
-    """ this class should be used by the blueprints to communicate with the network"""
+    """
+    The BlueprintCommunicator class is designed to manage network communication for a service in
+    a digitalpy environment.
+
+    This class uses ZeroMQ sockets and contexts to establish and manage network communication. 
+    It is designed to be used by a single service in a digitalpy environment, and is not 
+    thread-safe between different services.
+
+    The class maintains a dictionary of push and subscribe sockets for different network 
+    identities, and also manages a local ZeroMQ context. The network addresses for the sink and 
+    publisher are stored as class variables to be defined by the network at time of initialization.
+
+    The class assumes that the network will be initialized before any blueprint is used, and 
+    that the sink address will only be set once by the network.
+    """
 
     # NOTE: the use of class variables in this case is several fold, firstly it is
     # to avoid duplicating creation of the sockets and contexts. Secondly we assume
@@ -43,18 +67,33 @@ class BlueprintCommunicator:
     sub_sockets: Dict[int, zmq.Socket] = {}
     local_context: zmq.Context = zmq.Context()
 
-    def _get_id(self):
+    def _get_id(self)->bytes:
+        """ this method returns the network id for the current session
+
+        Returns:
+            bytes: the network id
+        """
         if session.get("network_id") is None:
-            id = uuid.uuid4().bytes
-            session["network_id"] = id
+            net_id = uuid.uuid4().bytes
+            session["network_id"] = net_id
         return session["network_id"]
 
     def _get_ctx(self) -> zmq.Context:
+        """this method returns the local zmq context
+        
+        Returns:
+            zmq.Context: the local zmq context
+        """
         if self.local_context is None:
             self.local_context = zmq.Context()
         return self.local_context
 
     def _get_sub_socket(self) -> zmq.Socket:
+        """this method returns the subscribe socket for the current thread
+
+        Returns:
+            zmq.Socket: the subscribe socket
+        """
         thread_id = threading.get_native_id()
 
         if thread_id not in self.sub_sockets:
@@ -64,9 +103,22 @@ class BlueprintCommunicator:
         return self.sub_sockets[thread_id]
 
     def _get_message_topic(self, message: Union[Request, Response]) -> bytes:
+        """this method returns the topic for the message
+
+        Args:
+            message (Union[Request, Response]): the message
+        
+        Returns:
+            bytes: the topic of the message
+        """
         return str(message.get_id()).encode()
 
     def _get_push_socket(self) -> zmq.Socket:
+        """this method returns the push socket for the current thread
+
+        Returns:
+            zmq.Socket: the push socket
+        """
         thread_id = threading.get_native_id()
 
         if thread_id not in self.push_sockets:
@@ -77,12 +129,12 @@ class BlueprintCommunicator:
         return self.push_sockets[thread_id]
 
     def send_message_async(self, action: str, context: str, data: dict):
-        """send a message to the network without waiting for a response
+        """send a message to the network without returning a response
 
         Args:
-            data (dict): _description_
-            action (str): _description_
-            context (str): _description_
+            action (str): the action key for the request
+            context (str): the context key for the request
+            data (dict): the data to be sent as the values of the request
         """
         push_sock = self._get_push_socket()
 
@@ -97,12 +149,12 @@ class BlueprintCommunicator:
         """send a message to the network and wait for a response
 
         Args:
-            data (dict): _description_
-            action (str): _description_
-            context (str): _description_
+            action (str): the action key for the request
+            context (str): the context key for the request
+            data (dict): the data to be sent as the values of the request
 
         Returns:
-            Response: the response from the zmanager
+            Response: the response from the network
         """
         # compose and send the request
         push_sock = self._get_push_socket()
@@ -138,8 +190,17 @@ class FlaskHTTPNetworkBlueprints(NetworkSyncInterface):
         self.push_sockets: Dict[int, zmq.Socket] = {}
         self.sub_sockets: Dict[int, zmq.Socket] = {}
         self.service_desc: ServiceDescription = None  # type: ignore
+        self.app_thread: threading.Thread
 
     def intialize_network(self, host: str, port: int, blueprints: List[Blueprint], service_desc: ServiceDescription):
+        """this method initializes the network
+
+        Args:
+            host (str): the host address
+            port (int): the port number
+            blueprints (List[Blueprint]): the list of blueprints to be registered
+            service_desc (ServiceDescription): the service description
+        """
         self.service_desc = service_desc
         self.app = Flask(f"{host}:{port}")
         self.app.secret_key = str(uuid.uuid4())
@@ -148,10 +209,10 @@ class FlaskHTTPNetworkBlueprints(NetworkSyncInterface):
         self.local_context = zmq.Context()
         self.sink = self.local_context.socket(zmq.PULL)
         self.publisher = self.local_context.socket(zmq.PUB)
-        self.sink.bind_to_random_port(f"tcp://127.0.0.1")
+        self.sink.bind_to_random_port("tcp://127.0.0.1")
         BlueprintCommunicator.sink_addr = self.sink.getsockopt(
             zmq.LAST_ENDPOINT)
-        self.publisher.bind_to_random_port(f"tcp://127.0.0.1")
+        self.publisher.bind_to_random_port("tcp://127.0.0.1")
         BlueprintCommunicator.publisher_addr = self.publisher.getsockopt(
             zmq.LAST_ENDPOINT)
 
@@ -162,9 +223,19 @@ class FlaskHTTPNetworkBlueprints(NetworkSyncInterface):
         self.app_thread.start()
 
     def _start_app(self):
+        """this method starts the flask app"""
         self.app.run()
 
-    def service_connections(self, max_requests=1000):
+    def service_connections(self, max_requests=1000) -> List[Request]:
+        """this method returns the requests from the network
+
+        Args:
+            max_requests (int, optional): the maximum number of requests to be returned. 
+            Defaults to 1000.
+        
+        Returns:
+            List[Request]: the list of requests
+        """
         requests = []
         for _ in range(max_requests):
             try:
@@ -176,19 +247,30 @@ class FlaskHTTPNetworkBlueprints(NetworkSyncInterface):
                 return requests
         return requests
 
-    def teardown_network(self):
-        return super().teardown_network()
-
     def receive_message(self, blocking: bool = False) -> Request:
+        """this method receives a message from the network
+        
+        Args:
+            blocking (bool, optional): whether the receive should be blocking. Defaults to False.
+        
+        Returns:
+            Request: the message received
+        """
         if blocking:
             return self.sink.recv_pyobj()
         else:
             return self.sink.recv_pyobj(zmq.NOBLOCK)
 
-    def receive_message_from_client(self, client: NetworkClient, blocking: bool = False) -> Request:
-        return super().receive_message_from_client(client, blocking)
-
     def handle_connection(self, request: Request, network_id: bytes):
+        """this method handles a connection request from the network
+
+        Args:
+            request (Request): the request
+            network_id (bytes): the network id
+
+        Returns:
+            NetworkClient: the network client
+        """
         request.set_value("action", "connection")
         oid = ObjectId("network_client", id=str(network_id))
         client: NetworkClient = ObjectFactory.get_new_instance(
@@ -203,14 +285,36 @@ class FlaskHTTPNetworkBlueprints(NetworkSyncInterface):
         return client
 
     def send_response(self, response: Response):
+        """this method sends a response to the network
+
+        Args:
+            response (Response): the response
+        """
         self.publisher.send_multipart(
             [self._get_message_topic(message=response), pickle.dumps(response)])
 
     def _get_client(self, network_id: bytes, request: 'Request') -> NetworkClient:
+        """this method returns the client for the given network id
+
+        Args:
+            network_id (bytes): the network id
+            request (Request): the request
+
+        Returns:
+            NetworkClient: the network client
+        """
         if network_id not in self.clients:
             client = self.handle_connection(request, network_id)
             self.clients[network_id] = client
         return self.clients[network_id]
 
     def _get_message_topic(self, message: Union[Request, Response]) -> bytes:
+        """this method returns the topic for the message
+
+        Args:
+            message (Union[Request, Response]): the message
+
+        Returns:
+            bytes: the topic of the message
+        """
         return str(message.get_id()).encode()
