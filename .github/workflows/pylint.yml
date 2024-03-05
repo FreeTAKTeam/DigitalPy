@@ -24,6 +24,7 @@ jobs:
           key: venv-${{ hashFiles('poetry.lock') }}
       - name: Install the project dependencies
         run: |
+          sudo apt-get install libxml2-dev libxslt1-dev
           poetry install --no-root
           poetry install --with dev
     
