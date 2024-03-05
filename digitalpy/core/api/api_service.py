@@ -1,4 +1,18 @@
+"""
+This module defines the ApiService class, a subclass of the DigitalPyService class, which is 
+designed to manage API services in a digitalpy environment.
 
+The ApiService class initializes with several parameters used to configure the service and 
+establish http network communication. It contains a main event loop for the service, initiated 
+by the service manager.
+
+The module imports necessary modules and types from various components of the `digitalpy` package,
+including `NetworkClient`, `ObjectFactory`, `Formatter`, `DigitalPyService`, `ServiceStatus`,
+`NetworkSyncInterface`, `Request`, `DefaultFactory`, `TracingProvider`, `Response`, and 
+`ServiceDescription`.
+
+The `CONFIGURATION_SECTION` constant is also defined in this module, which is used to specify the configuration section for the core API in the digitalpy environment.
+"""
 
 import importlib
 import os
@@ -6,7 +20,6 @@ import pathlib
 import time
 import traceback
 from typing import List
-from digitalpy.core.api.api_communication_controller import APICommunicationController
 from digitalpy.core.domain.domain.network_client import NetworkClient
 
 from digitalpy.core.main.object_factory import ObjectFactory
@@ -24,7 +37,23 @@ CONFIGURATION_SECTION = "digitalpy.core_api"
 
 
 class ApiService(DigitalPyService):
+    """
+    The ApiService class is a subclass of the DigitalPyService class and is designed to manage 
+    API services in a digitalpy environment.
 
+    This class initializes with several parameters including service_id, subject_address, 
+    subject_port, subject_protocol, integration_manager_address, integration_manager_port, 
+    integration_manager_protocol, formatter, network, protocol, service_desc, blueprint_path, 
+    and blueprint_import_base. These parameters are used to configure the service and establish 
+    network communication.
+
+    The `event_loop` method is the main event loop for the ApiService. It is initiated by the 
+    service manager.
+
+    The `blueprint_path` and `blueprint_import_base` attributes are used to manage the blueprint
+    for the service which are used to handle requests by the networks and define the output
+    contexts and actions.
+    """
     def __init__(self, service_id: str, subject_address: str, subject_port: int,  # pylint: disable=useless-super-delegation
                  subject_protocol: str, integration_manager_address: str,
                  integration_manager_port: int, integration_manager_protocol: str,
@@ -37,12 +66,16 @@ class ApiService(DigitalPyService):
         self.blueprint_path = blueprint_path
         self.blueprint_import_base = blueprint_import_base
 
-    def event_loop(self):
-        """This is the main event loop for the HelloService. It is intiated by the service manager.
-        """
-        super().event_loop()
-
     def handle_connection(self, client: NetworkClient, req: Request):
+        """This function is used to handle client connections. It is initiated by the event loop.
+
+        Args:
+            client (NetworkClient): the client that is connecting
+            req (Request): the request message
+
+        Returns:
+            None
+        """
         super().handle_connection(client, req)
         req.set_context("api")
         req.set_format("pickled")
@@ -57,6 +90,12 @@ class ApiService(DigitalPyService):
     def handle_inbound_message(self, message: Request):
         """This function is used to handle inbound messages from other services. 
         It is intiated by the event loop.
+
+        Args:
+            message (Request): the request message
+
+        Returns:
+            None
         """
 
         # TODO: discuss this with giu and see if we should move the to the action mapping system?
@@ -91,6 +130,9 @@ class ApiService(DigitalPyService):
     def handle_exception(self, exception: Exception):
         """This function is used to handle exceptions that occur in the service. 
         It is intiated by the event loop.
+
+        Args:
+            exception (Exception): the exception that occurred
         """
         if isinstance(exception, SystemExit):
             self.status = ServiceStatus.STOPPED
