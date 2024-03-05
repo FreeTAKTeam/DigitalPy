@@ -318,3 +318,13 @@ class FlaskHTTPNetworkBlueprints(NetworkSyncInterface):
             bytes: the topic of the message
         """
         return str(message.get_id()).encode()
+
+    def receive_message_from_client(self, client: NetworkClient, blocking: TYPE_CHECKING = False) -> Request:
+        """this method has not yet been implemented"""
+        return super().receive_message_from_client(client, blocking)
+    
+    def teardown_network(self):
+        """this method tears down the network"""
+        self.sink.close()
+        self.publisher.close()
+        self.local_context.term()
