@@ -80,7 +80,7 @@ class BlueprintCommunicator:
 
     def _get_ctx(self) -> zmq.Context:
         """this method returns the local zmq context
-        
+
         Returns:
             zmq.Context: the local zmq context
         """
@@ -107,7 +107,7 @@ class BlueprintCommunicator:
 
         Args:
             message (Union[Request, Response]): the message
-        
+
         Returns:
             bytes: the topic of the message
         """
@@ -145,7 +145,7 @@ class BlueprintCommunicator:
         req.set_context(context)
         push_sock.send_pyobj(req)
 
-    def send_message_sync(self, data: dict, action: str, context: str) -> Response:
+    def send_message_sync(self, action: str, context: str, data: dict) -> Response:
         """send a message to the network and wait for a response
 
         Args:
@@ -232,7 +232,7 @@ class FlaskHTTPNetworkBlueprints(NetworkSyncInterface):
         Args:
             max_requests (int, optional): the maximum number of requests to be returned. 
             Defaults to 1000.
-        
+
         Returns:
             List[Request]: the list of requests
         """
@@ -249,10 +249,10 @@ class FlaskHTTPNetworkBlueprints(NetworkSyncInterface):
 
     def receive_message(self, blocking: bool = False) -> Request:
         """this method receives a message from the network
-        
+
         Args:
             blocking (bool, optional): whether the receive should be blocking. Defaults to False.
-        
+
         Returns:
             Request: the message received
         """
@@ -322,7 +322,7 @@ class FlaskHTTPNetworkBlueprints(NetworkSyncInterface):
     def receive_message_from_client(self, client: NetworkClient, blocking: TYPE_CHECKING = False) -> Request:
         """this method has not yet been implemented"""
         return super().receive_message_from_client(client, blocking)
-    
+
     def teardown_network(self):
         """this method tears down the network"""
         self.sink.close()
