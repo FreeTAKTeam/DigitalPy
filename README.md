@@ -43,12 +43,51 @@ provides a  way to describes concepts like “Domain Object”, Services , View 
  ### Model
 An application is usually based on a domain model that represents the real-world concepts of the domain of interest. In object oriented programming this model is implemented using classes. Depending on the application requirements the instances of some of these classes have to be persisted in a storage to keep the contained data. These classes represent the data model. The classes that provide the infrastructure for storing data form the persistence layer.
 
-
 ![image](https://user-images.githubusercontent.com/60719165/201990851-634ce6ed-f980-426d-95be-4367dc24c0c2.png)
-the  dModelclasses  support the ability to Create, read, update and delete (CRUD) tree of elements taking in account the model information.
+the  dModelclasses  support the ability to Create, Read, Update and Delete (CRUD) tree of elements taking in account the model information.
 DigitalPy defines [PersistentObject](https://github.com/FreeTAKTeam/DigitalPy/blob/main/digitalpy/model/persistent_object.py) as base class for persistent domain classes. It mainly implements an unique identifier for each instance (see [ObjectId](https://github.com/FreeTAKTeam/DigitalPy/blob/main/digitalpy/model/object_id.py)), tracking of the persistent state, methods for setting and getting values as well as callback methods for lifecycle events. For the composition of object graphs the derived class Node is used as base class. It implements relation support for persistent objects.
 
 To retrieve persisted objects [PersistenceFacade](https://github.com/FreeTAKTeam/DigitalPy/blob/main/digitalpy/model/persistence_facade.py) is used. The actual operations for creating, reading, updating and deleting objects (e.g. SQL commands) are defined in classes implementing the [PersistenceMapper](https://github.com/FreeTAKTeam/DigitalPy/blob/main/digitalpy/model/persistence_mapper.py) interface (see Data Mapper Pattern). Although not necessary there usually exists one mapper class for each persistent domain class. Mapper classes are introduced to the persistent facade by configuration.
+
+## Relationships
+### Relationship types
+#### Associations
+Associations are an important concept in a Chronos model, since they describe the relations between entities, namely the parent-child relation. There are three different types of Relationships supported: Composite, Shared and normal Associations.
+It is important to understand how DAFGen recognizes parents and children in an association with composite or shared ends the parent is always the class, that is connected with the diamond end of the association, even if that is placed on the target side of the association. 
+
+![image](https://github.com/FreeTAKTeam/DigitalPy/assets/60719165/92915de9-25ca-4d11-b2c2-be6eacf37f7e)
+
+Normal associations are treated as parent-child relation, if they are only navigable in one direction, which is then defined as the child to parent direction.
+
+#### CRUD Behavior
+Different association types shown below result in different behaviors regarding the operations allowed on child entities
+
+| **Association type **  | **Delete children ** | **Create children ** | **Associate children ** |
+|------------------------|----------------------|----------------------|-------------------------|
+| Composite association  | Yes                  | Yes                  | No                      |
+| Shared association     | No                   | Yes                  | Yes                     |
+| Association            | No                   | No                   | Yes                     |
+
+#### Associations with Roles
+Another question that may arise is how to model multiple associations between two types. Given that you have **Person** and **Task** entity types and you want to associate tasks with persons. To achieve this, you'll draw a shared association between them and place the aggregation (diamond) end at the Person class.  
+But what if you want to have a task a task owner and a task creator? In this case you'll have to draw a second association. 
+The next question is now how the generator can  distinguish between a task creators and task owners. This is, where the concept of roles comes into play. To resolve this conflict, you'll have to assign role names to the person and task association ends. The generator will generate different entity and mapper classes for each role, which allows the framework to know which role a person has in relation to a given task.
+![image](https://github.com/FreeTAKTeam/DigitalPy/assets/60719165/4b980bad-cd02-41c3-bed1-f31310f390d9)
+
+#### Generalizations
+If different entity types should have the same attributes, one may define a common base class that makes these available to inheriting classes. An example may be a EntityBase type, which defines meta information like creation date and last modification date for all entity types
+![image](https://github.com/FreeTAKTeam/DigitalPy/assets/60719165/f180c7fe-c998-4631-9354-2cb9e7fcc724)
+The DAFGen expects to have a target class/mapper definitions for each class in the model. In case of inheritance the subclasses will contain the attributes of the parent classes too.  For abstract base classes no mapper class will be generated.
+
+Inheritance will cause the generator to draw new relations in the following cases:
+    • Subclasses of parent classes of the current entity will also become parents .
+    • Parent classes of the superclass of the current entity will  also become parents.
+    • Subclasses of child classes of the current entity will also become children .
+    • Child classes of super classes of the current entity will also  become children .
+### Navigability
+Another aspect of associations is the use of arrow ends that describe the navigability. If an arrow end is omitted on one end, that means that the appropriate entity type is not seen from the other end.
+This association information is written into the generated mapper classes.
+![image](https://github.com/FreeTAKTeam/DigitalPy/assets/60719165/addef48f-850f-476c-9d1e-a1f6c3239204)
 
 ## Modular design
 Modular design is a generally recognized “Good Thing(tm)” in software engineering. As in science in general, breaking a problem down to smaller, bite-sized pieces makes it easier to solve. It also allows different people to solve different parts of the problem and still have it all work correctly in the end. Each component is then self-contained and, as long as the interface between different components remains constant, can be extended or even gutted and rewritten as needed without causing a chaotic mess. DigitalPy supports this principle with his component Architecture (see below).
