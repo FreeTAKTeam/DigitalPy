@@ -10,6 +10,7 @@
 
 from typing import List
 import zmq
+from digitalpy.core.zmanager.configuration.zmanager_constants import ZMANAGER_MESSAGE_DELIMITER
 
 
 class IntegrationManager:
@@ -55,7 +56,7 @@ class IntegrationManager:
                 request = request_bytes[0]
 
                 response_protocol, response_object_unserialized = request.split(
-                    b',', 1)
+                    ZMANAGER_MESSAGE_DELIMITER, 1)
                 subject = b"/messages" + response_protocol
 
                 try:

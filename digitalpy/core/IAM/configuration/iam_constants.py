@@ -50,9 +50,17 @@ BUSINESS_RULES_PATH = str(
 )
 
 PERSISTENCE_PATH = str(
-    pathlib.PurePath(CURRENT_COMPONENT_PATH, "persistence/emergencies.json")
+    pathlib.PurePath(CURRENT_COMPONENT_PATH, "persistence/")
+)
+
+DB_PATH = "sqlite:///"+str(
+    pathlib.PurePath(PERSISTENCE_PATH, "IAMRecords.db")
 )
 
 MANIFEST_PATH = str(
     pathlib.PurePath(CURRENT_COMPONENT_PATH, "configuration/manifest.ini")
 )
+
+AUTHENTICATED_USERS = "authenticated_users"
+
+UNAUTHENTICATED_USERS = "unauthenticated_users"

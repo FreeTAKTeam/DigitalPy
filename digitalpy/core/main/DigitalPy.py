@@ -20,6 +20,7 @@ import signal
 from digitalpy.core.digipy_configuration.configuration import Configuration
 from digitalpy.core.digipy_configuration.impl.inifile_configuration import InifileConfiguration
 from digitalpy.core.component_management.impl.component_registration_handler import ComponentRegistrationHandler
+from digitalpy.core.service_management.configuration.message_keys import SECTION_NAME, TARGET_SERVICE_ID, COMMAND
 from digitalpy.core.telemetry.tracer import Tracer
 from digitalpy.core.telemetry.tracing_provider import TracingProvider
 from digitalpy.core.zmanager.response import Response
@@ -67,12 +68,6 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
 
         # register the factory and configuration to the object factory singleton
         ObjectFactory.configure(self.factory)
-        ObjectFactory.register_instance("configuration", self.configuration)
-
-        # factory instance is registered for use by the routing worker so that
-        # the instances in the instance dictionary can be preserved when the
-        # new object factory is instantiated in the sub-process
-        ObjectFactory.register_instance("factory", self.factory)
 
         self.initialize_tracing()
 
@@ -253,7 +248,7 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
             self.service_manager: ServiceManagementMain = ObjectFactory.get_instance(
                 "ServiceManager")
             self.service_manager_process = multiprocessing.Process(target=self.service_manager.start, args=(ObjectFactory.get_instance(
-                "factory"), ObjectFactory.get_instance("tracingprovider"), ComponentRegistrationHandler.component_index))
+                "factory"), ObjectFactory.get_instance("tracingprovider")))
             self.service_manager_process.start()
             return True
         except Exception as ex:
@@ -288,7 +283,7 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
             req.set_action("GetAllServiceHealth")
             req.set_context(self.configuration.get_value(
                 "service_id", "ServiceManager"))
-            req.set_value("command", "get_all_service_health")
+            req.set_value(COMMAND, "get_all_service_health")
             req.set_format("pickled")
             self.subject_send_request(req, COMMAND_PROTOCOL, self.configuration.get_value(
                 "service_id", "ServiceManager"))
@@ -300,11 +295,11 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
         except Exception as ex:
             raise ex
 
-    def start_service(self, service_id: str) -> bool:
+    def start_service(self, service_section_name: str) -> bool:
         """Starts a service.
 
         Args:
-            service_id (str): The unique id of the service to start.
+            service_section_name (str): The name of the configuration section of the service to start.
 
         Returns:
             bool: True if successful, False otherwise.
@@ -315,8 +310,11 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
             req.set_context(self.configuration.get_value(
                 "service_id", "ServiceManager"))
             req.set_value(
-                "command", ServiceManagerOperations.START_SERVICE.value)
-            req.set_value("target_service_id", service_id)
+                COMMAND, ServiceManagerOperations.START_SERVICE.value)
+            
+            req.set_value(SECTION_NAME, service_section_name)
+            req.set_value(TARGET_SERVICE_ID, self.configuration.get_value("service_id", service_section_name))
+
             req.set_format("pickled")
             self.subject_send_request(req, COMMAND_PROTOCOL, self.configuration.get_value(
                 "service_id", "ServiceManager"))
@@ -339,8 +337,8 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
             req.set_context(self.configuration.get_value(
                 "service_id", "servicemanager"))
             req.set_value(
-                "command", ServiceManagerOperations.STOP_SERVICE.value)
-            req.set_value("target_service_id", service_id)
+                COMMAND, ServiceManagerOperations.STOP_SERVICE.value)
+            req.set_value(TARGET_SERVICE_ID, service_id)
             req.set_format("pickled")
             self.subject_send_request(req, COMMAND_PROTOCOL, self.configuration.get_value(
                 "service_id", "ServiceManager"))
@@ -363,8 +361,8 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
             req.set_context(self.configuration.get_value(
                 "service_id", "ServiceManager"))
             req.set_value(
-                "command", ServiceManagerOperations.RESTART_SERVICE.value)
-            req.set_value("target_service_id", service_id)
+                COMMAND, ServiceManagerOperations.RESTART_SERVICE.value)
+            req.set_value(TARGET_SERVICE_ID, service_id)
             req.set_format("pickled")
             self.subject_send_request(req, COMMAND_PROTOCOL, self.configuration.get_value(
                 "service_id", "ServiceManager"))
@@ -378,7 +376,7 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
         self.stop_integration_manager_service()
         self.stop_routing_proxy_service()
 
-        raise SystemExit
+        exit(0)
 
     def restart(self):
         # End and then restart the execution of the application
@@ -395,7 +393,8 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
 
     def configure(self):
         """Set or modify the configuration of the application"""
-
+        pass
+    
     def get_status(self):
         # Retrieve the current status of the application (e.g. running, stopped, etc.)
         pass
@@ -408,3 +407,7 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
         # Close all resources and terminate the application
         self.resources = []
         self.configurations = {}
+
+
+if __name__ == "__main__":
+    DigitalPy().start()

@@ -31,6 +31,7 @@ from digitalpy.core.main.impl.default_factory import DefaultFactory
 from digitalpy.core.service_management.domain.service_manager_operations \
     import ServiceManagerOperations
 from digitalpy.core.service_management.domain.service_operations import ServiceOperations
+from digitalpy.core.service_management.configuration.message_keys import COMMAND, TARGET_SERVICE_ID, SECTION_NAME
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.service_management.domain.service_status import ServiceStatus
@@ -74,6 +75,9 @@ class ServiceManagementMain(DigitalPyService):
             integration_manager_port (int): the port of the zmanager "integration_manager"
             formatter (Formatter): _description_
         """
+
+        service_desc = ServiceDescription()
+
         super().__init__(
             service_id,
             subject_address,
@@ -84,14 +88,17 @@ class ServiceManagementMain(DigitalPyService):
             integration_manager_protocol,
             formatter,
             protocol=COMMAND_PROTOCOL,
-            network=None  # type: ignore
+            network=None,  # type: ignore
+            service_desc=service_desc
         )
 
         # the service index is used to keep track of all registered services,
         # their states, and their configurations
         self._service_index: Dict[str, ServiceDescription] = {}
-        self.component_index: Dict[str, Configuration] = {}
         self.process_controller: ServiceManagementProcessController
+        # get the central configuration
+        self.configuration: Configuration = ObjectFactory.get_instance(
+            "configuration")
 
     def initialize_controllers(self):
         """
@@ -112,8 +119,7 @@ class ServiceManagementMain(DigitalPyService):
         for service_id in self._service_index:
             self.stop_service(service_id)
 
-    def start(self, object_factory: DefaultFactory, tracing_provider: TracingProvider,
-              component_index: Dict[str, Configuration]):
+    def start(self, object_factory: DefaultFactory, tracing_provider: TracingProvider):
         """This method is used to start the service
 
         Args:
@@ -128,15 +134,12 @@ class ServiceManagementMain(DigitalPyService):
             None
         """
         self.initialize_connections(COMMAND_PROTOCOL)
-        self.component_index = component_index
         object_factory.clear_instance("servicemanager")
 
         ObjectFactory.configure(object_factory)
         self.tracer = tracing_provider.create_tracer(self.service_id)
         self.initialize_controllers()
         self.initialize_connections(self.protocol)
-
-        self.install_all_services()
 
         self.status = ServiceStatus.RUNNING
         # member exists in parent class
@@ -149,33 +152,6 @@ class ServiceManagementMain(DigitalPyService):
         for command in commands:
             self.handle_command(command)
 
-    def install_all_services(self):
-        """
-        Discover and install all services defined in the component manifest.
-
-        This method iterates over the component index and retrieves the configuration
-        for each component. It then discovers services from the component
-        manifest. Finally it starts the services that have a default status of "RUNNING".
-
-        Returns:
-            None
-        """
-        for component_name in self.component_index:
-            component_configuration = self.component_index[component_name]
-
-            # TODO: The service definitions should be moved out of the component manifest
-            # for better organization and separation of concerns.
-            for service_name in component_configuration.get_sections():
-                if not service_name.endswith("Service"):
-                    continue
-
-                service_config = component_configuration.get_section(
-                    service_name)
-                if service_config.get("default_status", ServiceStatus.STOPPED) \
-                        == ServiceStatus.RUNNING.value:
-                    service_id = str(service_config.get("service_id"))
-                    self.start_service(service_id)
-
     def handle_exception(self, exception: Exception):
         """This method is used to handle an exception"""
         # TODO: add logic to handle exceptions
@@ -185,17 +161,17 @@ class ServiceManagementMain(DigitalPyService):
         """This method is used to handle a command, commands are typically sent from the DigitalPy 
         application core through the ZManager"""
 
-        if command.get_value("command") == str(ServiceManagerOperations.START_SERVICE.value):
-            self.start_service(command.get_value("target_service_id"))
+        if command.get_value(COMMAND) == str(ServiceManagerOperations.START_SERVICE.value):
+            self.start_service(command.get_value(SECTION_NAME))
 
-        elif command.get_value("command") == str(ServiceManagerOperations.STOP_SERVICE.value):
-            self.stop_service(command.get_value("target_service_id"))
+        elif command.get_value(COMMAND) == str(ServiceManagerOperations.STOP_SERVICE.value):
+            self.stop_service(command.get_value(TARGET_SERVICE_ID))
 
-        elif command.get_value("command") == str(ServiceManagerOperations.RESTART_SERVICE.value):
-            self.stop_service(command.get_value("target_service_id"))
-            self.start_service(command.get_value("target_service_id"))
+        elif command.get_value(COMMAND) == str(ServiceManagerOperations.RESTART_SERVICE.value):
+            self.stop_service(command.get_value(TARGET_SERVICE_ID))
+            self.start_service(command.get_value(SECTION_NAME))
 
-        elif command.get_value("command") == str(ServiceManagerOperations.GET_ALL_SERVICE_HEALTH.value):
+        elif command.get_value(COMMAND) == str(ServiceManagerOperations.GET_ALL_SERVICE_HEALTH.value):
             all_service_health = self.get_all_service_health()
             self.send_response_to_core(all_service_health, command.get_id())
 
@@ -225,8 +201,8 @@ class ServiceManagementMain(DigitalPyService):
         req: Request = ObjectFactory.get_new_instance("Request")
         req.set_action(COMMAND_ACTION)
         req.set_context(service_id)
-        req.set_value("command", str(ServiceOperations.GET_HEALTH.value))
-        req.set_value("target_service_id", service_id)
+        req.set_value(COMMAND, str(ServiceOperations.GET_HEALTH.value))
+        req.set_value(TARGET_SERVICE_ID, service_id)
         req.set_format("pickled")
         self.subject_send_request(req, COMMAND_PROTOCOL, service_id)
         resp = self.broker_receive_response(request_id=req.get_id(), timeout=5)
@@ -253,8 +229,7 @@ class ServiceManagementMain(DigitalPyService):
         responses = self.broker_receive()
         return responses
 
-    def initialize_service_description(self, service_configuration: dict,
-                                       service_id: str) -> ServiceDescription:
+    def initialize_service_description(self, service_configuration: dict, service_id: str) -> ServiceDescription:
         """This method is used to initialize a service description"""
         # construct the service description
         new_service_instance = ServiceDescription()
@@ -280,30 +255,28 @@ class ServiceManagementMain(DigitalPyService):
 
         return new_service_instance
 
-    def start_service(self, service_id: str):
-        """This method is used to initialize the service process and start the service"""
+    def start_service(self, service_section_name: str):
+        """This method is used to initialize the service process and start the service
+
+        Args:
+            service_section_name (str): the section of the service in the configuration file
+        """
+        # get the service configuration
+        service_section: dict = self.configuration.get_section(
+            service_section_name)
+        service_id = service_section.get("service_id")
 
         # check if the service is already running
         if self.is_service_running(service_id):
             return
 
-        # parse the service id into the component name and the service name
-        component_name, service_name = service_id.split(".")
-
-        # get the configuration for the service
-        service_component_configuration = self.component_index[component_name]
-
-        # get the service configuration from the manifest of the component
-        service_configuration = service_component_configuration.get_section(
-            service_name)
-
         # initialize the service description
         service_description = self.initialize_service_description(
-            service_configuration, service_id)
+            service_section, service_id)
 
         # initialize the service class
         service_class = self.initialize_service_class(
-            service_configuration, service_description)
+            service_section, service_section_name, service_desc=service_description)
 
         # start the service process
         self.process_controller.start_process(
@@ -323,17 +296,16 @@ class ServiceManagementMain(DigitalPyService):
         return self._service_index[service_id].status == ServiceStatus.RUNNING
 
     def initialize_service_class(self, service_configuration: dict,
-                                 service_description: ServiceDescription) -> DigitalPyService:
+                                 service_section_name: str, service_desc: ServiceDescription) -> DigitalPyService:
         """This method is used to initialize a service class
 
         Args:
             service_configuration (dict): 
                 The configuration settings for the service. This is a dictionary that contains
                 key-value pairs of configuration settings.
-            service_description (ServiceDescription): 
-                An object that describes the service. This includes properties like the name of the service, 
-                its version, and other metadata.
-
+            service_section_name (str):
+                The name of the section in the configuration file that contains the configuration settings
+                for the service.
         Returns:
             DigitalPyService: an initialized digitalpy service object
         """
@@ -342,9 +314,11 @@ class ServiceManagementMain(DigitalPyService):
 
         service_configuration.update(base_config.get_section("Service"))
 
+        service_configuration["service_desc"] = service_desc
+
         # initialize the service class
         service_class: DigitalPyService = ObjectFactory.get_instance(
-            service_description.name, service_configuration)
+            service_section_name, service_configuration)
 
         return service_class
 
@@ -386,7 +360,7 @@ class ServiceManagementMain(DigitalPyService):
         req: Request = ObjectFactory.get_new_instance("Request")
         req.set_action(COMMAND_ACTION)
         req.set_context(service_id)
-        req.set_value("command", str(ServiceOperations.STOP.value))
-        req.set_value("target_service_id", service_id)
+        req.set_value(COMMAND, str(ServiceOperations.STOP.value))
+        req.set_value(TARGET_SERVICE_ID, service_id)
         req.set_format("pickled")
         self.subject_send_request(req, COMMAND_PROTOCOL, service_id)

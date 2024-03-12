@@ -12,5 +12,5 @@
 class Root:
 
 	def __init__(self, name, uid):  
-		self.Name = Name
-		self.UID = UID
+		self.Name = name
+		self.UID = uid

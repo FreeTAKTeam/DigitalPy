@@ -135,6 +135,13 @@ class TCPNetwork(NetworkAsyncInterface):
         # Implement logic to receive a message from a specific client
         return None  # type: ignore
 
+    def send_response(self, response: Response):
+        if response.get_value("client") is None or response.get_value("client") == "*":
+            self.send_message_to_all_clients(response)
+        else:
+            self.send_message_to_clients(
+                response, response.get_value("client"))
+
     def send_message_to_client(self, message: Response, client: NetworkClient):
         try:
             for message_data in message.get_value("message"):

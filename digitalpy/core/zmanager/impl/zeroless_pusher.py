@@ -1,3 +1,4 @@
+from digitalpy.core.zmanager.configuration.zmanager_constants import ZMANAGER_MESSAGE_DELIMITER
 from zeroless import Client
 from digitalpy.core.zmanager.pusher import Pusher
 from digitalpy.core.zmanager.request import Request
@@ -30,4 +31,4 @@ class ZerolessPusher(Pusher):
         """
         push = self.pusher_client.push()
         self.pusher_formatter.serialize(request)
-        push(b",".join([request.get_sender().encode(), request.get_context().encode(), request.get_action().encode(), request.get_format().encode(), protocol.encode(), request.get_values()]))
+        push(ZMANAGER_MESSAGE_DELIMITER.join([request.get_sender().encode(), request.get_context().encode(), request.get_action().encode(), request.get_format().encode(), protocol.encode(), request.get_values()]))

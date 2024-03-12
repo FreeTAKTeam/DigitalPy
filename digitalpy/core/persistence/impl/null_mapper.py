@@ -68,7 +68,7 @@ class NullMapper(PersistenceMapper):
         """@see _persistence_mapper.get_pk_names()"""
         return []
 
-    def get_properties(self) -> Any:
+    def get_properties(self) -> List[str]:
         """@see _persistence_mapper.get_properties()"""
         pass
 

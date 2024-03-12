@@ -4,6 +4,7 @@ import uuid
 import zmq
 import logging
 import traceback
+from digitalpy.core.zmanager.configuration.zmanager_constants import ZMANAGER_MESSAGE_DELIMITER
 
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
@@ -17,6 +18,7 @@ from digitalpy.core.parsing.formatter import Formatter
 from digitalpy.core.main.factory import Factory
 from digitalpy.core.telemetry.impl.opentel_metrics_provider import OpenTelMetricsProvider
 from digitalpy.core.service_management.digitalpy_service import COMMAND_PROTOCOL
+
 
 class DefaultRoutingWorker:
     def __init__(
@@ -86,24 +88,27 @@ class DefaultRoutingWorker:
             ex: raises thrown exceptions
         """
         try:
-            self.tracing_provider = self.factory.get_instance("tracingprovider")
+            self.tracing_provider = self.factory.get_instance(
+                "tracingprovider")
             self.factory.register_instance(
                 "tracingproviderinstance", self.tracing_provider
             )
         except Exception as ex:
             raise ex
 
-    def send_response(self, response: Response, protocol: str, service_id: str)->None:
+    def send_response(self, response: Response, protocol: str, service_id: str) -> None:
         """send a response to the integration_manager
 
         Args:
             response (Response): the response to be sent to integration_manager
             protocol (str): the protocol of the message
         """
-        response_topics = self.get_response_topic(response, protocol, service_id)
-        self.logger.debug("sending response \n id: %s \n values: %s \n topics: %s", str(response.get_id()), str(response.get_values()), str(response_topics))
-        #self.formatter.serialize(response)
-        #response_value = response.get_values()
+        response_topics = self.get_response_topic(
+            response, protocol, service_id)
+        self.logger.debug("sending response \n id: %s \n values: %s \n topics: %s", str(
+            response.get_id()), str(response.get_values()), str(response_topics))
+        # self.formatter.serialize(response)
+        # response_value = response.get_values()
         for response_topic in response_topics:
             self.integration_manager_sock.send(response_topic)
 
@@ -113,25 +118,29 @@ class DefaultRoutingWorker:
         Args:
             exception (Exception): the exception to be sent to the integration_manager
         """
-        self.integration_manager_sock.send(b"error,"+str(exception).encode("utf-8"))
-    
+        self.integration_manager_sock.send(
+            b"error,"+str(exception).encode("utf-8"))
+
     def start(self):
         """start the routing worker"""
         self.initiate_sockets()
         self.initialize_metrics()
         self.initialize_tracing()
+
         while True:
             try:
                 protocol, request = self.receive_request()
-                service_id =  request.get_value("service_id")
+                service_id = request.get_value("service_id")
                 # if the protocol is COMMAND_PROTOCOL, then the request is a command to a service and should
                 # be sent directly to integration_manager so that it can be processed by the service
                 if protocol == COMMAND_PROTOCOL:
-                    self.send_response(request, protocol, request.get_value("service_id"))
+                    self.send_response(request, protocol,
+                                       request.get_value("service_id"))
 
                 else:
                     response = self.process_request(protocol, request)
-                    self.send_response(response, protocol=protocol, service_id=service_id)
+                    self.send_response(
+                        response, protocol=protocol, service_id=service_id)
             except Exception as ex:
                 try:
                     self.send_error(ex)
@@ -156,82 +165,8 @@ class DefaultRoutingWorker:
         response.set_action(action)
         response.set_format(format)
         response.set_id(request.get_id())
-        
-        actionKeyProvider = ConfigActionKeyProvider(
-            self.configuration, "actionmapping"
-        )
 
-        actionKey = ActionKey.get_best_match(
-            actionKeyProvider,
-            request.get_sender(),
-            request.get_context(),
-            request.get_action(),
-        )
-
-        if len(actionKey) == 0:
-            # return, if action key is not defined
-            self.send_error(
-                Exception(f"action key for action {request.get_action()} undefined")
-            )
-            return
-
-        # get next controller
-        controllerClass = None
-        controllerDef = self.configuration.get_value(actionKey, "actionmapping")
-        if len(controllerDef) == 0:
-            self.logger.error(
-                "No controller found for best action key "
-                + actionKey
-                + ". Request was referrer?context?action"
-            )
-            Exception(request, response)
-
-        # check if the controller definition contains a method besides the class name
-        controllerMethod = None
-        if "." in controllerDef:
-            controller_def_list = controllerDef.split(".")
-            controllerClass = ".".join(controller_def_list[:-1])
-            controllerMethod = controller_def_list[-1]
-        else:
-            controllerClass = controllerDef
-
-        # instantiate controller
-        controllerObj = ObjectFactory.get_instance_of(
-            controllerClass,
-        )
-
-        # everything is right in place, start processing
-
-        # self.formatter.deserialize(request)
-
-        # initialize controller
-        controllerObj.initialize(request, response)
-
-        # execute controller
-        self.logger.info("sending action: %s to controller: %s", action, type(controllerObj))
-        try:
-            print("executing %s", action)
-            controllerObj.execute(controllerMethod)
-            print("%s executed", action)
-        except Exception as ex:
-            self.logger.error("error in default action mapper: %s", str(ex))
-            self.logger.debug("error traceback is %s", traceback.format_exc())
-        # check if an action key exists for the return action
-        nextActionKey = ActionKey.get_best_match(
-            actionKeyProvider,
-            controllerClass,
-            response.get_context(),
-            response.get_action(),
-        )
-
-        # terminate
-        # - if there is no next action key or
-        # - if the next action key is the same as the previous one (to prevent recursion)
-        terminate = len(nextActionKey) == 0 or actionKey == nextActionKey
-        if terminate:
-            return response
-        
-        self.process_next_request(controllerClass=controllerClass,response=response)
+        self.action_mapper.process_action(request, response)
         self.logger.debug("returned values: %s", str(response.get_values()))
         return response
 
@@ -246,7 +181,7 @@ class DefaultRoutingWorker:
             protocol (str): the protocol on which the message is sent
 
             service_id (str): the service to which the message is sent
-            
+
         Return:
             List[bytes]
         """
@@ -256,7 +191,7 @@ class DefaultRoutingWorker:
             message = f'/{service_id}/{protocol}/{response.get_sender()}/{response.get_context()}/{response.get_action()}/{response.get_id()}/'.encode()
             self.formatter.serialize(response)
             response_value = response.get_values()
-            return [message+b","+response_value]
+            return [message+ZMANAGER_MESSAGE_DELIMITER+response_value]
 
     def process_next_request(self, controllerClass: str, response: Response):
         """_summary_
@@ -284,8 +219,9 @@ class DefaultRoutingWorker:
         """
         try:
             # Receive message from client
-            message = self.sock.recv_multipart()[0]            
-            sender, context, action, format, protocol, id, values = message.split(b",", 6)
+            message = self.sock.recv_multipart()[0]
+            sender, context, action, format, protocol, id, values = message.split(
+                ZMANAGER_MESSAGE_DELIMITER, 6)
 
             # Create a new request object
             request = ObjectFactory.get_new_instance("request")
@@ -299,8 +235,8 @@ class DefaultRoutingWorker:
             # Deserialize the request
             self.formatter.deserialize(request)
 
-            
-            self.logger.debug("received request \n sender: %s \n context: %s \n action: %s \n format: %s \n protocol: %s \n id: %s \n values: %s", str(sender), str(context), str(action), format, protocol, id, request.get_values())
+            self.logger.debug("received request \n sender: %s \n context: %s \n action: %s \n format: %s \n protocol: %s \n id: %s \n values: %s", str(
+                sender), str(context), str(action), format, protocol, id, request.get_values())
             # Return the topic sections, response topic, and request
             return protocol.decode(), request
 

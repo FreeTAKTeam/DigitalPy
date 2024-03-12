@@ -7,10 +7,10 @@
 # Original author: Giu Platania
 # 
 #######################################################
-import Root
+from . import Root
 
 class Function:
-	  """the class function contains the description of a function and his relationship
+    """the class function contains the description of a function and his relationship
     to a certain component.
     """
     def __init__(self, component_name, group_permissions, name, uid):
@@ -18,27 +18,27 @@ class Function:
         self.group_permissions = group_permissions
         self.name = name
         self.uid = uid
-	
-	def get_component_name(self):
+
+    def get_component_name(self):
         return self.component_name
-    
+
     def set_component_name(self, component_name):
         self.component_name = component_name
-    
+
     def get_group_permissions(self):
         return self.group_permissions
-    
+
     def set_group_permissions(self, group_permissions):
         self.group_permissions = group_permissions
-    
+
     def get_name(self):
         return self.name
-    
+
     def set_name(self, name):
         self.name = name
-    
+
     def get_uid(self):
         return self.uid
-    
+
     def set_uid(self, uid):
         self.uid = uid
