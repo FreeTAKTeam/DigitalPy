@@ -1,4 +1,5 @@
 import inspect
+from typing import Any
 from digitalpy.core.digipy_configuration.configuration import Configuration
 from digitalpy.core.main.factory import Factory
 import json
@@ -27,14 +28,26 @@ class DefaultFactory(Factory):
     def __init__(self, configuration: Configuration):
         self.configuration = configuration
         self.current_stack = []
-        self.instances = {}
+        # factory instance is registered for use by the routing worker so that
+        # the instances in the instance dictionary can be preserved when the
+        # new object factory is instantiated in the sub-process
+        self.instances = {
+            'configuration': self.configuration,
+            'factory': self,
+        }
+        # store imported modules to prevent multiple imports
+        self.modules = {}
 
     def add_interfaces(self, interfaces: dict):
         raise NotImplementedError("this method has not yet been implemented")
 
     def clear(self):
         self.current_stack = []
-        self.instances = {}
+        self.instances = {
+            'configuration': self.configuration,
+            'factory': self,
+        }
+        self.modules = {}
         DefaultFactory.required_interfaces = {
             "event_manager": "digitalpy.core.main.event_manager.EventManager",
             "logger": "logger.Logger",
@@ -56,16 +69,8 @@ class DefaultFactory(Factory):
     def get_instance(self, name, dynamic_configuration={}) -> object:
         instance = None
         self.current_stack.append(name)
-        if len(dynamic_configuration) == 0:
-            instance_key = name.lower()
-        else:
-            try:
-                instance_key = name + json.dumps(dynamic_configuration)
-            # exception caught where the values of dynamic_configuration are not json serializable
-            # but are required to be passed as arguments
-            except TypeError:
-                instance_key = name
-        if instance_key in self.instances:
+        instance_key = self.get_instance_key(name, dynamic_configuration)
+        if instance_key in self.instances and dynamic_configuration.get("__cached", True) is True:
             instance = self.instances[instance_key]
         else:
             static_configuration = self.configuration.get_section(name, True)
@@ -74,6 +79,25 @@ class DefaultFactory(Factory):
         self.current_stack.pop()
         return instance
 
+    def get_instance_key(self, name, dynamic_configuration: dict):
+        """Get the instance key for the given name and dynamic configuration"""
+        key_conf = dynamic_configuration.copy()
+
+        # remove the __cached key from the configuration
+        key_conf.pop("__cached", None)
+        
+        if len(key_conf) == 0:
+            instance_key = name.lower()
+        else:
+            try:
+                instance_key = name + json.dumps(key_conf, sort_keys=True)
+            # exception caught where the values of dynamic_configuration are not json serializable
+            # but are required to be passed as arguments
+            except TypeError:
+                instance_key = name
+
+        return instance_key
+
     def create_instance(self, name, configuration, instance_key):
         instance = None
         if configuration.get("__class") is not None:
@@ -81,12 +105,12 @@ class DefaultFactory(Factory):
             class_name_parts = class_name.split(".")
             if len(class_name_parts) == 2:
                 instance_class = getattr(
-                    importlib.import_module(".", class_name_parts[0]),
+                    self.import_module(class_name_parts[0]),
                     class_name_parts[1],
                 )
             else:
                 instance_class = getattr(
-                    importlib.import_module(".".join(class_name_parts[:-1])),
+                    self.import_module(".".join(class_name_parts[:-1])),
                     class_name_parts[-1],
                 )
 
@@ -221,7 +245,12 @@ class DefaultFactory(Factory):
             **{"__class": class_name, "__shared": False},
             **dynamic_configuration,
         }
-        instance = self.create_instance(class_name, configuration, None)
+        # check if an instance of the class has already been created note this is only applicable
+        # for classes that have a defined section in a configuration file
+        if class_name in self.instances:
+            instance = self.instances[class_name]
+        else:
+            instance = self.create_instance(class_name, configuration, None)
         return instance
 
     def get_new_instance(self, name, dynamic_configuration={}):
@@ -233,3 +262,20 @@ class DefaultFactory(Factory):
         instance_key = name.lower()
         if instance_key in self.instances:
             del self.instances[instance_key]
+
+    def import_module(self, module_name):
+        module = self.modules.get(module_name)
+        if module is None:
+            module = importlib.import_module(module_name)
+            self.modules[module_name] = module
+        return module
+
+    def __getstate__(self) -> object:
+        tmp_dict = self.__dict__.copy()
+        if "modules" in tmp_dict:
+            del tmp_dict["modules"]
+        return tmp_dict
+
+    def __setstate__(self, state: dict) -> None:
+        self.__dict__.update(state)
+        self.modules = {}

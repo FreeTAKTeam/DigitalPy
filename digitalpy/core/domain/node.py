@@ -1,3 +1,4 @@
+from functools import lru_cache
 import uuid
 import re
 from typing import Dict, Any, Union
@@ -7,7 +8,7 @@ from digitalpy.core.domain.object_id import ObjectId
 from digitalpy.core.persistence.persistent_object import PersistentObject
 from digitalpy.core.persistence.persistent_object_proxy import PersistentObjectProxy
 from digitalpy.core.persistence.build_depth import BuildDepth
-
+from digitalpy.core.main.object_factory import ObjectFactory
 
 class Node(DefaultPersistentObject):
     """Node adds the concept of relations to PersistentObject. It is the basic
@@ -79,7 +80,11 @@ class Node(DefaultPersistentObject):
             relationship_def,
         ) in self._relationship_definition.relationships.items():
             child_class = model[relationship_name]
-            child_instance = child_class(configuration, model)
+            id = str(uuid.uuid1())
+            oid = ObjectFactory.get_instance(
+                "ObjectId", {"id": id, "type": relationship_name}
+            )
+            child_instance = child_class(configuration, model, oid)
             self.add_child(child_instance)
 
     def get_first_child(self, child_type, values, properties, use_regex=True):
@@ -938,3 +943,7 @@ class Node(DefaultPersistentObject):
 
         # default behaviour
         return super().set_value(name, value, force_set, track_change)
+
+    @lru_cache(maxsize=1)
+    def get_properties(self):
+        return [k for k, p in type(self).__dict__.items() if isinstance(p, property)]

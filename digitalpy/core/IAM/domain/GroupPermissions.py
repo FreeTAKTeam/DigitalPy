@@ -7,11 +7,11 @@
 # Original author: giu.platania
 # 
 #######################################################
-import Root
-import Function
+from .Root import Root
+from . import Function
 
 class GroupPermissions(Root):
-  def __init__(self, functions, group, uid, is_active):
+    def __init__(self, functions, group, uid, is_active):
         self.functions = functions
         self.group = group
         self.uid = uid
