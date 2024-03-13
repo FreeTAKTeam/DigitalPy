@@ -134,7 +134,7 @@ class ObjectId:
         next_part = oid_parts.pop()
         while next_part is not None and re.match(ObjectId.__id_pattern, next_part):
             try:
-                ids.append(int(next_part))
+                ids.append(str(next_part))
             except ValueError:
                 ids.append(next_part)
             next_part = oid_parts.pop() if oid_parts else None

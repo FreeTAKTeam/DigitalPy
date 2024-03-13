@@ -164,6 +164,7 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
         self.start_routing_proxy_service()
         self.start_service_manager()
         self.initialize_connections()
+        self.start_service("digitalpy.core_api")
 
     def initialize_connections(self):
         ZMQPusher.initiate_connections(
@@ -311,9 +312,10 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
                 "service_id", "ServiceManager"))
             req.set_value(
                 COMMAND, ServiceManagerOperations.START_SERVICE.value)
-            
+
             req.set_value(SECTION_NAME, service_section_name)
-            req.set_value(TARGET_SERVICE_ID, self.configuration.get_value("service_id", service_section_name))
+            req.set_value(TARGET_SERVICE_ID, self.configuration.get_value(
+                "service_id", service_section_name))
 
             req.set_format("pickled")
             self.subject_send_request(req, COMMAND_PROTOCOL, self.configuration.get_value(
@@ -394,7 +396,7 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
     def configure(self):
         """Set or modify the configuration of the application"""
         pass
-    
+
     def get_status(self):
         # Retrieve the current status of the application (e.g. running, stopped, etc.)
         pass
