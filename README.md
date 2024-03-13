@@ -170,6 +170,9 @@ example of extenal routing
 Health?api?CreateHealthPOST = components.health.health_facade.Health.create_health_post
 ```
 
+> [!CAUTION]
+> Action Keys must not use the `~` character as this will break routing
+
 # DigitalPy components
 
 ![image](https://github.com/FreeTAKTeam/DigitalPy/assets/60719165/fc7a6ca4-9b87-42bb-8608-f76e646715ce)

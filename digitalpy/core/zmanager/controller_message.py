@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
 from typing import Any
-
+from digitalpy.core.domain.object_id import ObjectId
 
 class ControllerMessage(ABC):
 
     @abstractmethod
-    def get_id(self):
+    def get_id(self) -> ObjectId:
         return self.id
 
     @abstractmethod

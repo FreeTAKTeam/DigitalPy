@@ -89,4 +89,3 @@ class ServiceManagement(DefaultFacade):
     def start_service(self, *args, **kwargs):
         """This method is used to initialize the service process and start the service
         """
-        self.service_m

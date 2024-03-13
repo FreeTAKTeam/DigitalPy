@@ -51,13 +51,13 @@ class IAMUsersController(Controller):
         Args:
             connection_ids (List[str]): a list of IDs to be queries against the persistency layer
         """
-        queried_connections: List[Node] = [self._convert_user_to_network_client(self.persistence_controller.get_user(connection_id)) \
+        queried_connections: List[Node] = [self._convert_user_to_network_client(self.persistence_controller.get_user(connection_id))
                                            for connection_id in connection_ids]
 
         self.response.set_value("connections", queried_connections)
 
         return queried_connections
-    
+
     def authenticate_system_user(self, name: 'str', password: 'str', user_id: 'str', *args, **kwargs) -> bool:
         """authenticate a system user
 
@@ -78,8 +78,10 @@ class IAMUsersController(Controller):
         if system_user.password != password:
             self.response.set_value("authenticated", False)
             return False
-        
+
         self.response.set_value("authenticated", True)
+        self.response.set_value(
+            "message", f"{system_user.name} has been authenticated successfully.")
         self.persistence_controller.add_user_to_system_user(user, system_user)
         return True
 
@@ -95,7 +97,8 @@ class IAMUsersController(Controller):
         """get all recorded connections and save them to the connections value
         """
         users = self.persistence_controller.get_all_users()
-        connections = [self._convert_user_to_network_client(user) for user in users]
+        connections = [self._convert_user_to_network_client(
+            user) for user in users]
 
         self.response.set_value("connections", connections)
 

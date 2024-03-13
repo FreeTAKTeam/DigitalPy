@@ -52,6 +52,7 @@ from digitalpy.core.domain.domain.network_client import NetworkClient
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.health.domain.service_health_category import ServiceHealthCategory
 from digitalpy.core.digipy_configuration.configuration import Configuration
+from digitalpy.core.service_management.domain.service_description import ServiceDescription
 
 COMMAND_PROTOCOL = "command"
 COMMAND_ACTION = "ServiceCommand"
@@ -79,6 +80,9 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         protocol (str): The protocol of the service.
         error_threshold (float, optional): The error threshold for the service. Defaults to 0.1.
     """
+    # TODO: there must be a better solution than passing the service description as a parameter but for now
+    # it's necessary to be shared with the network so that the network can initialize the network clients
+    # with the service information
 
     def __init__(self, service_id: str,
                  subject_address: str,
@@ -90,7 +94,9 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
                  formatter: Formatter,
                  network: NetworkInterface,
                  protocol: str,
-                 error_threshold: float = 0.1):
+                 service_desc: ServiceDescription,
+                 error_threshold: float = 0.1,
+                 ):
         """the constructor for the digitalpy service class
 
         Args:
@@ -105,6 +111,8 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
             network (NetworkInterface): the network interface used by the service to send and receive messages, (should be injected by object factory through the services' constructor)
             protocol (str): the protocol of the service
         """
+        self.service_desc = service_desc
+
         Service.__init__(self)
         ZmqSubscriber.__init__(self, formatter)
         ZMQPusher.__init__(self, formatter)
@@ -121,7 +129,6 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         self.protocol = protocol
         self.response_queue: List[Response] = []
         self.iam_facade: IAM = ObjectFactory.get_instance("IAM")
-
         self.total_requests = 0
         self.total_errors = 0
         self.total_request_processing_time = 0
@@ -163,7 +170,7 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         Returns:
             str: the protocol of the service
         """
-        return self._protocol
+        return self.service_desc.protocol
 
     @protocol.setter
     def protocol(self, protocol: str):
@@ -172,7 +179,7 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         Args:
             protocol (str): the protocol of the service
         """
-        self._protocol = protocol
+        self.service_desc.protocol = protocol
 
     @property
     def status(self) -> ServiceStatus:
@@ -181,11 +188,11 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         Returns:
             ServiceStatus: the status of the service
         """
-        return self._status
+        return self.service_desc.status
 
     @status.setter
     def status(self, status: ServiceStatus):
-        self._status = status
+        self.service_desc.status = status
 
     @property
     def tracer(self) -> Tracer:
@@ -261,11 +268,8 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
     def handle_response(self, response: Response):
         """used to handle a response. Should be overriden by inheriting classes"""
         if self.network:
-            if response.get_value("recipients") == "*":
-                self.network.send_message_to_all_clients(response)
-            else:
-                self.network.send_message_to_clients(
-                    response, response.get_value("recipients"))
+            response.set_value("client", response.get_value("recipients"))
+            self.network.send_response(response)
 
     def event_loop(self):
         """used to run the service. Should be overriden by inheriting classes"""
@@ -387,7 +391,8 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         self.initialize_connections(self.protocol)
 
         if self.network and host and port:
-            self.network.intialize_network(host, port)
+            self.network.intialize_network(
+                host, port, service_desc=self.service_desc)
 
         elif self.network:
             raise ValueError(

@@ -23,9 +23,9 @@ class SerializationGeneralController(Controller):
     def __init__(self, request, response, action_mapper, configuration):
         super().__init__(request, response, action_mapper, configuration)
         self.xml_serialization_controller = XMLSerializationController(
-               request, response, action_mapper, configuration)
+            request, response, action_mapper, configuration)
         self.json_serialization_controller = JSONSerializationController(
-               request, response, action_mapper, configuration)
+            request, response, action_mapper, configuration)
 
     def execute(self, method=None):
         getattr(self, method)(**self.request.get_values())
@@ -35,11 +35,28 @@ class SerializationGeneralController(Controller):
         super().initialize(request, response)
         self.xml_serialization_controller.initialize(request, response)
 
-    def serialize_node_to_protocol(self, message: Union[Node, List[Node]], protocol, **kwargs):
+    def deserialize_protocol_to_node(self, message: bytes, model_object, protocol, **kwargs):
         """this is the general method used to serialize the component to a given format
         """
         messages = []
-        is_str_list = (isinstance(message, list) and len(message)>0 and (isinstance(message[0], str) or isinstance(message[0], bytes)))
+        if protocol.upper() == Protocols.XML:
+            messages = self.xml_serialization_controller.deserialize(
+                message, model_object=model_object)
+        elif protocol.upper() == Protocols.JSON:
+            messages = self.json_serialization_controller.deserialize(
+                message, model_object=model_object)
+        else:
+            self.request.set_context(protocol.upper())
+            messages = self.execute_sub_action(
+                "deserialize").get_value("message")
+
+    def serialize_node_to_protocol(self, message: Union[Node, List[Node]], protocol, **kwargs):
+        """this is the general method used to serialize the component to a given format
+        """
+        # TODO: Refactor to reduce cyclomatic complexity
+        messages = []
+        is_str_list = (isinstance(message, list) and len(message) > 0 and (
+            isinstance(message[0], str) or isinstance(message[0], bytes)))
         is_str = (isinstance(message, str) or isinstance(message, bytes))
         if is_str_list:
             messages = message
@@ -49,18 +66,24 @@ class SerializationGeneralController(Controller):
             # handle case where message contains multiple messages
             if isinstance(message, list):
                 for m in message:
-                    messages.append(self.xml_serialization_controller.serialize_node(m))
+                    messages.append(
+                        self.xml_serialization_controller.serialize_node(m))
             else:
-                raise ValueError("unsupported type passed in message value only list type support")
+                raise ValueError(
+                    "unsupported type passed in message value only list type support")
         elif protocol.upper() == Protocols.JSON:
             # handle case where message contains multiple messages
             if isinstance(message, list):
                 for m in message:
-                    messages.append(self.json_serialization_controller.serialize_node(m))
+                    messages.append(
+                        self.json_serialization_controller.serialize_node(m))
             else:
-                raise ValueError("unsupported type passed in message value only list type support")
+                raise ValueError(
+                    "unsupported type passed in message value only list type support")
         else:
-            raise Exception("unsupported protocol "+protocol)
+            self.request.set_context(protocol.upper())
+            messages = self.execute_sub_action(
+                "serialize").get_value("message")
 
         self.response.set_value("message", messages)
 
