@@ -12,12 +12,12 @@ including `NetworkClient`, `ObjectFactory`, `Formatter`, `DigitalPyService`, `Se
 `ServiceDescription`.
 
 The `CONFIGURATION_SECTION` constant is also defined in this module, which is used to specify the configuration section for the core API in the digitalpy environment.
+
 """
 
 import importlib
 import os
 import pathlib
-import time
 import traceback
 from typing import List
 from digitalpy.core.domain.domain.network_client import NetworkClient
