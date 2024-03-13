@@ -122,6 +122,9 @@ External routing can be executed Between:
  -  Two Components
  - a Core function and a component
 
+> [!CAUTION]
+> Action Keys must not use the `~` character as this will break routing
+
 # DigitalPy components
 
 ![image](https://github.com/FreeTAKTeam/DigitalPy/assets/60719165/fc7a6ca4-9b87-42bb-8608-f76e646715ce)
