@@ -145,6 +145,14 @@ EmergencyGeoFenceBreached = FreeTAKServer.components.extended.emergency.Emergenc
 This allows you to keep the implementation details of the emergency alert handling logic separate from the rest of the application, and makes it easier to maintain and modify the code in the future.
  ```
  
+ 
+### Blueprints
+
+DigitalPy supports a base API which can register [flask blueprints](https://flask.palletsprojects.com/en/2.3.x/blueprints/) dynamically. 
+<br>
+<br>
+This enables component developpers to quickly add exposed functionality without the need to develop a new  service from scratch. These blueprint's must be put in the path `DPApplicationRoot/Blueprints/your_blueprint.py`. From there, they will be dynamically registered.
+
 ## DigitalPy package dependencies
 ![image](https://user-images.githubusercontent.com/60719165/201922228-a4a7842c-8425-437f-be1c-884ec8c852d1.png)
 
