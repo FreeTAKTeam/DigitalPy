@@ -10,18 +10,26 @@ import json
 
 
 class JSONSerializationController(Controller):
+
+    # this is a class variable that is used to keep track of the nodes that are being serialized to prevent infinite recursion
+    serializing = []
+
     def __init__(self, request, response, sync_action_mapper, configuration) -> None:
+        JSONSerializationController.serializing = []
         super().__init__(request, response, sync_action_mapper, configuration)
         self.domain_controller = Domain(
             request, response, sync_action_mapper, configuration)
 
-    def deserialize(self, message: bytes, model_object: Node, *args, **kwargs):
+    def deserialize(self, message: Union[bytes, dict], model_object: Node, *args, **kwargs):
         """converts the provided xml string to a node
 
         Args:
             message (bytes): the xml string to be converted to a node
         """
-        dictionary = json.loads(message)
+        if isinstance(message, bytes):
+            dictionary = json.loads(message)
+        else:
+            dictionary = message
         return self._deserialize(dictionary=dictionary, node=model_object)
 
     def _deserialize(self, dictionary: dict, node: Node):
@@ -41,7 +49,7 @@ class JSONSerializationController(Controller):
     def add_value_to_node(self, key, value, node):
         """add a value to a node object"""
 
-        if isinstance(value, dict) and isinstance(getattr(node, key, None), Node):
+        if isinstance(value, dict) and isinstance(getattr(node, key, None), Node) or isinstance(getattr(node, key, None), list):
             self._deserialize(value, getattr(node, key))
 
         elif isinstance(value, list) and isinstance(getattr(node, key, None), list):
@@ -80,6 +88,9 @@ class JSONSerializationController(Controller):
             Union[str, Dict]: the original call to this method returns a string representing the xml
                 the Element is only returned in the case of recursive calls
         """
+        if node.oid in JSONSerializationController.serializing:
+            return None
+        JSONSerializationController.serializing.append(node.oid)
         json_data = {}
 
         for attrib_name in node.get_properties():
@@ -108,11 +119,43 @@ class JSONSerializationController(Controller):
                 # TODO: modify so double underscores are handled differently
                 # handles instances in which attribute name begins with double underscore
                 self.handle_attribute(json_data, attrib_name, value)
-
+        for child in list(node.get_children().values()):
+            self.handle_child(json_data, child, level)
         if level == 0:
+            JSONSerializationController.serializing.remove(node.oid)
             return json.dumps(json_data)
         else:
+            JSONSerializationController.serializing.remove(node.oid)
             return json_data
+
+    def handle_child(self, json_data, child, level):
+        """
+        Handles the serialization of a child node.
+
+        Args:
+            json_data (dict): The JSON data being serialized.
+            child (Node): The child node to be serialized.
+            level (int): The current level of serialization.
+
+        Returns:
+            None
+        """
+        child_class_name = child.__class__.__name__.lower()
+        if isinstance(json_data.get(child_class_name, None), dict):
+            json_data[child_class_name] = [
+                json_data[child_class_name],
+                self._serialize_node(child, child_class_name, level=level + 1)
+            ]
+        elif isinstance(json_data.get(child_class_name, None), list):
+            json_data[child_class_name].append(
+                self._serialize_node(child, child_class_name, level=level + 1)
+            )
+        else:
+            resp = self._serialize_node(
+                child, child_class_name, level=level + 1
+            )
+            if resp:
+                json_data[child_class_name] = resp
 
     def handle_nested_object(self, level, attrib_name, value):
         json_sub_element = self._serialize_node(

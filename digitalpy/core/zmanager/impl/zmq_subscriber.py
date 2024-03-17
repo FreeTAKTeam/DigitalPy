@@ -151,7 +151,7 @@ class ZmqSubscriber(Subscriber):
 
                 topic = message[0]
                 decoded_topic = topic.decode("utf-8")
-                topic_sections = decoded_topic.split("/")
+                topic_sections = decoded_topic.split("/", 9)
                 _, _, service_id, protocol, sender, context, action, id, recipients = topic_sections
                 response.set_sender(sender)
                 response.set_context(context)
