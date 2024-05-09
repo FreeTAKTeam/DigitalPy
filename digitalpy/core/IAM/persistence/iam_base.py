@@ -1,3 +1,5 @@
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import DeclarativeBase
 
-IAMBase = declarative_base()
+
+class IAMBase(DeclarativeBase):
+    pass
