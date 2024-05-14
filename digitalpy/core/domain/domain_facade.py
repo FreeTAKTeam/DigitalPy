@@ -75,7 +75,7 @@ class Domain(DefaultFacade):
     @DefaultFacade.public
     def create_node(self, *args, **kwargs):
         """this method creates a new node object"""
-        self.domain_controller.create_node(*args, **kwargs)
+        return self.domain_controller.create_node(*args, **kwargs)
 
     @DefaultFacade.public
     def get_node_parent(self, *args, **kwargs):

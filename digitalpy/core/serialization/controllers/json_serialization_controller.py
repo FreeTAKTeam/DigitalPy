@@ -16,9 +16,9 @@ class JSONSerializationController(Controller):
 
     def __init__(self, request, response, sync_action_mapper, configuration) -> None:
         JSONSerializationController.serializing = []
-        super().__init__(request, response, sync_action_mapper, configuration)
+        super().__init__(sync_action_mapper, request, response, configuration)
         self.domain_controller = Domain(
-            request, response, sync_action_mapper, configuration)
+            sync_action_mapper, request, response, configuration)
 
     def deserialize(self, message: Union[bytes, dict], model_object: Node, *args, **kwargs):
         """converts the provided xml string to a node
@@ -46,17 +46,30 @@ class JSONSerializationController(Controller):
         except Exception as ex:
             print(ex)
 
-    def add_value_to_node(self, key, value, node):
+    def add_value_to_node(self, key, value, node: Node):
         """add a value to a node object"""
 
         if isinstance(value, dict) and isinstance(getattr(node, key, None), Node) or isinstance(getattr(node, key, None), list):
             self._deserialize(value, getattr(node, key))
 
+        # handles the case in which the value is a dictionary and the node attribute is not yet initialized such as in the case of an optional
+        # attribute
+        elif isinstance(value, dict):
+            new_node = self.domain_controller.create_node(node._model_configuration,
+                                                          node._model_configuration.elements[
+                                                              node.__class__.__name__].relationships[key].target_class,
+                                                          extended_domain=node._model)
+            self._deserialize(value, new_node)
+            setattr(node, key, new_node)
+
         elif isinstance(value, list) and isinstance(getattr(node, key, None), list):
             self._deserialize(value[0], getattr(node, key)[0])
 
             for i in range(1, len(value)):
-                new_node = self.domain_controller.create_node(LoadConf(), key)
+                new_node = self.domain_controller.create_node(node._model_configuration,
+                                                              node._model_configuration.elements[
+                                                                  node.__class__.__name__].relationships[key].target_class,
+                                                              extended_domain=node._model)
                 self._deserialize(value[i], new_node)
 
         elif isinstance(getattr(node, key, None), list):

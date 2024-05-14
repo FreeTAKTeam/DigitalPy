@@ -54,10 +54,12 @@ class Node(DefaultPersistentObject):
         super().__init__(oid, initial_data)
         if model_configuration is None:
             model_configuration = ModelConfiguration()
+        self._model_configuration = model_configuration
         self._children: Dict[str, Node] = {}
         self._parents: Dict[str, Node] = {}
         self._depth = -1
         self._path = ""
+        self._model = model
 
         # whether or not to include the oid when getting the properties of the node. this is important
         # for the serialization of the node
@@ -101,12 +103,13 @@ class Node(DefaultPersistentObject):
             relationship_name,
             relationship_def,
         ) in self._relationship_definition.relationships.items():
-            child_class = model[relationship_name]
+            child_class = model[relationship_def.target_class]
             if relationship_def.min_occurs > 0:
                 for _ in range(relationship_def.min_occurs):
                     id = str(uuid.uuid1())
                     oid = ObjectFactory.get_instance(
-                        "ObjectId", {"id": id, "type": relationship_name}
+                        "ObjectId", {
+                            "id": id, "type": relationship_def.target_class}
                     )
                     child_instance = child_class(configuration, model, oid)
                     setattr(self, relationship_name, child_instance)
