@@ -1,6 +1,6 @@
 from sqlalchemy import Text, Column, ForeignKey
-from sqlalchemy.orm import relationship
-from typing import TYPE_CHECKING, List
+from sqlalchemy.orm import relationship, mapped_column, Mapped
+from typing import TYPE_CHECKING, List, Optional
 
 from .iam_base import IAMBase
 
@@ -20,18 +20,18 @@ class User(IAMBase):
     """
 
     __tablename__ = 'User'
-    uid = Column(Text, primary_key=True)
-    callsign = Column(Text, nullable=True)
-    CN = Column(Text, nullable=True)
-    IP = Column(Text, nullable=True)
-    protocol = Column(Text, nullable=False)
-    service_id = Column(Text, nullable=False)
-    status = Column(Text)
+    uid: Mapped[str] = mapped_column(primary_key=True)
+    callsign: Mapped[Optional[str]]
+    CN: Mapped[Optional[str]]
+    IP: Mapped[Optional[str]]
+    protocol: Mapped[Optional[str]]
+    service_id: Mapped[Optional[str]]
+    status: Mapped[str]
     # relationships
-    system_user_uid = Column(Text, ForeignKey("SystemUser.uid"))
-    system_user: 'SystemUser' = relationship('SystemUser', back_populates='users')
+    system_user_uid: Mapped[str] = mapped_column(ForeignKey("SystemUser.uid"))
+    system_user: Mapped['SystemUser'] = relationship('SystemUser', back_populates='users')
 
-    session_contacts: List['SessionContact'] = relationship('SessionContact', back_populates='users')
+    session_contacts: Mapped[List['SessionContact']] = relationship('SessionContact', back_populates='users')
 
     def __repr__(self) -> str:
         return super().__repr__() + f"uid={self.uid}, callsign={self.callsign}, CN={self.CN}, IP={self.IP}, service_id={self.service_id}"
