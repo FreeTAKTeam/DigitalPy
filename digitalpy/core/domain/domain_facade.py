@@ -1,5 +1,7 @@
 """This module contains the facade class for the domain component
 """
+from typing import TYPE_CHECKING
+
 from digitalpy.core.component_management.impl.default_facade import DefaultFacade
 from digitalpy.core.domain.configuration.domain_constants import (
     ACTION_MAPPING_PATH,
@@ -12,6 +14,8 @@ from digitalpy.core.domain.configuration.domain_constants import (
 from .controllers.domain_controller import DomainController
 from . import base  # pylint: disable=no-name-in-module
 
+if TYPE_CHECKING:
+    from digitalpy.core.domain.node import Node
 
 class Domain(DefaultFacade):
     """This is the facade class for the domain component, it is responsible
@@ -73,7 +77,7 @@ class Domain(DefaultFacade):
             self.logger.fatal(str(e))
 
     @DefaultFacade.public
-    def create_node(self, *args, **kwargs):
+    def create_node(self, *args, **kwargs) -> 'Node':
         """this method creates a new node object"""
         return self.domain_controller.create_node(*args, **kwargs)
 
