@@ -1,5 +1,6 @@
-from digitalpy.core.domain.node import Node
 from typing import TYPE_CHECKING
+from digitalpy.core.domain.node import Node
+from digitalpy.core.domain.relationship import Relationship, RelationshipType
 
 if TYPE_CHECKING:
     from .simple_object import SimpleObject
@@ -17,7 +18,7 @@ class NestedObject(Node):
     def string(self, string: str):
         self._string = string
 
-    @property
+    @Relationship(multiplicity_lower=0, multiplicity_upper=-1, reltype=RelationshipType.ASSOCIATION, navigable=True)
     def nested(self) -> 'SimpleObject':
         return_val = self.get_children_ex(children_type="SimpleObject")
         if len(return_val)>0:

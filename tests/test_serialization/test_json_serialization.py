@@ -5,9 +5,10 @@ from tests.testing_utilities.domain_utilities import (
     initialize_list_object,
     initialize_list_object_with_min,
     initialize_nested_object,
-    initialize_nested_object_required
+    initialize_nested_object_required,
+    initialize_simple_list
 )
-from tests.testing_utilities.domain_objects import SimpleObject, ListObject, NestedObject
+from tests.testing_utilities.domain_objects import SimpleObject, ListObject, NestedObject, SimpleList
 from digitalpy.core.serialization.configuration.serialization_constants import Protocols
 import json
 
@@ -25,6 +26,30 @@ def test_json_serialization_controller_simple_object():
     completed_obj: SimpleObject = response.get_value("model_object")
     assert completed_obj.string == "some string data"
     assert completed_obj.number == 1234
+
+def test_json_serialization_controller_simple_list():
+    """Test the JSON serialization controller with an object containing a list of strings"""
+    request, response = initialize_test_environment()
+    simple_obj = initialize_simple_list(request, response)
+    message = json.dumps({"string": "some string data", "number": 1234, "string_list": ["abc", "def", "hij"]})
+
+    serialization_facade = initialize_facade(
+        "digitalpy.core.serialization.serialization_facade.Serialization", 
+        request,
+        response
+    )
+    request.set_value("protocol", Protocols.JSON)
+    request.set_value("message", message)
+    request.set_value("model_object", simple_obj)
+    serialization_facade.execute("desearialize_protocol_to_node")
+
+    completed_obj: SimpleList = response.get_value("model_object")
+    assert completed_obj.string == "some string data"
+    assert completed_obj.number == 1234
+    assert len(completed_obj.string_list) == 3
+    assert completed_obj.string_list[0] == "abc"
+    assert completed_obj.string_list[1] == "def"
+    assert completed_obj.string_list[2] == "hij"
 
 def test_json_serialization_controller_list_object_optional():
     """Test the JSON serialization controller with an optional list object"""

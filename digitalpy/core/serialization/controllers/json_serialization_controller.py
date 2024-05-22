@@ -2,6 +2,7 @@ from typing import Any, Dict, Union
 from digitalpy.core.main.controller import (
     Controller,
 )
+from digitalpy.core.domain.relationship import Relationship
 from digitalpy.core.domain.node import Node
 from digitalpy.core.parsing.load_configuration import ModelConfiguration as LoadConf
 from digitalpy.core.domain.domain_facade import Domain
@@ -33,7 +34,8 @@ class JSONSerializationController(Controller):
             dictionary = json.loads(message)
         else:
             dictionary = message
-        deserialized_model_obj = self._deserialize(dictionary=dictionary, node=model_object)
+        deserialized_model_obj = self._deserialize(
+            dictionary=dictionary, node=model_object)
         self.response.set_value("model_object", deserialized_model_obj)
         return deserialized_model_obj
 
@@ -69,11 +71,11 @@ class JSONSerializationController(Controller):
             setattr(node, key, new_node)
 
         # handles the case in which the value is a list and the node attribute is a list
-        elif isinstance(value, list) and isinstance(getattr(node, key, None), list):
+        elif isinstance(value, list) and isinstance(getattr(node, key, None), list) and isinstance(type(node).__dict__[key], Relationship):
             # add all mandatory nodes
             for i in range(len(getattr(node, key))):
                 self._deserialize(value[i], getattr(node, key)[i])
-                
+
             # add all optional nodes
             for i in range(len(getattr(node, key)), len(value)):
                 new_node = self.domain_controller.create_node(node._model_configuration,
@@ -82,10 +84,6 @@ class JSONSerializationController(Controller):
                                                               extended_domain=node._model)
                 self._deserialize(value[i], new_node)
                 setattr(node, key, new_node)
-
-        # handles the case in which the value is a list and the node attribute is not yet initialized such as in the case of an optional
-        elif isinstance(getattr(node, key, None), list):
-            self._deserialize(value, getattr(node, key)[0])
 
         # handles the generic case in which the value is not a dictionary or a list
         else:
