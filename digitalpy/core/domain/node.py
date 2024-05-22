@@ -590,7 +590,7 @@ class Node(DefaultPersistentObject):
         """
         return len(self.get_relatives(hierarchy_type, mem_only))
 
-    def get_parent(self) -> Any:
+    def get_parent(self) -> 'Node':
         """Get the Node's super(). This method exists for compatibility with previous
         versions. It returns the first super().
            @return Node
@@ -600,7 +600,7 @@ class Node(DefaultPersistentObject):
         else:
             return None
 
-    def get_parents(self, mem_only: Any = True) -> Any:
+    def get_parents(self, mem_only: Any = True) -> 'Node':
         """Get the Nodes parents.
            @param mem_only Boolean whether to only get the loaded parents or all
         parents (default: _True_).
