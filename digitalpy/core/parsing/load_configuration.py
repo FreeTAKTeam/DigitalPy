@@ -56,7 +56,7 @@ class LoadConfiguration:
                         if "$ref" in value["items"]:
                             target_class = value["items"]["$ref"].split(
                                 "/")[-1]
-                        config_entry.relationships[child_name] = Relationship(
-                            value.get("minItems", 0), value.get("maxItems", "*"), target_class)
+                            config_entry.relationships[child_name] = Relationship(
+                                value.get("minItems", 0), value.get("maxItems", "*"), target_class)
                 configuration.elements[class_name] = config_entry
         return configuration
