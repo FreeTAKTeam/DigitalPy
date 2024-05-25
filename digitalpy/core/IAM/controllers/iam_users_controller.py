@@ -28,14 +28,16 @@ class IAMUsersController(Controller):
         super().initialize(request, response)
 
     def connection(self, connection: NetworkClient, *args, **kargs):
-        """handle the case of a connection connection to any digitalpy service
+        """handle the case of a new anonymous connection to any digitalpy service which may latter be authenticated
 
         Args:
             connection (Node): the Node object associated with the connected connection
         """
         con_oid = str(connection.get_oid())
-        session = Session(uid=con_oid, SessionStartTime=datetime.now(), IPAddress=connection.ip_address, ServiceName=connection.service_id, SessionEndTime=None)
-        self.persistence_controller.save_user(session)
+        user = self.persistence_controller.get_user_by_cn("Anonymous")[0]
+        session = Session(uid=con_oid, SessionStartTime=datetime.now(
+        ), ServiceId=connection.service_id, SessionEndTime=None, protocol=connection.protocol)
+        self.persistence_controller.save_session(session, user)
 
     def disconnection(self, connection_id: str, *args, **kwargs):
         """handle the case of a connection disconnection from any digitalpy service
@@ -52,12 +54,29 @@ class IAMUsersController(Controller):
         Args:
             connection_ids (List[str]): a list of IDs to be queries against the persistency layer
         """
-        queried_connections: List[Node] = [self._convert_user_to_network_client(self.persistence_controller.get_user(connection_id))
+        queried_connections: List[Node] = [self._convert_session_to_network_client(self.persistence_controller.get_session_by_uid(connection_id))
                                            for connection_id in connection_ids]
 
         self.response.set_value("connections", queried_connections)
 
         return queried_connections
+
+    def get_all_sessions(self, *args, **kwargs) -> List[Session]:
+        """get all recorded sessions and save them to the sessions value
+        """
+        sessions = self.persistence_controller.get_all_sessions()
+        self.response.set_value("sessions", sessions)
+        return sessions
+
+    def get_session_by_uid(self, uid: ObjectId, *args, **kwargs) -> Session:
+        """get a session by its object id
+
+        Args:
+            uid (ObjectId): the object id of the session to be queried
+        """
+        session = self.persistence_controller.get_session_by_uid(uid)
+        self.response.set_value("session", session)
+        return session
 
     def authenticate_system_user(self, user_id: 'str', name: 'str' = '', password: 'str' = '', *args, **kwargs) -> bool:
         """authenticate a system user
@@ -97,8 +116,8 @@ class IAMUsersController(Controller):
     def get_all_connections(self, *args, **kwargs) -> List[Node]:
         """get all recorded connections and save them to the connections value
         """
-        users = self.persistence_controller.get_all_users()
-        connections = [self._convert_user_to_network_client(
+        users = self.persistence_controller.get_all_sessions()
+        connections = [self._convert_session_to_network_client(
             user) for user in users]
 
         self.response.set_value("connections", connections)
@@ -113,7 +132,7 @@ class IAMUsersController(Controller):
         self.response.set_value("users", users)
         return users
 
-    def _convert_user_to_network_client(self, user: User) -> NetworkClient:
+    def _convert_session_to_network_client(self, session: Session) -> NetworkClient:
         """convert a user to a network client
 
         Args:
@@ -122,14 +141,13 @@ class IAMUsersController(Controller):
         Returns:
             NetworkClient: the converted user
         """
-        oid = ObjectId.parse(user.uid)
+        oid = ObjectId.parse(session.uid)
         if oid is None:
             raise ValueError("Invalid user id")
 
         connection = NetworkClient(oid=oid)
 
         connection.id = oid.get_id()[0][2:-1].encode()
-        connection.service_id = user.service_id
-        connection.status = ClientStatus[user.status]
-        connection.protocol = user.protocol
+        connection.service_id = session.ServiceId
+        connection.protocol = session.protocol
         return connection

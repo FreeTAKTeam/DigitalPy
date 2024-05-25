@@ -150,6 +150,49 @@ class IAMPersistenceController(Controller):
         self.ses.query(DBSession).delete()
         self.ses.commit()
 
+    def save_session(self, session: DBSession, user: User, *args, **kwargs):
+        """this function is responsible for saving a session in the IAM
+        system.
+
+        Args:
+            session (Session): the session to be saved
+        """
+        if not isinstance(session, DBSession):
+            raise TypeError("'session' must be an instance of Session")
+        self.ses.add(session)
+        self.ses.commit()
+
+        ses_con = SessionContact(
+            uid=str(uuid.uuid4()),
+            session=session,
+            user=user
+        )
+        self.ses.add(ses_con)
+        self.ses.commit()
+
+    def get_all_sessions(self, *args, **kwargs) -> list[DBSession]:
+        """this function is responsible for getting all sessions from the IAM
+        system.
+
+        Returns:
+            list[Session]: a list of all sessions
+        """
+        return self.ses.query(DBSession).all()
+
+    def get_session_by_uid(self, oid: str, *args, **kwargs) -> DBSession:
+        """this function is responsible for getting a session from the IAM
+        system.
+
+        Args:
+            oid (str): the object id of the session to be retrieved
+
+        Returns:
+            Session: the session retrieved
+        """
+        if not isinstance(oid, str):
+            raise TypeError("'oid' must be an instance of str")
+        return self.ses.query(DBSession).filter(DBSession.uid == oid).first()
+
     def create_default_permissions(self, *args, **kwargs) -> list[Permissions]:
         """this function is responsible for creating the default permissions in the IAM
 
@@ -199,7 +242,7 @@ class IAMPersistenceController(Controller):
 
         self._create_admin_user_group(groups)
 
-        self._create_unauthenticated_user_group(groups)  
+        self._create_unauthenticated_user_group(groups)
 
         return groups
 
@@ -221,25 +264,27 @@ class IAMPersistenceController(Controller):
             rcvDataGrp = SystemGroupPermission(
                 uid=str(uuid.uuid4()),
                 system_group=group,
-                permission=self.ses.query(Permissions).filter(Permissions.PermissionName == "receiveData").first()
+                permission=self.ses.query(Permissions).filter(
+                    Permissions.PermissionName == "receiveData").first()
             )
             self.ses.add(rcvDataGrp)
             self.ses.commit()
             rqstStdAct = SystemGroupPermission(
                 uid=str(uuid.uuid4()),
                 system_group=group,
-                permission=self.ses.query(Permissions).filter(Permissions.PermissionName == "requestStandardAction").first()
+                permission=self.ses.query(Permissions).filter(
+                    Permissions.PermissionName == "requestStandardAction").first()
             )
             self.ses.add(rqstStdAct)
             self.ses.commit()
             rqstCoreActGrpPerm = SystemGroupPermission(
                 uid=str(uuid.uuid4()),
                 system_group=group,
-                permission=self.ses.query(Permissions).filter(Permissions.PermissionName == "requestCoreAction").first()
+                permission=self.ses.query(Permissions).filter(
+                    Permissions.PermissionName == "requestCoreAction").first()
             )
             self.ses.add(rqstCoreActGrpPerm)
             self.ses.commit()
-            
 
     def _create_unauthenticated_user_group(self, groups: list[SystemGroup]):
         """this function is responsible for creating the unauthenticated user group in the IAM
@@ -257,7 +302,6 @@ class IAMPersistenceController(Controller):
             self.ses.add(group)
             self.ses.commit()
             groups.append(group)
-            
 
     def _create_authenticated_user_group(self, groups: list[SystemGroup]):
         """this function is responsible for creating the authenticated user group in the IAM
@@ -277,18 +321,19 @@ class IAMPersistenceController(Controller):
             rcvDataGrp = SystemGroupPermission(
                 uid=str(uuid.uuid4()),
                 system_group=group,
-                permission=self.ses.query(Permissions).filter(Permissions.PermissionName == "receiveData").first()
+                permission=self.ses.query(Permissions).filter(
+                    Permissions.PermissionName == "receiveData").first()
             )
             self.ses.add(rcvDataGrp)
             self.ses.commit()
             rqstStdAct = SystemGroupPermission(
                 uid=str(uuid.uuid4()),
                 system_group=group,
-                permission=self.ses.query(Permissions).filter(Permissions.PermissionName == "requestStandardAction").first()
+                permission=self.ses.query(Permissions).filter(
+                    Permissions.PermissionName == "requestStandardAction").first()
             )
             self.ses.add(rqstStdAct)
             self.ses.commit()
-            
 
     def create_admin_system_user(self, *args, **kwargs) -> SystemUser:
         """this function is responsible for creating a default system user in the IAM
@@ -421,7 +466,7 @@ class IAMPersistenceController(Controller):
         if not isinstance(group_name, str):
             raise TypeError("'group_name' must be an instance of str")
         return self.ses.query(SystemGroup).filter(SystemGroup.name == group_name).first()
-    
+
     def get_all_groups(self, *args, **kwargs) -> list[SystemGroup]:
         """this function is responsible for getting all groups from the IAM
         system.

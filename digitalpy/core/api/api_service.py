@@ -54,6 +54,7 @@ class ApiService(DigitalPyService):
     for the service which are used to handle requests by the networks and define the output
     contexts and actions.
     """
+
     def __init__(self, service_id: str, subject_address: str, subject_port: int,  # pylint: disable=useless-super-delegation
                  subject_protocol: str, integration_manager_address: str,
                  integration_manager_port: int, integration_manager_protocol: str,
@@ -65,27 +66,6 @@ class ApiService(DigitalPyService):
             formatter, network, protocol, service_desc)
         self.blueprint_path = blueprint_path
         self.blueprint_import_base = blueprint_import_base
-
-    def handle_connection(self, client: NetworkClient, req: Request):
-        """This function is used to handle client connections. It is initiated by the event loop.
-
-        Args:
-            client (NetworkClient): the client that is connecting
-            req (Request): the request message
-
-        Returns:
-            None
-        """
-        super().handle_connection(client, req)
-        req.set_context("api")
-        req.set_format("pickled")
-        req.set_value("source_format", self.protocol)
-        req.set_action("authenticate")
-        client: 'NetworkClient' = req.get_value("client")
-        client.protocol = self.protocol
-        client.service_id = self.service_id
-        req.set_value("user_id", str(client.get_oid()))
-        self.subject_send_request(req, self.protocol)
 
     def handle_inbound_message(self, message: Request):
         """This function is used to handle inbound messages from other services. 
@@ -100,9 +80,10 @@ class ApiService(DigitalPyService):
 
         # TODO: discuss this with giu and see if we should move the to the action mapping system?
         if message.get_value("action") == "connection":
-            self.handle_connection(message.get_value("client"), message)
+            self.handle_connection(message.get_value("client"))
 
-        elif message.get_value("action") == "disconnection":
+        # handle disconnection otherwise call the api message handler
+        if message.get_value("action") == "disconnection":
             self.handle_disconnection(message.get_value("client"), message)
 
         else:

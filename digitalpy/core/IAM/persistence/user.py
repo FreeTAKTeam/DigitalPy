@@ -28,7 +28,7 @@ class User(IAMBase):
     system_user_uid: Mapped[str] = mapped_column(ForeignKey("SystemUser.uid"))
     system_user: Mapped['SystemUser'] = relationship('SystemUser', back_populates='users')
 
-    session_contacts: Mapped[List['SessionContact']] = relationship('SessionContact', back_populates='users')
+    session_contacts: Mapped[List['SessionContact']] = relationship('SessionContact', back_populates='user')
 
     def __repr__(self) -> str:
         return super().__repr__() + f"uid={self.uid}, callsign={self.callsign}, CN={self.CN}, IP={self.IP}, service_id={self.service_id}"

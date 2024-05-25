@@ -199,6 +199,9 @@ class IAM(DefaultFacade):
     def get_all_connections(self, *args, **kwargs):
         self.users_controller.get_all_connections(*args, **kwargs)
 
+    def get_session_by_uid(self, *args, **kwargs):
+        self.users_controller.get_session_by_uid(*args, **kwargs)
+
     def ValidateUsers(self, **kwargs):
         self.persistency_controller.validate_users(**kwargs)
 
