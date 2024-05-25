@@ -34,6 +34,7 @@ class SerializationGeneralController(Controller):
     def initialize(self, request, response):
         super().initialize(request, response)
         self.xml_serialization_controller.initialize(request, response)
+        self.json_serialization_controller.initialize(request, response)
 
     def deserialize_protocol_to_node(self, message: bytes, model_object, protocol, **kwargs):
         """this is the general method used to serialize the component to a given format

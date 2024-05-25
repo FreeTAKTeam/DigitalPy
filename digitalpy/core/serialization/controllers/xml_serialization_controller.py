@@ -11,10 +11,11 @@ import uuid
 from digitalpy.core.domain.node import Node
 from digitalpy.core.parsing.load_configuration import ModelConfiguration as LoadConf
 from digitalpy.core.main.object_factory import ObjectFactory
+from digitalpy.core.domain.domain_facade import Domain
 
 class XMLDeserializer:
-    """this class exposes the basic lxml target interface for parsing COTs to Node objects"""
-    def __init__(self, node: Node) -> None:
+    """this class exposes the basic lxml target interface for parsing xml to Node objects"""
+    def __init__(self, node: Node, domain: Domain) -> None:
         if node is None:
             raise ValueError("node cannot be None")
         if not isinstance(node, Node):
@@ -22,11 +23,37 @@ class XMLDeserializer:
         self.root_node: Node = node
         self.curr_object: Node = None
         self.prev_object: Node = None
-        self.siblings = []
+        self.siblings: list[Node] = []
         self.stack = []
-        
+        self.domain = domain
+
         self.xml_obj: etree.ElementBase = None
         self.xml_root: etree.ElementBase = None
+
+    def handle_sibling_tag(self, children: list[Node], tag: str) -> Node:
+        """if the tag is a sibling of the current node, set the current node to the sibling
+        
+        Args:
+            children (list[Node]): the list of children of the current node
+            tag (str): the tag name of the sibling node
+        
+        Returns:
+            Node: the sibling node to be processed
+        """
+        children = getattr(self.curr_object, tag, None)
+        if isinstance(children, list) and len(children) > 0:
+            if isinstance(self.siblings, list) and len(self.siblings)>0 and self.prev_object is not None and self.prev_object.get_type() == self.siblings[0].get_type():
+                self.curr_object = self.siblings.pop()
+            else:
+                self.siblings = children
+                self.curr_object = self.siblings.pop()
+        return self.curr_object
+
+    def handle_child_tag(self, tag: str, attrib: dict):
+        # if the tag is a child of the current node, set the current node to the child
+        children = getattr(self.curr_object, tag, None)
+        if isinstance(children, Node):
+            self.curr_object = children
 
     def start(self, tag: str, attrib: dict):
         """this method is called when the parser encounters a start tag
@@ -39,17 +66,35 @@ class XMLDeserializer:
         if self.curr_object is None:
             self.curr_object = self.root_node
         else:
-            children = self._get_child_node(tag)
+            children = getattr(self.curr_object, tag, None)
 
             # if the tag is a sibling of the current node, set the current node to the sibling
-            if len(children)>1:
-                self.siblings = children
-                self.curr_object = self.siblings.pop()
+            if isinstance(children, list) and len(children) > 0:
+                # if the current node has siblings and the last sibling is the same type as the current tag, set the current node to the next
+                # sibling. This handles the case where the current node is a list of nodes of the same type.
+                if isinstance(self.siblings, list) and len(self.siblings)>0 and self.prev_object is not None and self.prev_object.get_type() == self.siblings[0].get_type():
+                    self.curr_object = self.siblings.pop()
+                else:
+                    self.siblings = children
+                    self.curr_object = self.siblings.pop()
 
             # if the tag is a child of the current node, set the current node to the child
-            elif len(children)==1:
-                self.curr_object = children.pop()
+            # this handles cases where the child node is a mondatory relationship
+            # and one child has already been initialized.
+            elif isinstance(children, Node):
+                self.curr_object = children
             
+            # if the tag is a relationship of the current node, create a new instance of the relationship
+            # this handles cases of optional relationships where a child object has not necessarily been
+            # initialized.
+            elif tag in self.curr_object._model_configuration.elements[self.curr_object.__class__.__name__].relationships.keys():
+                new_inst = self.domain.create_node(self.curr_object._model_configuration,
+                                                            self.curr_object._model_configuration.elements[
+                                                            self.curr_object.__class__.__name__].relationships[tag].target_class,
+                                                          extended_domain=self.curr_object._model)
+                setattr(self.curr_object, tag, new_inst)
+                self.curr_object = new_inst
+
             # if the tag is not a child of the current node, create a new xml element and add it to the current node
             else:
                 if self.xml_obj is None:
@@ -60,22 +105,21 @@ class XMLDeserializer:
                 return
         
         # if the current node is the same type as the previous node, create a new instance of the current node
-        if type(self.curr_object) == type(self.prev_object):
-            id = str(uuid.uuid1())
-            oid = ObjectFactory.get_instance(
-                "ObjectId", {"id": id, "type": str(type(self.curr_object))}
-            )
-
-            new_inst = type(self.curr_object)(LoadConf(), None, oid)
-            self.prev_object.get_parent().add_child(new_inst)
+        if self.prev_object is not None and self.curr_object.get_oid() == self.prev_object.get_oid():
+            new_inst = self.domain.create_node(self.prev_object.get_parent()._model_configuration,
+                                                            self.prev_object.get_parent()._model_configuration.elements[
+                                                            self.prev_object.get_parent().__class__.__name__].relationships[tag].target_class,
+                                                          extended_domain=self.prev_object.get_parent()._model)
+            setattr(self.prev_object.get_parent(), tag, new_inst)
             self.curr_object = new_inst
 
         # set the attributes of the current node
         for key, value in attrib.items():
-            if key in self.curr_object.cot_attributes:
+            if key in self.curr_object.get_properties():
                 setattr(self.curr_object, key, value)
             else:
-                self.curr_object.xml.set(key, value)
+                # if the attribute is not a property of the current node, add it to the xml object
+                pass
 
     def _get_child_node(self, tag: str) -> list[Node]:
         """gets the child node of the current node with the given tag name
@@ -126,7 +170,9 @@ class XMLDeserializer:
 class XMLSerializationController(Controller):
     def __init__(self, request, response, action_mapper, configuration) -> None:
         super().__init__(request, response, action_mapper, configuration)
-
+        self.domain_controller = Domain(
+            action_mapper, request, response, configuration)
+        
     def execute(self, method=None):
         getattr(self, method)(**self.request.get_values())
         return self.response
@@ -149,7 +195,7 @@ class XMLSerializationController(Controller):
         return self._deserialize(message, model_object)
     
     def _deserialize(self, message: bytes, model_object: Node) -> Node:
-        target = XMLDeserializer(model_object)
+        target = XMLDeserializer(model_object, domain=self.domain_controller)
         parser = etree.XMLParser(target=target)
         result = etree.XML(message, parser)
         self.response.set_value("model_object", result)

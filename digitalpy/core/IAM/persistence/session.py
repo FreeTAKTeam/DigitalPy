@@ -17,14 +17,15 @@ class Session(IAMBase):
         SessionStartTime (String): the SessionStartTime of the session
         SessionEndTime (String): the SessionEndTime of the session
         IPAddress (String): the IPAddress of the session
-        ServiceName (String): the ServiceName of the session
+        ServiceId (String): the id of the service associated with the session
     """
     __tablename__ = 'Session'
     uid: Mapped[str] = mapped_column(primary_key=True)
     SessionStartTime: Mapped[Optional[str]]
     SessionEndTime: Mapped[Optional[str]]
     IPAddress: Mapped[Optional[str]]
-    ServiceName: Mapped[Optional[str]]
+    ServiceId: Mapped[Optional[str]]
+    protocol: Mapped[Optional[str]]
 
     # relationships
     session_contacts: Mapped['SessionContact'] = relationship("SessionContact", back_populates="sessions")

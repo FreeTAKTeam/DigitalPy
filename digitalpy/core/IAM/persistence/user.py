@@ -23,9 +23,6 @@ class User(IAMBase):
     uid: Mapped[str] = mapped_column(primary_key=True)
     callsign: Mapped[Optional[str]]
     CN: Mapped[Optional[str]]
-    IP: Mapped[Optional[str]]
-    protocol: Mapped[Optional[str]]
-    service_id: Mapped[Optional[str]]
     status: Mapped[str]
     # relationships
     system_user_uid: Mapped[str] = mapped_column(ForeignKey("SystemUser.uid"))

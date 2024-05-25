@@ -23,8 +23,8 @@ class SystemGroupPermission(IAMBase):
     uid = Column(Text, primary_key=True)
 
     # relationships
-    system_group_uid: Mapped[str] = Column(Text, ForeignKey(SystemGroup.uid))
-    system_groups: Mapped["SystemGroup"] = relationship(back_populates="system_group_permissions")
+    system_group_uid: Mapped[str] = mapped_column(ForeignKey('SystemGroup.uid'))
+    system_group: Mapped["SystemGroup"] = relationship("SystemGroup", back_populates="system_group_permissions")
 
-    permission_id: Mapped[str] = mapped_column(ForeignKey(Permissions.PermissionID))
-    permissions: Mapped["Permissions"] = relationship(back_populates="system_group_permissions")
+    permission_id: Mapped[str] = mapped_column(ForeignKey('Permissions.PermissionID'))
+    permission: Mapped["Permissions"] = relationship("Permissions", back_populates="system_group_permissions")
