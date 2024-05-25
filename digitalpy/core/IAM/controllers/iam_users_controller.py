@@ -58,14 +58,14 @@ class IAMUsersController(Controller):
 
         return queried_connections
 
-    def authenticate_system_user(self, name: 'str', password: 'str', user_id: 'str', *args, **kwargs) -> bool:
+    def authenticate_system_user(self, user_id: 'str', name: 'str' = '', password: 'str' = '', *args, **kwargs) -> bool:
         """authenticate a system user
 
         Args:
             user_id (User): the id of the user to be authenticated
         """
 
-        if name is None or password is None:
+        if not name or not password:
             self.response.set_value("authenticated", False)
             return False
 

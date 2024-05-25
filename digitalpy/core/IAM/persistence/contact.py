@@ -1,8 +1,8 @@
 """this file contains the contact persistence class"""
 
 from sqlalchemy import Text, Column, ForeignKey
-from sqlalchemy.orm import relationship
-
+from sqlalchemy.orm import relationship, Mapped, mapped_column
+from typing import Optional
 from .iam_base import IAMBase
 
 class Contact(IAMBase):
@@ -22,15 +22,15 @@ class Contact(IAMBase):
     """
 
     __tablename__ = 'Contact'
-    uid = Column(Text, primary_key=True)
-    callsign = Column(Text, nullable=True)
-    iconsetpath = Column(Text, nullable=True)
-    sipAddress = Column(Text, nullable=True)
-    emailAddress = Column(Text, nullable=True)
-    xmppUsername = Column(Text, nullable=True)
-    endpoint = Column(Text, nullable=True)
-    name = Column(Text, nullable=True)
-    phone = Column(Text, nullable=True)
+    uid: Mapped[str] = mapped_column(primary_key=True)
+    callsign: Mapped[Optional[str]]
+    iconsetpath: Mapped[Optional[str]]
+    sipAddress: Mapped[Optional[str]]
+    emailAddress: Mapped[Optional[str]]
+    xmppUsername: Mapped[Optional[str]]
+    endpoint: Mapped[Optional[str]]
+    name: Mapped[Optional[str]]
+    phone: Mapped[Optional[str]]
 
     # relationships
     system_user = relationship('SystemUser', back_populates="contact")

@@ -10,6 +10,9 @@ from digitalpy.core.persistence.persistent_object_proxy import PersistentObjectP
 from digitalpy.core.persistence.build_depth import BuildDepth
 from digitalpy.core.main.object_factory import ObjectFactory
 
+UNLIMITED_OCCURANCES = "*"
+
+
 class Node(DefaultPersistentObject):
     """Node adds the concept of relations to PersistentObject. It is the basic
     component for building object trees (although a Node can have more than one
@@ -36,6 +39,7 @@ class Node(DefaultPersistentObject):
         model=None,
         oid: ObjectId = None,
         initial_data=None,
+        include_oid=True,
     ) -> None:
         """
 
@@ -45,14 +49,21 @@ class Node(DefaultPersistentObject):
             model (_type_, optional): _description_. Defaults to None.
             oid (ObjectId, optional): _description_. Defaults to None.
             initial_data (_type_, optional): _description_. Defaults to None.
+            include_oid (bool, optional): whether or not to include the oid when getting the properties of the node, if true the oid attribute will be included in all serialization. Defaults to True.
         """
         super().__init__(oid, initial_data)
         if model_configuration is None:
             model_configuration = ModelConfiguration()
+        self._model_configuration = model_configuration
         self._children: Dict[str, Node] = {}
         self._parents: Dict[str, Node] = {}
         self._depth = -1
         self._path = ""
+        self._model = model
+
+        # whether or not to include the oid when getting the properties of the node. this is important
+        # for the serialization of the node
+        self._include_oid = include_oid
         # any extended domain objects which are not defined in the domain
         self._extended = {}
         # default the elements to an empty dictionary if the class configuration doesn't exist
@@ -74,18 +85,34 @@ class Node(DefaultPersistentObject):
         """this property sets the extended domain objects which are not defined in the domain"""
         self._extended = value
 
+    @property
+    def oid(self) -> str:
+        """this property returns the object id of the node"""
+        return str(self._oid)
+
+    @oid.setter
+    def oid(self, value: Union[str, ObjectId]):
+        """this property sets the object id of the node"""
+        if isinstance(value, str):
+            self._oid = ObjectId.parse(value)
+        elif isinstance(value, ObjectId):
+            self._oid = value
+
     def _add_relationships(self, configuration: ModelConfiguration, model) -> None:
         for (
             relationship_name,
             relationship_def,
         ) in self._relationship_definition.relationships.items():
-            child_class = model[relationship_name]
-            id = str(uuid.uuid1())
-            oid = ObjectFactory.get_instance(
-                "ObjectId", {"id": id, "type": relationship_name}
-            )
-            child_instance = child_class(configuration, model, oid)
-            self.add_child(child_instance)
+            child_class = model[relationship_def.target_class]
+            if relationship_def.min_occurs > 0:
+                for _ in range(relationship_def.min_occurs):
+                    id = str(uuid.uuid1())
+                    oid = ObjectFactory.get_instance(
+                        "ObjectId", {
+                            "id": id, "type": relationship_def.target_class}
+                    )
+                    child_instance = child_class(configuration, model, oid)
+                    setattr(self, relationship_name, child_instance)
 
     def get_first_child(self, child_type, values, properties, use_regex=True):
         """Get the first child that matches given conditions."""
@@ -167,10 +194,9 @@ class Node(DefaultPersistentObject):
         else:
             return len(self._children)
 
-    def add_child(self, child):
+    def add_child(self, child: 'Node'):
         if self.validate_child_addition(child):
-            self._children[child.get_id()] = child
-            setattr(self, child.__class__.__name__, child)
+            self._children[child.oid] = child
             child.set_parent(self)
         else:
             raise TypeError("child must be an instance of Node")
@@ -183,10 +209,12 @@ class Node(DefaultPersistentObject):
                     child_type
                 ]
                 children = self.get_children_ex(children_type=child_type)
-                if relationship_requirements.max_occurs == len(children):
-                    return False
+                if relationship_requirements.max_occurs != UNLIMITED_OCCURANCES and relationship_requirements.max_occurs < len(children):
+                    raise ValueError(
+                        "Maximum number of related objects exceeded")
             return True
-        raise TypeError("children must inherit from type Node")
+        else:
+            raise TypeError("children must inherit from type Node")
 
     def delete_child(self, child_id):
         del self._children[child_id]
@@ -562,7 +590,7 @@ class Node(DefaultPersistentObject):
         """
         return len(self.get_relatives(hierarchy_type, mem_only))
 
-    def get_parent(self) -> Any:
+    def get_parent(self) -> 'Node':
         """Get the Node's super(). This method exists for compatibility with previous
         versions. It returns the first super().
            @return Node
@@ -572,7 +600,7 @@ class Node(DefaultPersistentObject):
         else:
             return None
 
-    def get_parents(self, mem_only: Any = True) -> Any:
+    def get_parents(self, mem_only: Any = True) -> 'Node':
         """Get the Nodes parents.
            @param mem_only Boolean whether to only get the loaded parents or all
         parents (default: _True_).
@@ -946,4 +974,10 @@ class Node(DefaultPersistentObject):
 
     @lru_cache(maxsize=1)
     def get_properties(self):
-        return [k for k, p in type(self).__dict__.items() if isinstance(p, property)]
+        # iterate over all properties of the class and add them to the list then add all properties defined in the node object
+        # NOTE: this will not work with a system using inheritance!
+        properties = [k for k, p in type(
+            self).__dict__.items() if isinstance(p, property)]
+        if self._include_oid is True:
+            properties.append("oid")
+        return properties

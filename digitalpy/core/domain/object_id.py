@@ -9,7 +9,7 @@ class ObjectId:
     DELIMITER = ":"
 
     __dummy_id_pattern = "DigitalPy[A-Za-z0-9]{32}"
-    __id_pattern = ".*"
+    __id_pattern = r'.*'
     __delimiter_pattern = ":"
     _num_pk_keys = {}
     __null_oid = None
@@ -39,12 +39,14 @@ class ObjectId:
         self.str_val = self.__str__()
 
     def __str__(self):
-        oid_str = self.__fq_type + ObjectId.DELIMITER + \
-            ObjectId.DELIMITER.join(self.id)
-        if len(self.prefix.strip()) > 0:
-            oid_str = self.prefix + ObjectId.DELIMITER + oid_str
+        if hasattr(self, "str_val") and self.str_val != None:
+            return self.str_val
+        oid_str = self.__fq_type + self.DELIMITER + \
+            self.DELIMITER.join(self.id)
+        if self.prefix and self.prefix.strip():
+            oid_str = self.prefix + self.DELIMITER + oid_str
         self.str_val = oid_str
-        return self.str_val
+        return oid_str
 
     def get_id(self) -> list[str]:
         return self.id
@@ -93,6 +95,7 @@ class ObjectId:
 
     @staticmethod
     def parse(oid) -> Union['ObjectId', None]:
+        # fast checks first
         if isinstance(oid, ObjectId):
             return oid
 
@@ -100,9 +103,9 @@ class ObjectId:
         if not oid_parts:
             return None
 
-        type = oid_parts["type"]
-        ids = oid_parts["id"]
-        prefix = oid_parts["prefix"]
+        type = oid_parts['type']
+        ids = oid_parts['id']
+        prefix = oid_parts['prefix']
 
         # Sections commented out as the persistence facade is not yet implemented
         # if not ObjectFactory.get_instance("persistence_facade").is_known_type(type):
@@ -134,7 +137,7 @@ class ObjectId:
         next_part = oid_parts.pop()
         while next_part is not None and re.match(ObjectId.__id_pattern, next_part):
             try:
-                ids.append(int(next_part))
+                ids.append(str(next_part))
             except ValueError:
                 ids.append(next_part)
             next_part = oid_parts.pop() if oid_parts else None

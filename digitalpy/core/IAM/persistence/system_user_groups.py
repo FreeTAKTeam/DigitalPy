@@ -1,10 +1,13 @@
 """this file contains the system user groups persistence class"""
 from typing import TYPE_CHECKING
 from sqlalchemy import Text, Column, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from .iam_base import IAMBase
 from .system_group import SystemGroup
+
+if TYPE_CHECKING:
+    from .system_user import SystemUser
 
 class SystemUserGroups(IAMBase):
     """
@@ -20,12 +23,12 @@ class SystemUserGroups(IAMBase):
     uid = Column(Text, primary_key=True)
 
     # relationships
-    system_user_uid = Column(Text, ForeignKey("SystemUser.uid"))
-    system_users = relationship(
+    system_user_uid: Mapped[str] = mapped_column(ForeignKey("SystemUser.uid"))
+    system_users: Mapped["SystemUser"] = relationship(
         "SystemUser", back_populates="system_user_groups")
 
-    system_group_uid = Column(Text, ForeignKey(SystemGroup.uid))
-    system_groups: SystemGroup = relationship(
+    system_group_uid: Mapped[str] = mapped_column(ForeignKey(SystemGroup.uid))
+    system_groups: Mapped["SystemGroup"] = relationship(
         "SystemGroup", back_populates="system_user_groups")
 
     def __repr__(self) -> str:

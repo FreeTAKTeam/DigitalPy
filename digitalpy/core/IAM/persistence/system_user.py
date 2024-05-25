@@ -1,8 +1,8 @@
 """this is the system user persistence file, containing the system user persistence class"""
 
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Optional
 from sqlalchemy import Text, Column, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from .iam_base import IAMBase
 from .contact import Contact
@@ -28,23 +28,23 @@ class SystemUser(IAMBase):
     """
 
     __tablename__ = 'SystemUser'
-    uid = Column(Text, primary_key=True)
-    name = Column(Text, nullable=True)
-    token = Column(Text, nullable=True)
-    password = Column(Text, nullable=True)
-    device_type = Column(Text, nullable=True)
-    certificate_package_name = Column(Text, nullable=True)
+    uid: Mapped[str] = mapped_column(primary_key=True)
+    name: Mapped[Optional[str]]
+    token: Mapped[Optional[str]]
+    password: Mapped[Optional[str]]
+    device_type: Mapped[Optional[str]]
+    certificate_package_name: Mapped[Optional[str]]
 
     # relationships
-    system_user_groups: List['SystemUserGroups'] = relationship(
+    system_user_groups: Mapped[List['SystemUserGroups']] = relationship(
         "SystemUserGroups", back_populates="system_users")
     
-    users: 'User' = relationship("User", back_populates="system_user")
+    users: Mapped['User'] = relationship("User", back_populates="system_user")
 
-    api_calls: 'ApiCalls' = relationship("ApiCalls", back_populates="system_user")
+    api_calls: Mapped['ApiCalls'] = relationship("ApiCalls", back_populates="system_user")
 
-    contact_uid = Column(Text, ForeignKey(Contact.uid))
-    contact: Contact = relationship("Contact", back_populates="system_user")
+    contact_uid: Mapped[str] = mapped_column(ForeignKey(Contact.uid))
+    contact: Mapped['Contact'] = relationship("Contact", back_populates="system_user")
     
     def __repr__(self) -> str:
         return super().__repr__() + f"uid={self.uid}, name={self.name}, token={self.token}, \

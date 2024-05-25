@@ -1,7 +1,9 @@
 """this file contains the system group permission persistence class"""
 
 from sqlalchemy import Text, Column, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped, mapped_column
+
+from typing import TYPE_CHECKING
 
 from .iam_base import IAMBase
 
@@ -21,8 +23,8 @@ class SystemGroupPermission(IAMBase):
     uid = Column(Text, primary_key=True)
 
     # relationships
-    system_group_uid = Column(Text, ForeignKey(SystemGroup.uid))
-    system_groups = relationship("SystemGroup", back_populates="system_group_permissions")
+    system_group_uid: Mapped[str] = Column(Text, ForeignKey(SystemGroup.uid))
+    system_groups: Mapped["SystemGroup"] = relationship(back_populates="system_group_permissions")
 
-    permission_id = Column(Text, ForeignKey(Permissions.PermissionID))
-    permissions: Permissions = relationship("Permissions", back_populates="system_group_permissions")
+    permission_id: Mapped[str] = mapped_column(ForeignKey(Permissions.PermissionID))
+    permissions: Mapped["Permissions"] = relationship(back_populates="system_group_permissions")
