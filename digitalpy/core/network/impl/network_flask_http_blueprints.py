@@ -43,8 +43,8 @@ class BlueprintCommunicator:
     a digitalpy environment.
 
     This class uses ZeroMQ sockets and contexts to establish and manage network communication. 
-    It is designed to be used by a single service in a digitalpy environment, and is not 
-    thread-safe between different services.
+    It is designed to be used by a single service in a digitalpy environment, and is **not 
+    thread-safe** between different services.
 
     The class maintains a dictionary of push and subscribe sockets for different network 
     identities, and also manages a local ZeroMQ context. The network addresses for the sink and 
@@ -57,7 +57,7 @@ class BlueprintCommunicator:
     # NOTE: the use of class variables in this case is several fold, firstly it is
     # to avoid duplicating creation of the sockets and contexts. Secondly we assume
     # that the network will be initialized before any blueprint is used.
-    # Finally and most importantly we assume only one instance will exist per process,
+    # Finally and most importantly we assume only one instance will exist **per process**,
     # this is because the network interface should be used by a service and each digitalpy
     # service is a process. This class is NOT thread safe between digitalpy services.
     # this is because the sink_addr is expected to only be set once by the network.
@@ -68,7 +68,8 @@ class BlueprintCommunicator:
     local_context: zmq.Context = zmq.Context()
 
     def _get_id(self)->bytes:
-        """ this method returns the network id for the current session
+        """ this method returns the network id for the current session, if it does not exist then generate
+        a new one and store it in the session.
 
         Returns:
             bytes: the network id
@@ -240,7 +241,9 @@ class FlaskHTTPNetworkBlueprints(NetworkSyncInterface):
         for _ in range(max_requests):
             try:
                 msg = self.receive_message(blocking=False)
+                # get the client connection id
                 dp_conn_id = msg.get_value("digitalpy_connection_id")
+                # get the client based on the connection id
                 msg.set_value("client", self._get_client(dp_conn_id, msg))
                 requests.append(msg)
             except zmq.Again:
@@ -271,7 +274,10 @@ class FlaskHTTPNetworkBlueprints(NetworkSyncInterface):
         Returns:
             NetworkClient: the network client
         """
+        # change the action to connection
         request.set_value("action", "connection")
+
+        # create a new client object
         oid = ObjectId("network_client", id=str(network_id))
         client: NetworkClient = ObjectFactory.get_new_instance(
             "DefaultClient", dynamic_configuration={"oid": oid})
@@ -280,6 +286,7 @@ class FlaskHTTPNetworkBlueprints(NetworkSyncInterface):
         client.service_id = self.service_desc.id
         client.protocol = self.service_desc.protocol
 
+        # send the response
         self.clients[network_id] = client
 
         return client
@@ -304,6 +311,7 @@ class FlaskHTTPNetworkBlueprints(NetworkSyncInterface):
             NetworkClient: the network client
         """
         if network_id not in self.clients:
+            # if the client is not in the clients dictionary then handle the new connection
             client = self.handle_connection(request, network_id)
             self.clients[network_id] = client
         return self.clients[network_id]
