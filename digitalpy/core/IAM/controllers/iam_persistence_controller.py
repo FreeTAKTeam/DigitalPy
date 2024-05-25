@@ -1,6 +1,9 @@
+import os
 from typing import TYPE_CHECKING
+import uuid
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import NullPool
 
 # import tables in initialization order
 from digitalpy.core.IAM.persistence.session_contact import SessionContact
@@ -9,14 +12,16 @@ from digitalpy.core.IAM.persistence.system_user_groups import SystemUserGroups
 from digitalpy.core.IAM.persistence.system_group import SystemGroup
 from digitalpy.core.IAM.persistence.system_user import SystemUser
 from digitalpy.core.IAM.persistence.user import User
+from digitalpy.core.IAM.persistence.session import Session as DBSession
 from digitalpy.core.IAM.persistence.api_calls import ApiCalls
 from digitalpy.core.IAM.persistence.contact import Contact
+from digitalpy.core.network.domain.client_status import ClientStatus
 
 from digitalpy.core.IAM.persistence.permissions import Permissions
 
 from digitalpy.core.main.controller import Controller
 from ..persistence.iam_base import IAMBase
-from ..configuration.iam_constants import AUTHENTICATED_USERS, DB_PATH
+from ..configuration.iam_constants import AUTHENTICATED_USERS, UNAUTHENTICATED_USERS, ADMIN_USERS, DB_PATH
 if TYPE_CHECKING:
     from digitalpy.core.zmanager.request import Request
     from digitalpy.core.zmanager.response import Response
@@ -36,6 +41,11 @@ class IAMPersistenceController(Controller):
         configuration (Configuration): the configuration object
     """
 
+    # create the engine as a class variable to avoid creating it multiple times
+    # implementation ref https://docs.sqlalchemy.org/en/20/core/pooling.html#using-connection-pools-with-multiprocessing-or-os-fork
+    engine = None
+    engine_pid = None
+
     def __init__(
         self,
         request: 'Request',
@@ -52,11 +62,20 @@ class IAMPersistenceController(Controller):
         Returns:
             Session: the session connecting the db
         """
-        engine = create_engine(DB_PATH)
-        # create a configured "Session" class
-        SessionClass = sessionmaker(bind=engine)
+        # create an engine if it does not exist
+        if IAMPersistenceController.engine is None or IAMPersistenceController.engine_pid is None:
+            IAMPersistenceController.engine = create_engine(DB_PATH)
+            IAMPersistenceController.engine_pid = os.getpid()
 
-        IAMBase.metadata.create_all(engine)
+        # if the engine exists but the pid is different, dispose the engine
+        elif IAMPersistenceController.engine_pid != os.getpid():
+            IAMPersistenceController.engine.dispose(close=False)
+            IAMPersistenceController.engine_pid = os.getpid()
+
+        # create a configured "Session" class
+        SessionClass = sessionmaker(bind=IAMPersistenceController.engine)
+
+        IAMBase.metadata.create_all(IAMPersistenceController.engine)
 
         # create a Session
         return SessionClass()
@@ -100,6 +119,20 @@ class IAMPersistenceController(Controller):
             raise TypeError("'user_id' must be an instance of str")
         return self.ses.query(User).filter(User.uid == user_id).first()
 
+    def get_user_by_cn(self, cn: str, *args, **kwargs) -> list[User]:
+        """this function is responsible for getting a user from the IAM
+        system.
+
+        Args:
+            cn (str): the common name of the user to be retrieved
+
+        Returns:
+            list[User]: the user retrieved
+        """
+        if not isinstance(cn, str):
+            raise TypeError("'user_name' must be an instance of str")
+        return self.ses.query(User).filter(User.CN == cn)
+
     def get_all_users(self, *args, **kwargs) -> list[User]:
         """this function is responsible for getting all users from the IAM
         system.
@@ -109,42 +142,247 @@ class IAMPersistenceController(Controller):
         """
         return self.ses.query(User).all()
 
-    def clear_users(self, *args, **kwargs):
-        """this function is responsible for clearing all users from the IAM
+    def clear_sessions(self, *args, **kwargs):
+        """this function is responsible for clearing all sessions from the IAM
         system.
         """
-        self.ses.query(User).delete()
+        self.ses.query(SessionContact).delete()
+        self.ses.query(DBSession).delete()
         self.ses.commit()
 
-    def create_default_system_user(self, *args, **kwargs) -> SystemUser:
+    def create_default_permissions(self, *args, **kwargs) -> list[Permissions]:
+        """this function is responsible for creating the default permissions in the IAM
+
+        Returns:
+            list[Permissions]: a list of the default permissions created
+        """
+        permissions = []
+        # TODO: add more permissions
+        if self.ses.query(Permissions).filter(Permissions.PermissionName == "receiveData").first() is None:
+            recvDataPerm = Permissions(
+                PermissionID=str(uuid.uuid4()),
+                PermissionName="receiveData",
+                PermissionDescription="Receive data",
+            )
+            self.ses.add(recvDataPerm)
+            self.ses.commit()
+            permissions.append(recvDataPerm)
+        if self.ses.query(Permissions).filter(Permissions.PermissionName == "requestStandardAction").first() is None:
+            reqStdActionPerm = Permissions(
+                PermissionID=str(uuid.uuid4()),
+                PermissionName="requestStandardAction",
+                PermissionDescription="Request a standard action"
+            )
+            self.ses.add(reqStdActionPerm)
+            self.ses.commit()
+            permissions.append(reqStdActionPerm)
+        if self.ses.query(Permissions).filter(Permissions.PermissionName == "requestCoreAction").first() is None:
+            reqCoreActionPerm = Permissions(
+                PermissionID=str(uuid.uuid4()),
+                PermissionName="requestCoreAction",
+                PermissionDescription="Request a core action"
+            )
+            self.ses.add(reqCoreActionPerm)
+            self.ses.commit()
+            permissions.append(reqCoreActionPerm)
+        return permissions
+
+    def create_default_groups(self, *args, **kwargs) -> list[SystemGroup]:
+        """this function is responsible for creating the default groups in the IAM
+
+        Returns:
+            list[SystemGroup]: a list of the default groups created
+        """
+        groups = []
+
+        self._create_authenticated_user_group(groups)
+
+        self._create_admin_user_group(groups)
+
+        self._create_unauthenticated_user_group(groups)  
+
+        return groups
+
+    def _create_admin_user_group(self, groups: list[SystemGroup]):
+        """this function is responsible for creating the admin user group in the IAM
+
+        Args:
+            groups (list[SystemGroup]): the list of groups to append the created group to
+        """
+        if self.get_group_by_name(ADMIN_USERS):
+            groups.append(self.get_group_by_name(ADMIN_USERS))
+        else:
+            group = SystemGroup(
+                uid=str(uuid.uuid4()),
+                name=ADMIN_USERS,
+            )
+            self.ses.add(group)
+            self.ses.commit()
+            rcvDataGrp = SystemGroupPermission(
+                uid=str(uuid.uuid4()),
+                system_group=group,
+                permission=self.ses.query(Permissions).filter(Permissions.PermissionName == "receiveData").first()
+            )
+            self.ses.add(rcvDataGrp)
+            self.ses.commit()
+            rqstStdAct = SystemGroupPermission(
+                uid=str(uuid.uuid4()),
+                system_group=group,
+                permission=self.ses.query(Permissions).filter(Permissions.PermissionName == "requestStandardAction").first()
+            )
+            self.ses.add(rqstStdAct)
+            self.ses.commit()
+            rqstCoreActGrpPerm = SystemGroupPermission(
+                uid=str(uuid.uuid4()),
+                system_group=group,
+                permission=self.ses.query(Permissions).filter(Permissions.PermissionName == "requestCoreAction").first()
+            )
+            self.ses.add(rqstCoreActGrpPerm)
+            self.ses.commit()
+            
+
+    def _create_unauthenticated_user_group(self, groups: list[SystemGroup]):
+        """this function is responsible for creating the unauthenticated user group in the IAM
+
+        Args:
+            groups (list[SystemGroup]): the list of groups to append the created group to
+        """
+        if self.get_group_by_name(UNAUTHENTICATED_USERS):
+            groups.append(self.get_group_by_name(UNAUTHENTICATED_USERS))
+        else:
+            group = SystemGroup(
+                uid=str(uuid.uuid4()),
+                name=UNAUTHENTICATED_USERS,
+            )
+            self.ses.add(group)
+            self.ses.commit()
+            groups.append(group)
+            
+
+    def _create_authenticated_user_group(self, groups: list[SystemGroup]):
+        """this function is responsible for creating the authenticated user group in the IAM
+
+        Args:
+            groups (list[SystemGroup]): the list of groups to append the created group to
+        """
+        if self.get_group_by_name(AUTHENTICATED_USERS):
+            groups.append(self.get_group_by_name(AUTHENTICATED_USERS))
+        else:
+            group = SystemGroup(
+                uid=str(uuid.uuid4()),
+                name=AUTHENTICATED_USERS,
+            )
+            self.ses.add(group)
+            self.ses.commit()
+            rcvDataGrp = SystemGroupPermission(
+                uid=str(uuid.uuid4()),
+                system_group=group,
+                permission=self.ses.query(Permissions).filter(Permissions.PermissionName == "receiveData").first()
+            )
+            self.ses.add(rcvDataGrp)
+            self.ses.commit()
+            rqstStdAct = SystemGroupPermission(
+                uid=str(uuid.uuid4()),
+                system_group=group,
+                permission=self.ses.query(Permissions).filter(Permissions.PermissionName == "requestStandardAction").first()
+            )
+            self.ses.add(rqstStdAct)
+            self.ses.commit()
+            
+
+    def create_admin_system_user(self, *args, **kwargs) -> SystemUser:
         """this function is responsible for creating a default system user in the IAM
         system.
 
         Returns:
             SystemUser: the system user created
         """
-        if self.get_system_user_by_name("default"):
-            return self.get_system_user_by_name("default")
-        
-        system_user = SystemUser(
-            uid="default",
-            name="default",
-            token="default",
-            password="default",
-            device_type="default",
-            certificate_package_name="default",
+        if self.get_system_user_by_name("Administrator"):
+            return self.get_system_user_by_name("Administrator")
+        # create the administator system user
+        admin_sysuser = SystemUser(
+            uid=str(uuid.uuid4()),
+            name="Administrator",
+            token="admin",
+            password="admin",
+            device_type="admin",
+            certificate_package_name="admin",
         )
-        authed_users = self.get_group_by_name(AUTHENTICATED_USERS)
-        system_user_groups = SystemUserGroups(
-            uid="default",
-            system_groups=authed_users,
-            system_users=system_user,
-        )
-        system_user.system_user_groups.append(system_user_groups)
-        self.ses.add(system_user_groups)
-        self.ses.add(system_user)
+        self.ses.add(admin_sysuser)
         self.ses.commit()
-        return system_user
+        # get the groups
+        authed_users = self.get_group_by_name(AUTHENTICATED_USERS)
+        admin_users = self.get_group_by_name(ADMIN_USERS)
+        # create the admin user
+        admin_usr = User(
+            uid=str(uuid.uuid4()),
+            callsign="Administrator",
+            system_user=admin_sysuser,
+            CN="Administrator",
+            status=ClientStatus.DISCONNECTED.value
+        )
+        self.ses.add(admin_usr)
+        self.ses.commit()
+
+        # create the system user groups
+        admin_usr_grps = SystemUserGroups(
+            uid=str(uuid.uuid4()),
+            system_user=admin_sysuser,
+            system_group=admin_users
+        )
+        self.ses.add(admin_usr_grps)
+        self.ses.commit()
+        authed_usr_grps = SystemUserGroups(
+            uid=str(uuid.uuid4()),
+            system_user=admin_sysuser,
+            system_group=authed_users
+        )
+        self.ses.add(authed_usr_grps)
+        self.ses.commit()
+
+        return admin_sysuser
+
+    def create_anonymous_system_user(self, *args, **kwargs) -> SystemUser:
+        """this function is responsible for creating an anonymous system user in the IAM
+        system used for unauthenticated sessions.
+
+        Returns:
+            SystemUser: the system user created
+        """
+        if self.get_system_user_by_name("Anonymous"):
+            return self.get_system_user_by_name("Anonymous")
+
+        anon_sysuser = SystemUser(
+            uid=str(uuid.uuid4()),
+            name="Anonymous",
+            token="anonymous",
+            password="anonymous",
+            device_type="anonymous",
+            certificate_package_name="anonymous",
+        )
+        self.ses.add(anon_sysuser)
+        self.ses.commit()
+
+        anon_user = User(
+            uid=str(uuid.uuid4()),
+            callsign="Anonymous",
+            system_user=anon_sysuser,
+            CN="Anonymous",
+            status=ClientStatus.DISCONNECTED.value
+        )
+        self.ses.add(anon_user)
+        self.ses.commit()
+
+        unauthed_users = self.get_group_by_name(UNAUTHENTICATED_USERS)
+        unauth_sysgrp = SystemUserGroups(
+            uid=str(uuid.uuid4()),
+            system_user=anon_sysuser,
+            system_group=unauthed_users
+        )
+        self.ses.add(unauth_sysgrp)
+        self.ses.commit()
+
+        return anon_sysuser
 
     def create_permission(self, permission: Permissions, *args, **kwargs):
         """this function is responsible for creating a permission in the IAM
@@ -183,6 +421,15 @@ class IAMPersistenceController(Controller):
         if not isinstance(group_name, str):
             raise TypeError("'group_name' must be an instance of str")
         return self.ses.query(SystemGroup).filter(SystemGroup.name == group_name).first()
+    
+    def get_all_groups(self, *args, **kwargs) -> list[SystemGroup]:
+        """this function is responsible for getting all groups from the IAM
+        system.
+
+        Returns:
+            list[SystemUserGroups]: a list of all groups
+        """
+        return self.ses.query(SystemGroup).all()
 
     def create_group_permission(self, group_permission: SystemGroupPermission, *args, **kwargs):
         """this function is responsible for creating a group permission in the IAM
@@ -192,9 +439,19 @@ class IAMPersistenceController(Controller):
             group_permission (SystemGroupPermission): the group permission to be created
         """
         if not isinstance(group_permission, SystemGroupPermission):
-            raise TypeError("'group_permission' must be an instance of SystemGroupPermission")
+            raise TypeError(
+                "'group_permission' must be an instance of SystemGroupPermission")
         self.ses.add(group_permission)
         self.ses.commit()
+
+    def get_all_system_users(self, *args, **kwargs) -> list[SystemUser]:
+        """this function is responsible for getting all system users from the IAM
+        system.
+
+        Returns:
+            list[SystemUser]: a list of all system users
+        """
+        return self.ses.query(SystemUser).all()
 
     def get_system_user_by_name(self, system_user_name: str, *args, **kwargs) -> SystemUser:
         """this function is responsible for creating a system user in the IAM
@@ -224,6 +481,7 @@ class IAMPersistenceController(Controller):
         self.ses.commit()
 
     def __getstate__(self) -> object:
+        """return the state of the object, removing the session and engine object"""
         state: dict = super().__getstate__()  # type: ignore
         if "ses" in state:
             del state["ses"]

@@ -1,6 +1,8 @@
+from datetime import datetime
 from typing import List
 from digitalpy.core.IAM.controllers.iam_persistence_controller import IAMPersistenceController
 from digitalpy.core.IAM.persistence.user import User
+from digitalpy.core.IAM.persistence.session import Session
 from digitalpy.core.domain.object_id import ObjectId
 
 from digitalpy.core.main.controller import Controller
@@ -32,9 +34,8 @@ class IAMUsersController(Controller):
             connection (Node): the Node object associated with the connected connection
         """
         con_oid = str(connection.get_oid())
-        user = User(uid=con_oid, status=connection.status.value,
-                    service_id=connection.service_id, protocol=connection.protocol)
-        self.persistence_controller.save_user(user)
+        session = Session(uid=con_oid, SessionStartTime=datetime.now(), IPAddress=connection.ip_address, ServiceName=connection.service_id, SessionEndTime=None)
+        self.persistence_controller.save_user(session)
 
     def disconnection(self, connection_id: str, *args, **kwargs):
         """handle the case of a connection disconnection from any digitalpy service
@@ -89,8 +90,8 @@ class IAMUsersController(Controller):
         """validate the request to ensure that the request is valid
         """
         for group in user.system_user.system_user_groups:
-            for permission in group.system_groups.system_group_permissions:
-                if permission.permissions.PermissionName == action_key:
+            for group_permission in group.system_group.system_group_permissions:
+                if group_permission.permission.PermissionName == action_key:
                     return True
 
     def get_all_connections(self, *args, **kwargs) -> List[Node]:
@@ -101,6 +102,16 @@ class IAMUsersController(Controller):
             user) for user in users]
 
         self.response.set_value("connections", connections)
+
+    def get_user_by_cn(self, cn, *args, **kwargs) -> List[User]:
+        """get a user by their common name
+
+        Args:
+            cn (str): the common name of the user to be queried
+        """
+        users = self.persistence_controller.get_user_by_cn(cn)
+        self.response.set_value("users", users)
+        return users
 
     def _convert_user_to_network_client(self, user: User) -> NetworkClient:
         """convert a user to a network client

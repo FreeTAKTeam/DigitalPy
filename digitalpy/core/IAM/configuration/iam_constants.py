@@ -64,3 +64,5 @@ MANIFEST_PATH = str(
 AUTHENTICATED_USERS = "authenticated_users"
 
 UNAUTHENTICATED_USERS = "unauthenticated_users"
+
+ADMIN_USERS = "admin_users"
