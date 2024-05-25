@@ -36,8 +36,8 @@ class IAMActionFilterStrategy(ABC):
         user_has_permissions = user is not None and user.system_user is not None and len(user.system_user.system_user_groups) > 0
         if user_has_permissions:
             for group in user.system_user.system_user_groups:
-                for group_permission in group.system_groups.system_group_permissions:
-                    if group_permission.permissions.PermissionID == permission_id:
+                for group_permission in group.system_group.system_group_permissions:
+                    if group_permission.permission.PermissionID == permission_id:
                         return True        
         else:
             return False

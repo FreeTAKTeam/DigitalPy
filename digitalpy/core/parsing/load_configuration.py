@@ -10,6 +10,7 @@ from typing import Dict
 class Relationship:
     min_occurs: int = 0
     max_occurs: int = 1
+    target_class: str = ""
 
 
 @dataclass
@@ -48,15 +49,14 @@ class LoadConfiguration:
                 config_entry = ConfigurationEntry()
                 for child_name, value in class_values.get("properties", {}).items():
                     if "$ref" in value:
-                        child_name = value["$ref"].split("/")[-1]
-                        config[child_name]
+                        target_class = value["$ref"].split("/")[-1]
                         config_entry.relationships[child_name] = Relationship(
-                            value.get("minItems", 0), value.get("maxItems", 1))
+                            value.get("minItems", 0), value.get("maxItems", 1), target_class)
                     elif value["type"] == "array":
                         if "$ref" in value["items"]:
-                            child_name = value["items"]["$ref"].split("/")[-1]
-                        config[child_name]
-                        config_entry.relationships[child_name] = Relationship(
-                            value.get("minItems", 0), value.get("maxItems", "*"))
+                            target_class = value["items"]["$ref"].split(
+                                "/")[-1]
+                            config_entry.relationships[child_name] = Relationship(
+                                value.get("minItems", 0), value.get("maxItems", "*"), target_class)
                 configuration.elements[class_name] = config_entry
         return configuration
