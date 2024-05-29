@@ -31,4 +31,4 @@ class User(IAMBase):
     session_contacts: Mapped[List['SessionContact']] = relationship('SessionContact', back_populates='user')
 
     def __repr__(self) -> str:
-        return super().__repr__() + f"uid={self.uid}, callsign={self.callsign}, CN={self.CN}, IP={self.IP}, service_id={self.service_id}"
+        return super().__repr__() + f"uid={self.uid}, callsign={self.callsign}, CN={self.CN}"
