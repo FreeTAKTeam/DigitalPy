@@ -19,8 +19,10 @@ import threading
 import pickle
 import uuid
 from typing import Dict, List, TYPE_CHECKING, Union
-from flask import Blueprint, Flask, session
-
+from flask import Blueprint, Flask, g
+from flask_jwt_extended import JWTManager, get_jwt_identity, create_access_token, verify_jwt_in_request
+from flask_jwt_extended.utils import decode_token, get_unverified_jwt_headers
+from flask_cors import CORS
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.network.domain.client_status import ClientStatus
 from digitalpy.core.domain.object_id import ObjectId
@@ -67,17 +69,19 @@ class BlueprintCommunicator:
     sub_sockets: Dict[int, zmq.Socket] = {}
     local_context: zmq.Context = zmq.Context()
 
-    def _get_id(self)->bytes:
+    def _get_id(self) -> bytes:
         """ this method returns the network id for the current session, if it does not exist then generate
         a new one and store it in the session.
 
         Returns:
             bytes: the network id
         """
-        if session.get("network_id") is None:
+        if verify_jwt_in_request(optional=True) is None or get_jwt_identity() is None:
             net_id = uuid.uuid4().bytes
-            session["network_id"] = net_id
-        return session["network_id"]
+            new_jwt = create_access_token(net_id.decode("utf-16"))
+            g._iam_encoded_jwt = new_jwt
+            return net_id
+        return get_jwt_identity().encode("utf-8")
 
     def _get_ctx(self) -> zmq.Context:
         """this method returns the local zmq context
@@ -204,7 +208,15 @@ class FlaskHTTPNetworkBlueprints(NetworkSyncInterface):
         """
         self.service_desc = service_desc
         self.app = Flask(f"{host}:{port}")
+        CORS(self.app, allow_headers="*", supports_credentials=True, origins="*")
+        jwt = JWTManager(self.app)
         self.app.secret_key = str(uuid.uuid4())
+
+        self.app.config["JWT_SECRET_KEY"] = str(uuid.uuid4())
+        self.app.config["JWT_TOKEN_LOCATION"] = ["headers"]
+        self.app.config["JWT_HEADER_NAME"] = "Authorization"
+        self.app.config["JWT_HEADER_TYPE"] = "Bearer"
+
         self.host = host
         self.port = port
         self.local_context = zmq.Context()

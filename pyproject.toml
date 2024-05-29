@@ -9,12 +9,14 @@ packages = [
 include = ["digitalpy/**/*.json", "digitalpy/**/*.py", "digitalpy/**/*.ini", "digitalpy/**/*.conf"]
 
 [tool.poetry.dependencies]
+python = "^3.11"
 setuptools="*"
 rule-engine="*"
 pyzmq="*"
 opentelemetry-sdk="*"
 lxml="*"
 xmltodict="*"
+flask_cors="*"
 sqlalchemy="^2.0.30"
 
 [tool.poetry.extras]
