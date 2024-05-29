@@ -1,7 +1,7 @@
 """
 This file defines a class `DigitalPyService` that inherits from `Service`, `ZmqSubscriber`, 
-and `ZMQPusher`. This class is used to create a service that can subscribe to messages, push messages, 
-and perform service-related operations.
+and `ZMQPusher`. This class is used to create a service that can subscribe to messages, 
+push messages, and perform service-related operations.
 
 The class constructor takes several parameters including service id, addresses, ports, protocols, 
 a formatter, and a network interface. It initializes the parent classes and sets up various 
@@ -78,11 +78,12 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         network (NetworkInterface): The network interface used by the service to send and 
             receive messages.
         protocol (str): The protocol of the service.
+        service_desc (ServiceDescription): The service description.
         error_threshold (float, optional): The error threshold for the service. Defaults to 0.1.
     """
-    # TODO: there must be a better solution than passing the service description as a parameter but for now
-    # it's necessary to be shared with the network so that the network can initialize the network clients
-    # with the service information
+    # TODO: there must be a better solution than passing the service description as a parameter but
+    # for now it's necessary to be shared with the network so that the network can initialize the
+    # network clients with the service information
 
     def __init__(self, service_id: str,
                  subject_address: str,
@@ -134,9 +135,9 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         self.total_request_processing_time = 0
         self.error_threshold = error_threshold
 
-    def handle_connection(self, client: NetworkClient, req: Request):
-        """register a client with the server. This method should be called when a client connects to the server
-        so that it can be registered with the IAM component.
+    def handle_connection(self, client: NetworkClient, req: Request) -> Request:
+        """register a client with the server. This method should be called when a client connects to
+        the server so that it can be registered with the IAM component.
         Args:
             client (NetworkClient): the client to register
             req (Request): the request from the client containing connection data
@@ -151,8 +152,8 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         return
 
     def handle_disconnection(self, client: NetworkClient, req: Request):
-        """unregister a client from the server. This method should be called when a client disconnects from the server
-        so that it can be unregistered from the IAM component.
+        """unregister a client from the server. This method should be called when a client disconnects 
+        from the server so that it can be unregistered from the IAM component.
         Args:
             client (NetworkClient): the client to unregister
             req (Request): the request from the client containing disconnection data
@@ -318,7 +319,7 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
 
         # TODO: discuss this with giu and see if we should move the to the action mapping system?
         if message.get_value("action") == "connection":
-            self.handle_connection(message.get_value("client"), message)
+            self.handle_connection(message.get_value("client"))
             return True
 
         elif message.get_value("action") == "disconnection":
@@ -350,7 +351,8 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
             service_health.average_request_time = 0
         else:
             service_health.error_percentage = self.total_errors/self.total_requests
-            service_health.average_request_time = self.total_request_processing_time/self.total_requests
+            service_health.average_request_time = \
+                self.total_request_processing_time/self.total_requests
         service_health.service_id = self.service_id
         service_health.status = self.calculate_health(service_health)
         service_health.timestamp = datetime.now()
@@ -375,7 +377,8 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
             print("An exception occurred: " + str(exception))
             self.total_errors += 1
 
-    def start(self, object_factory: DefaultFactory, tracing_provider: TracingProvider, host: str = "", port: int = 0):
+    def start(self, object_factory: DefaultFactory, tracing_provider: TracingProvider, 
+              host: str = "", port: int = 0):
         """used to start the service and initialize the network if provided
 
         Args:
@@ -405,7 +408,7 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         while self.status == ServiceStatus.RUNNING:
             try:
                 self.event_loop()
-            except Exception as ex:
+            except Exception as ex: # pylint: disable=broad-except
                 self.handle_exception(ex)
         if self.status == ServiceStatus.STOPPED:
             exit(0)
