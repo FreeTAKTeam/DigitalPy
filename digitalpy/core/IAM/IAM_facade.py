@@ -112,6 +112,7 @@ class IAM(DefaultFacade):
         self.persistency_controller.create_default_groups()
         self.persistency_controller.create_admin_system_user()
         self.persistency_controller.create_anonymous_system_user()
+        self.persistency_controller.ses.expunge_all()
 
     def execute(self, method):
         self.request.set_value("logger", self.logger)
@@ -186,7 +187,7 @@ class IAM(DefaultFacade):
 
     def get_function(self, uid, **kwargs):
         return self.functions.get(uid)
-    
+
     def get_user_by_cn(self, *args, **kwargs):
         return self.users_controller.get_user_by_cn(*args, **kwargs)
 

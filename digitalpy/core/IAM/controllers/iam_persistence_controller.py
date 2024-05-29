@@ -343,6 +343,7 @@ class IAMPersistenceController(Controller):
             SystemUser: the system user created
         """
         if self.get_system_user_by_name("Administrator"):
+            self.ses.close()
             return self.get_system_user_by_name("Administrator")
         # create the administator system user
         admin_sysuser = SystemUser(
@@ -384,7 +385,7 @@ class IAMPersistenceController(Controller):
         )
         self.ses.add(authed_usr_grps)
         self.ses.commit()
-
+        self.ses.close()
         return admin_sysuser
 
     def create_anonymous_system_user(self, *args, **kwargs) -> SystemUser:
@@ -395,6 +396,7 @@ class IAMPersistenceController(Controller):
             SystemUser: the system user created
         """
         if self.get_system_user_by_name("Anonymous"):
+            self.ses.close()
             return self.get_system_user_by_name("Anonymous")
 
         anon_sysuser = SystemUser(
@@ -426,7 +428,7 @@ class IAMPersistenceController(Controller):
         )
         self.ses.add(unauth_sysgrp)
         self.ses.commit()
-
+        self.ses.close()
         return anon_sysuser
 
     def create_permission(self, permission: Permissions, *args, **kwargs):
@@ -507,7 +509,10 @@ class IAMPersistenceController(Controller):
         """
         if not isinstance(system_user_name, str):
             raise TypeError("'system_user' must be an instance of SystemUser")
-        return self.ses.query(SystemUser).filter(SystemUser.name == system_user_name).first()
+        sys_user = self.ses.query(SystemUser).filter(
+            SystemUser.name == system_user_name).first()
+        self.ses.close()
+        return sys_user
 
     def add_user_to_system_user(self, user: User, system_user: SystemUser, *args, **kwargs):
         """this function is responsible for adding a user to a system user in the IAM
