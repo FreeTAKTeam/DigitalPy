@@ -21,6 +21,7 @@ If a network is provided, it also initializes the network.
 The `__getstate__` and `__setstate__` methods are used for pickling and unpickling the object, 
 respectively.
 """
+
 #######################################################
 #
 # DigitalPyService.py
@@ -37,7 +38,9 @@ from typing import List
 from digitalpy.core.domain.domain.service_health import ServiceHealth
 from digitalpy.core.main.impl.default_factory import DefaultFactory
 from digitalpy.core.main.object_factory import ObjectFactory
-from digitalpy.core.service_management.domain.service_operations import ServiceOperations
+from digitalpy.core.service_management.domain.service_operations import (
+    ServiceOperations,
+)
 from digitalpy.core.service_management.domain.service_status import ServiceStatus
 from digitalpy.core.telemetry.tracing_provider import TracingProvider
 from digitalpy.core.telemetry.tracer import Tracer
@@ -52,7 +55,9 @@ from digitalpy.core.domain.domain.network_client import NetworkClient
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.health.domain.service_health_category import ServiceHealthCategory
 from digitalpy.core.digipy_configuration.configuration import Configuration
-from digitalpy.core.service_management.domain.service_description import ServiceDescription
+from digitalpy.core.service_management.domain.service_description import (
+    ServiceDescription,
+)
 
 COMMAND_PROTOCOL = "command"
 COMMAND_ACTION = "ServiceCommand"
@@ -73,31 +78,34 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         integration_manager_address (str): The address of the zmanager "integration_manager".
         integration_manager_port (int): The port of the zmanager "integration_manager".
         integration_manager_protocol (str): The protocol of the zmanager "integration_manager".
-        formatter (Formatter): The formatter used by the service to serialize the request 
+        formatter (Formatter): The formatter used by the service to serialize the request
             values to and from messages.
-        network (NetworkInterface): The network interface used by the service to send and 
+        network (NetworkInterface): The network interface used by the service to send and
             receive messages.
         protocol (str): The protocol of the service.
         service_desc (ServiceDescription): The service description.
         error_threshold (float, optional): The error threshold for the service. Defaults to 0.1.
     """
+
     # TODO: there must be a better solution than passing the service description as a parameter but
     # for now it's necessary to be shared with the network so that the network can initialize the
     # network clients with the service information
 
-    def __init__(self, service_id: str,
-                 subject_address: str,
-                 subject_port: int,
-                 subject_protocol: str,
-                 integration_manager_address: str,
-                 integration_manager_port: int,
-                 integration_manager_protocol: str,
-                 formatter: Formatter,
-                 network: NetworkInterface,
-                 protocol: str,
-                 service_desc: ServiceDescription,
-                 error_threshold: float = 0.1,
-                 ):
+    def __init__(
+        self,
+        service_id: str,
+        subject_address: str,
+        subject_port: int,
+        subject_protocol: str,
+        integration_manager_address: str,
+        integration_manager_port: int,
+        integration_manager_protocol: str,
+        formatter: Formatter,
+        network: NetworkInterface,
+        protocol: str,
+        service_desc: ServiceDescription,
+        error_threshold: float = 0.1,
+    ):
         """the constructor for the digitalpy service class
 
         Args:
@@ -152,7 +160,7 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         return
 
     def handle_disconnection(self, client: NetworkClient, req: Request):
-        """unregister a client from the server. This method should be called when a client disconnects 
+        """unregister a client from the server. This method should be called when a client disconnects
         from the server so that it can be unregistered from the IAM component.
         Args:
             client (NetworkClient): the client to unregister
@@ -239,7 +247,7 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         # to define the format for this service.
 
     def initialize_controllers(self):
-        """used to initialize the controllers once the service is started. Should be overriden 
+        """used to initialize the controllers once the service is started. Should be overriden
         by inheriting classes
         """
 
@@ -253,10 +261,15 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
             application_protocol (str): the application protocol of the service
         """
         ZMQPusher.initiate_connections(
-            self, self.subject_port, self.subject_address, self.service_id)
-        self.broker_connect(self.integration_manager_address, self.integration_manager_port,
-                            self.integration_manager_protocol, self.service_id,
-                            application_protocol)
+            self, self.subject_port, self.subject_address, self.service_id
+        )
+        self.broker_connect(
+            self.integration_manager_address,
+            self.integration_manager_port,
+            self.integration_manager_protocol,
+            self.service_id,
+            application_protocol,
+        )
 
     def response_handler(self, responses: List[Response]):
         """used to handle a response. Should be overriden by inheriting classes"""
@@ -307,7 +320,7 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         raise SystemExit
 
     def handle_inbound_message(self, message: Request) -> bool:
-        """This function is used to handle inbound messages from other services. 
+        """This function is used to handle inbound messages from other services.
         It is intiated by the event loop.
 
         Args:
@@ -319,7 +332,7 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
 
         # TODO: discuss this with giu and see if we should move the to the action mapping system?
         if message.get_value("action") == "connection":
-            self.handle_connection(message.get_value("client"))
+            self.handle_connection(message.get_value("client"), message)
             return True
 
         elif message.get_value("action") == "disconnection":
@@ -340,8 +353,9 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
             resp.set_action("publish")
             resp.set_format("pickled")
             resp.set_id(command.get_id())
-            self.subject_send_request(resp, COMMAND_PROTOCOL, conf.get_value(
-                "service_id", "ServiceManager"))
+            self.subject_send_request(
+                resp, COMMAND_PROTOCOL, conf.get_value("service_id", "ServiceManager")
+            )
 
     def get_health(self):
         """used to get the health of the service."""
@@ -350,9 +364,10 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
             service_health.error_percentage = 0
             service_health.average_request_time = 0
         else:
-            service_health.error_percentage = self.total_errors/self.total_requests
-            service_health.average_request_time = \
-                self.total_request_processing_time/self.total_requests
+            service_health.error_percentage = self.total_errors / self.total_requests
+            service_health.average_request_time = (
+                self.total_request_processing_time / self.total_requests
+            )
         service_health.service_id = self.service_id
         service_health.status = self.calculate_health(service_health)
         service_health.timestamp = datetime.now()
@@ -366,7 +381,7 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
             return ServiceHealthCategory.OPERATIONAL
 
     def handle_exception(self, exception: Exception):
-        """This function is used to handle exceptions that occur in the service. 
+        """This function is used to handle exceptions that occur in the service.
         It is intiated by the event loop.
         """
         if isinstance(exception, SystemExit):
@@ -377,8 +392,13 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
             print("An exception occurred: " + str(exception))
             self.total_errors += 1
 
-    def start(self, object_factory: DefaultFactory, tracing_provider: TracingProvider, 
-              host: str = "", port: int = 0):
+    def start(
+        self,
+        object_factory: DefaultFactory,
+        tracing_provider: TracingProvider,
+        host: str = "",
+        port: int = 0,
+    ):
         """used to start the service and initialize the network if provided
 
         Args:
@@ -394,12 +414,12 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         self.initialize_connections(self.protocol)
 
         if self.network and host and port:
-            self.network.intialize_network(
-                host, port, service_desc=self.service_desc)
+            self.network.intialize_network(host, port, service_desc=self.service_desc)
 
         elif self.network:
             raise ValueError(
-                "network has been injected but host and port have not been provided")
+                "network has been injected but host and port have not been provided"
+            )
         self.status = ServiceStatus.RUNNING
         self.execute_main_loop()
 
@@ -408,7 +428,7 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         while self.status == ServiceStatus.RUNNING:
             try:
                 self.event_loop()
-            except Exception as ex: # pylint: disable=broad-except
+            except Exception as ex:  # pylint: disable=broad-except
                 self.handle_exception(ex)
         if self.status == ServiceStatus.STOPPED:
             exit(0)

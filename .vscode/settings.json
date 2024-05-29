@@ -8,9 +8,13 @@
         "emergencys",
         "opentelemetry"
     ],
-    "python.linting.pylintEnabled": true,
-    "python.linting.enabled": true,
     "githubPullRequests.ignoredPullRequestBranches": [
         "main"
-    ]
+    ],
+    "[python]": {
+        "diffEditor.ignoreTrimWhitespace": false,
+        "editor.formatOnType": true,
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "ms-python.black-formatter"
+    }
 }
