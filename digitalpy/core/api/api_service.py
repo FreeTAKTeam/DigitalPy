@@ -16,11 +16,10 @@ The `CONFIGURATION_SECTION` constant is also defined in this module, which is us
 """
 
 import importlib
-import os
 import pathlib
 import traceback
 from typing import List
-from digitalpy.core.domain.domain.network_client import NetworkClient
+import os
 
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.parsing.formatter import Formatter
@@ -54,6 +53,9 @@ class ApiService(DigitalPyService):
     for the service which are used to handle requests by the networks and define the output
     contexts and actions.
     """
+
+    # The path to the blueprints directory in this module
+    base_blueprints = pathlib.Path(pathlib.Path(__file__).parent, "blueprints")
 
     def __init__(self, service_id: str, subject_address: str, subject_port: int,  # pylint: disable=useless-super-delegation
                  subject_protocol: str, integration_manager_address: str,
@@ -135,6 +137,12 @@ class ApiService(DigitalPyService):
                     self.blueprint_import_base+"."+filename.strip(".py"))
 
                 # get the blueprint from the file
+                blueprints.append(blueprint_module.page)
+        # iterate through base blueprints
+        for filename in os.listdir(self.base_blueprints):
+            if filename.endswith(".py") and filename != "__init__.py":
+                blueprint_module = importlib.import_module(
+                    "digitalpy.core.api.blueprints."+filename.strip(".py"))
                 blueprints.append(blueprint_module.page)
         return blueprints
 
