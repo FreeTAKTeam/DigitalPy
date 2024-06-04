@@ -89,7 +89,8 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
 
     # TODO: there must be a better solution than passing the service description as a parameter but
     # for now it's necessary to be shared with the network so that the network can initialize the
-    # network clients with the service information
+    # network clients with the service information. A possible solution is to have the service
+    # initialize it's own description.
 
     def __init__(
         self,
