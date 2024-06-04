@@ -17,7 +17,7 @@ xmltodict="*"
 sqlalchemy="^2.0.30"
 
 [tool.poetry.extras]
-dev = ["pytest"]
+dev = ["pytest", "black"]
 
 [build-system]
 requires = ["poetry-core"]
