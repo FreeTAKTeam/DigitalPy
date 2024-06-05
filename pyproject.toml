@@ -9,7 +9,7 @@ packages = [
 include = ["digitalpy/**/*.json", "digitalpy/**/*.py", "digitalpy/**/*.ini", "digitalpy/**/*.conf"]
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.10"
 setuptools="*"
 rule-engine="*"
 pyzmq="*"
