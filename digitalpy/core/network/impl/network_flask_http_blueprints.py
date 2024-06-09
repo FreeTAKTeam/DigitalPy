@@ -77,10 +77,10 @@ class BlueprintCommunicator:
             bytes: the network id
         """
         if verify_jwt_in_request(optional=True) is None or get_jwt_identity() is None:
-            net_id = uuid.uuid4().bytes
-            new_jwt = create_access_token(net_id.decode("utf-16"))
+            net_id = str(uuid.uuid4())
+            new_jwt = create_access_token(net_id)
             g._iam_encoded_jwt = new_jwt
-            return net_id
+            return net_id.encode("utf-8")
         return get_jwt_identity().encode("utf-8")
 
     def _get_ctx(self) -> zmq.Context:
@@ -116,7 +116,7 @@ class BlueprintCommunicator:
         Returns:
             bytes: the topic of the message
         """
-        return str(message.get_id()).encode()
+        return str(message.get_id()).encode("utf-8")
 
     def _get_push_socket(self) -> zmq.Socket:
         """this method returns the push socket for the current thread
@@ -337,7 +337,7 @@ class FlaskHTTPNetworkBlueprints(NetworkSyncInterface):
         Returns:
             bytes: the topic of the message
         """
-        return str(message.get_id()).encode()
+        return str(message.get_id()).encode("utf-8")
 
     def receive_message_from_client(self, client: NetworkClient, blocking: TYPE_CHECKING = False) -> Request:
         """this method has not yet been implemented"""
