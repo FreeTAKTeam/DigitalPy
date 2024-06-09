@@ -139,7 +139,7 @@ class ApiService(DigitalPyService):
                 # get the blueprint from the file
                 blueprints.append(blueprint_module.page)
         # iterate through base blueprints
-        for filename in os.listdir(self.base_blueprints):
+        for filename in os.listdir(ApiService.base_blueprints):
             if filename.endswith(".py") and filename != "__init__.py":
                 blueprint_module = importlib.import_module(
                     "digitalpy.core.api.blueprints."+filename.strip(".py"))
