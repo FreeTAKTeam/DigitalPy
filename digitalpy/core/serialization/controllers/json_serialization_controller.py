@@ -147,7 +147,7 @@ class JSONSerializationController(Controller):
             self.handle_child(json_data, child, level)
         if level == 0:
             JSONSerializationController.serializing.remove(node.oid)
-            return json.dumps(json_data)
+            return json_data
         else:
             JSONSerializationController.serializing.remove(node.oid)
             return json_data
