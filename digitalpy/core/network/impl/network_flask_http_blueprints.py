@@ -237,7 +237,7 @@ class FlaskHTTPNetworkBlueprints(NetworkSyncInterface):
 
     def _start_app(self):
         """this method starts the flask app"""
-        self.app.run()
+        self.app.run(self.host, self.port, use_reloader=False, threaded=True)
 
     def service_connections(self, max_requests=1000) -> List[Request]:
         """this method returns the requests from the network
