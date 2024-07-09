@@ -1,11 +1,12 @@
 from datetime import datetime as dt
 from multiprocessing import Process
 from digitalpy.core.domain.node import Node
+from digitalpy.core.parsing.load_configuration import ModelConfiguration
 from digitalpy.core.service_management.domain.service_status import ServiceStatus
 
 class ServiceDescription(Node):
-    def __init__(self, node_type = "service_description", oid=None) -> None:
-        super().__init__(node_type, oid=oid)
+    def __init__(self, model_configuration=ModelConfiguration(), model={}, node_type = "service_description", oid=None) -> None:
+        super().__init__(model_configuration=model_configuration, model=model, node_type=node_type, oid=oid)
         # the pid of the service, changing depending on the status of the service
         self._pid: int = None  # type: ignore
         # the id of the service (must be unique), consistent throughout the lifetime of the service, this must be in the form, <component_name>.<service_name>

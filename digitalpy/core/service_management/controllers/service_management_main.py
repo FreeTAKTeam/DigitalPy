@@ -46,7 +46,7 @@ from digitalpy.core.digipy_configuration.configuration import Configuration
 from digitalpy.core.zmanager.response import Response
 from digitalpy.core.domain.domain.service_health import ServiceHealth
 from digitalpy.core.health.domain.service_health_category import ServiceHealthCategory
-
+from digitalpy.core.domain.domain_facade import Domain
 
 class ServiceManagementMain(DigitalPyService):
     """The Service Management component in DigitalPy is a core function designed 
@@ -232,6 +232,7 @@ class ServiceManagementMain(DigitalPyService):
     def initialize_service_description(self, service_configuration: dict, service_id: str) -> ServiceDescription:
         """This method is used to initialize a service description"""
         # construct the service description
+        #TODO: use domain to build this object instead of manual construction
         new_service_instance = ServiceDescription()
 
         # set the id of the service

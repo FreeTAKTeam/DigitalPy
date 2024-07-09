@@ -18,7 +18,6 @@ from digitalpy.core.IAM.persistence.system_user_groups import SystemUserGroups
 
 from digitalpy.core.component_management.impl.default_facade import DefaultFacade
 
-from .controllers.iam_group_controller import IAMGroupController
 from .controllers.iam_users_controller import IAMUsersController
 from .configuration.iam_constants import (
     ACTION_MAPPING_PATH,
@@ -76,21 +75,20 @@ class IAM(DefaultFacade):
             # the path for log files to be stored
             log_file_path=log_file_path
         )
-        # self.function_controller = IAMController()
-        self.persistence_controller = IAMPersistenceController(request, response, iam_action_mapper, configuration)
-        self.group_controller = IAMGroupController(
-            request, response, sync_action_mapper=iam_action_mapper, configuration=configuration)
+        # self.persistency_controller = IAMController()
+        self.persistency_controller = IAMPersistenceController(
+            request, response, iam_action_mapper, configuration)
         self.users_controller = IAMUsersController(
             request=request, response=response, action_mapper=iam_action_mapper, configuration=configuration)
         self.filter_controller = IAMFilterController(
-            request=request, 
-            response=response, 
-            sync_action_mapper=iam_action_mapper, 
-            configuration=configuration, 
-            iam_recipient_filter_strategy=iam_recipient_filter_strategy, 
+            request=request,
+            response=response,
+            sync_action_mapper=iam_action_mapper,
+            configuration=configuration,
+            iam_recipient_filter_strategy=iam_recipient_filter_strategy,
             iam_action_filter_strategy=iam_action_filter_strategy)
-        # self.group_permissions_controller = IAMController()
-        # self.system_user_controller = IAMController()
+        # self.persistency_controller = IAMController()
+        # self.persistency_controller = IAMController()
         self.functions = {}
         self.groups = {}
         self.group_permissions = {}
@@ -99,32 +97,22 @@ class IAM(DefaultFacade):
     def initialize(self, request, response):
         self.request = request
         self.response = response
-        # self.function_controller.initialize(request, response)
-        self.group_controller.initialize(request, response)
+        # self.persistency_controller.initialize(request, response)
+        self.persistency_controller.initialize(request, response)
         self.users_controller.initialize(request, response)
         self.filter_controller.initialize(request, response)
-        self.persistence_controller.initialize(request, response)
-        # self.group_permissions_controller.initialize(request, response)
-        # self.system_user_controller.initialize(request, response)
+        self.persistency_controller.initialize(request, response)
+        # self.persistency_controller.initialize(request, response)
+        # self.persistency_controller.initialize(request, response)
 
     def register(self, *args, **kwargs):
         super().register(*args, **kwargs)
-        self.persistence_controller.clear_users()
-        self.persistence_controller.create_group(
-            SystemGroup(
-                name=AUTHENTICATED_USERS,
-                description="The group of all authenticated users",
-                uid=str(uuid.uuid4())
-            )
-        )
-        self.persistence_controller.create_group(
-            SystemGroup(
-                name=UNAUTHENTICATED_USERS,
-                description="The group of all unauthenticated users",
-                uid=str(uuid.uuid4())
-            )
-        )
-        self.persistence_controller.create_default_system_user()
+        self.persistency_controller.clear_sessions()
+        self.persistency_controller.create_default_permissions()
+        self.persistency_controller.create_default_groups()
+        self.persistency_controller.create_admin_system_user()
+        self.persistency_controller.create_anonymous_system_user()
+        self.persistency_controller.ses.expunge_all()
 
     def execute(self, method):
         self.request.set_value("logger", self.logger)
@@ -141,61 +129,58 @@ class IAM(DefaultFacade):
             self.logger.debug(traceback.format_exc())
 
     def get_all_functions(self, **kwargs):
-        return self.function_controller.get_all_functions()
+        return self.persistency_controller.get_all_functions()
 
     def get_function_by_id(self, function_id, **kwargs):
-        return self.function_controller.get_function_by_id(function_id)
+        return self.persistency_controller.get_function_by_id(function_id)
 
     def create_function(self, function, **kwargs):
-        return self.function_controller.create_function(function)
+        return self.persistency_controller.create_function(function)
 
     def update_function(self, function_id, updated_function, **kwargs):
-        return self.function_controller.update_function(function_id, updated_function)
+        return self.persistency_controller.update_function(function_id, updated_function)
 
     def delete_function(self, function_id, **kwargs):
-        return self.function_controller.delete_function(function_id)
+        return self.persistency_controller.delete_function(function_id)
 
     def get_all_groups(self, **kwargs):
-        return self.group_controller.get_all_groups()
+        return self.persistency_controller.get_all_groups()
 
     def get_group_by_id(self, group_id, **kwargs):
-        return self.group_controller.get_group_by_id(group_id)
+        return self.persistency_controller.get_group_by_id(group_id)
 
     def get_group_by_name(self, group_name, *args, **kwargs):
-        return self.persistence_controller.get_group_by_name(group_name)
+        return self.persistency_controller.get_group_by_name(group_name)
 
     def create_group(self, group, **kwargs):
-        return self.group_controller.create_group(group)
+        return self.persistency_controller.create_group(group)
 
     def update_group(self, group_id, updated_group, **kwargs):
-        return self.group_controller.update_group(group_id, updated_group)
+        return self.persistency_controller.update_group(group_id, updated_group)
 
     def delete_group(self, group_id, **kwargs):
-        return self.group_controller.delete_group(group_id)
+        return self.persistency_controller.delete_group(group_id)
 
     def get_all_group_permissions(self, **kwargs):
-        return self.group_permissions_controller.get_all_group_permissions()
+        return self.persistency_controller.get_all_group_permissions()
 
     def get_group_permissions_by_id(self, group_permissions_id, **kwargs):
-        return self.group_permissions_controller.get_group_permissions_by_id(group_permissions_id)
-
-    def create_group_permission(self, group_permission, **kwargs):
-        return self.persistence_controller.create_group_permission(group_permission)
+        return self.persistency_controller.get_group_permissions_by_id(group_permissions_id)
 
     def update_group_permissions(self, group_permissions_id, updated_group_permissions, **kwargs):
-        return self.group_permissions_controller.update_group_permissions(group_permissions_id, updated_group_permissions)
+        return self.persistency_controller.update_group_permissions(group_permissions_id, updated_group_permissions)
 
     def delete_group_permissions(self, group_permissions_id, **kwargs):
-        return self.group_permissions_controller.delete_group_permissions(group_permissions_id)
+        return self.persistency_controller.delete_group_permissions(group_permissions_id)
 
     def get_all_system_users(self, **kwargs):
-        return self.system_user_controller.get_all_system_users()
+        return self.persistency_controller.get_all_system_users()
 
     def get_system_user_by_id(self, system_user_id, **kwargs):
-        return self.system_user_controller.get_system_user_by_id(system_user_id)
+        return self.persistency_controller.get_system_user_by_id(system_user_id)
 
     def create_system_user(self, system_user, **kwargs):
-        return self.system_user_controller.Createsystem_user(system_user)
+        return self.persistency_controller.Createsystem_user(system_user)
 
     def add_function(self, function, **kwargs):
         self.functions[function.uid] = function
@@ -203,14 +188,23 @@ class IAM(DefaultFacade):
     def get_function(self, uid, **kwargs):
         return self.functions.get(uid)
 
+    def get_user_by_cn(self, *args, **kwargs):
+        return self.users_controller.get_user_by_cn(*args, **kwargs)
+
+    def get_all_users(self, *args, **kwargs):
+        return self.persistency_controller.get_all_users(*args, **kwargs)
+
     def get_connections_by_id(self, *args, **kwargs):
         self.users_controller.get_connections_by_id(*args, **kwargs)
 
     def get_all_connections(self, *args, **kwargs):
         self.users_controller.get_all_connections(*args, **kwargs)
 
+    def get_session_by_uid(self, *args, **kwargs):
+        self.users_controller.get_session_by_uid(*args, **kwargs)
+
     def ValidateUsers(self, **kwargs):
-        self.group_controller.validate_users(**kwargs)
+        self.persistency_controller.validate_users(**kwargs)
 
     def validate_request(self, *args, **kwargs):
         self.users_controller.validate_request(*args, **kwargs)
@@ -218,12 +212,12 @@ class IAM(DefaultFacade):
     def create_permission(self, *args, **kwargs):
         """a wrapper to call the persistence controller
         """
-        self.persistence_controller.create_permission(*args, **kwargs)
-    
+        self.persistency_controller.create_permission(*args, **kwargs)
+
     def create_group_permission(self, *args, **kwargs):
         """a wrapper to call the persistence controller
         """
-        self.persistence_controller.create_group_permission(*args, **kwargs)
+        self.persistency_controller.create_group_permission(*args, **kwargs)
 
     def connection(self, *args, **kwargs):
         """a wrapper to call the users controller

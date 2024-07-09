@@ -37,14 +37,14 @@ class SystemUser(IAMBase):
 
     # relationships
     system_user_groups: Mapped[List['SystemUserGroups']] = relationship(
-        "SystemUserGroups", back_populates="system_users")
+        "SystemUserGroups", back_populates="system_user")
     
     users: Mapped['User'] = relationship("User", back_populates="system_user")
 
     api_calls: Mapped['ApiCalls'] = relationship("ApiCalls", back_populates="system_user")
 
-    contact_uid: Mapped[str] = mapped_column(ForeignKey(Contact.uid))
-    contact: Mapped['Contact'] = relationship("Contact", back_populates="system_user")
+    contact_uid: Mapped[Optional[str]] = mapped_column(ForeignKey(Contact.uid))
+    contact: Mapped[Optional['Contact']] = relationship("Contact", back_populates="system_user")
     
     def __repr__(self) -> str:
         return super().__repr__() + f"uid={self.uid}, name={self.name}, token={self.token}, \

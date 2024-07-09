@@ -2,6 +2,7 @@ from typing import Any, Dict, Union
 from digitalpy.core.main.controller import (
     Controller,
 )
+from digitalpy.core.domain.relationship import Relationship
 from digitalpy.core.domain.node import Node
 from digitalpy.core.parsing.load_configuration import ModelConfiguration as LoadConf
 from digitalpy.core.domain.domain_facade import Domain
@@ -10,17 +11,18 @@ import json
 
 
 class JSONSerializationController(Controller):
+    """The JSONSerializationController class is responsible for serializing and deserializing nodes to and from JSON strings"""
 
     # this is a class variable that is used to keep track of the nodes that are being serialized to prevent infinite recursion
     serializing = []
 
     def __init__(self, request, response, sync_action_mapper, configuration) -> None:
         JSONSerializationController.serializing = []
-        super().__init__(request, response, sync_action_mapper, configuration)
+        super().__init__(sync_action_mapper, request, response, configuration)
         self.domain_controller = Domain(
-            request, response, sync_action_mapper, configuration)
+            sync_action_mapper, request, response, configuration)
 
-    def deserialize(self, message: Union[bytes, dict], model_object: Node, *args, **kwargs):
+    def deserialize(self, message: Union[str, bytes, dict], model_object: Node, *args, **kwargs):
         """converts the provided xml string to a node
 
         Args:
@@ -28,9 +30,14 @@ class JSONSerializationController(Controller):
         """
         if isinstance(message, bytes):
             dictionary = json.loads(message)
+        elif isinstance(message, str):
+            dictionary = json.loads(message)
         else:
             dictionary = message
-        return self._deserialize(dictionary=dictionary, node=model_object)
+        deserialized_model_obj = self._deserialize(
+            dictionary=dictionary, node=model_object)
+        self.response.set_value("model_object", deserialized_model_obj)
+        return deserialized_model_obj
 
     def _deserialize(self, dictionary: dict, node: Node):
         """recursively serialize a single layer of the given dictionary
@@ -46,22 +53,39 @@ class JSONSerializationController(Controller):
         except Exception as ex:
             print(ex)
 
-    def add_value_to_node(self, key, value, node):
+    def add_value_to_node(self, key, value, node: Node):
         """add a value to a node object"""
 
-        if isinstance(value, dict) and isinstance(getattr(node, key, None), Node) or isinstance(getattr(node, key, None), list):
+        # handles the case in which the value is a dictionary and the node attribute is a node
+        if isinstance(value, dict) and (isinstance(getattr(node, key, None), Node) or isinstance(getattr(node, key, None), list)):
             self._deserialize(value, getattr(node, key))
 
-        elif isinstance(value, list) and isinstance(getattr(node, key, None), list):
-            self._deserialize(value[0], getattr(node, key)[0])
+        # handles the case in which the value is a dictionary and the node attribute is not yet initialized such as in the case of an optional
+        # attribute
+        elif isinstance(value, dict):
+            new_node = self.domain_controller.create_node(node._model_configuration,
+                                                          node._model_configuration.elements[
+                                                              node.__class__.__name__].relationships[key].target_class,
+                                                          extended_domain=node._model)
+            self._deserialize(value, new_node)
+            setattr(node, key, new_node)
 
-            for i in range(1, len(value)):
-                new_node = self.domain_controller.create_node(LoadConf(), key)
+        # handles the case in which the value is a list and the node attribute is a list
+        elif isinstance(value, list) and isinstance(getattr(node, key, None), list) and isinstance(type(node).__dict__[key], Relationship):
+            # add all mandatory nodes
+            for i in range(len(getattr(node, key))):
+                self._deserialize(value[i], getattr(node, key)[i])
+
+            # add all optional nodes
+            for i in range(len(getattr(node, key)), len(value)):
+                new_node = self.domain_controller.create_node(node._model_configuration,
+                                                              node._model_configuration.elements[
+                                                                  node.__class__.__name__].relationships[key].target_class,
+                                                              extended_domain=node._model)
                 self._deserialize(value[i], new_node)
+                setattr(node, key, new_node)
 
-        elif isinstance(getattr(node, key, None), list):
-            self._deserialize(value, getattr(node, key)[0])
-
+        # handles the generic case in which the value is not a dictionary or a list
         else:
             setattr(node, key, value)
 
@@ -123,7 +147,7 @@ class JSONSerializationController(Controller):
             self.handle_child(json_data, child, level)
         if level == 0:
             JSONSerializationController.serializing.remove(node.oid)
-            return json.dumps(json_data)
+            return json_data
         else:
             JSONSerializationController.serializing.remove(node.oid)
             return json_data

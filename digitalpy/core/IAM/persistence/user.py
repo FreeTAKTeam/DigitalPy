@@ -23,15 +23,12 @@ class User(IAMBase):
     uid: Mapped[str] = mapped_column(primary_key=True)
     callsign: Mapped[Optional[str]]
     CN: Mapped[Optional[str]]
-    IP: Mapped[Optional[str]]
-    protocol: Mapped[Optional[str]]
-    service_id: Mapped[Optional[str]]
     status: Mapped[str]
     # relationships
     system_user_uid: Mapped[str] = mapped_column(ForeignKey("SystemUser.uid"))
     system_user: Mapped['SystemUser'] = relationship('SystemUser', back_populates='users')
 
-    session_contacts: Mapped[List['SessionContact']] = relationship('SessionContact', back_populates='users')
+    session_contacts: Mapped[List['SessionContact']] = relationship('SessionContact', back_populates='user')
 
     def __repr__(self) -> str:
-        return super().__repr__() + f"uid={self.uid}, callsign={self.callsign}, CN={self.CN}, IP={self.IP}, service_id={self.service_id}"
+        return super().__repr__() + f"uid={self.uid}, callsign={self.callsign}, CN={self.CN}"

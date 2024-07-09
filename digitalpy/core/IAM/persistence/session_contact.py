@@ -21,10 +21,10 @@ class SessionContact(IAMBase):
     
     # relationships
     session_uid: Mapped[str] = mapped_column(ForeignKey(Session.uid))
-    sessions: Mapped["Session"] = relationship("Session", back_populates="session_contacts")
+    session: Mapped["Session"] = relationship("Session", back_populates="session_contacts")
 
     contact_uid: Mapped[str] = mapped_column(ForeignKey(User.uid))
-    users: Mapped["User"] = relationship("User", back_populates="session_contacts")
+    user: Mapped["User"] = relationship("User", back_populates="session_contacts")
 
     def __repr__(self) -> str:
         return super().__repr__() + f"uid={self.uid}, session_uid={self.session_uid}, contact_uid={self.contact_uid}"
