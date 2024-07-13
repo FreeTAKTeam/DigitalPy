@@ -153,3 +153,15 @@ class Component(Node):
         if not isinstance(UUID, str):
             raise TypeError("'UUID' must be of type str")
         self._UUID= UUID
+
+    @property
+    def name(self) -> 'str':
+        """The name of the component."""
+        return self._name
+
+    @name.setter
+    def name(self, name: 'str'):
+        name = str(name)
+        if not isinstance(name, str):
+            raise TypeError("'name' must be of type str")
+        self._name= name

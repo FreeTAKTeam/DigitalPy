@@ -51,6 +51,10 @@
 				"UUID":
 				{
 					"type": "string"
+				},
+				"name":
+				{
+					"type": "string"
 				}
 			}
 		}

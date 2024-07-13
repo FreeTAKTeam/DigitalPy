@@ -71,6 +71,7 @@ class Component_ManagementPersistenceController(Controller):
         db_component.URL = component.URL
         db_component.Version = component.Version
         db_component.UUID = component.UUID
+        db_component.name = component.name
         self.ses.add(db_component)
         self.ses.commit()
         return db_component
@@ -83,7 +84,7 @@ class Component_ManagementPersistenceController(Controller):
         self.ses.delete(component_db)
         self.ses.commit()
 
-    def get_component(self, import_root:Union['str', None] = None, installation_path:Union['str', None] = None, author:Union['str', None] = None, author_email:Union['str', None] = None, description:Union['str', None] = None, License:Union['str', None] = None, repo:Union['str', None] = None, requiredAlfaVersion:Union['str', None] = None, URL:Union['str', None] = None, Version:Union['str', None] = None, UUID:Union['str', None] = None, oid: 'str' = None, *args, **kwargs) -> List[DBComponent]:
+    def get_component(self, import_root:Union['str', None] = None, installation_path:Union['str', None] = None, author:Union['str', None] = None, author_email:Union['str', None] = None, description:Union['str', None] = None, License:Union['str', None] = None, repo:Union['str', None] = None, requiredAlfaVersion:Union['str', None] = None, URL:Union['str', None] = None, Version:Union['str', None] = None, UUID:Union['str', None] = None, name:Union['str', None] = None, oid: 'str' = None, *args, **kwargs) -> List[DBComponent]:
 
         query = self.ses.query(DBComponent)
 
@@ -111,6 +112,8 @@ class Component_ManagementPersistenceController(Controller):
             query = query.filter(DBComponent.Version == Version)
         if UUID != None:
             query = query.filter(DBComponent.UUID == UUID)
+        if name != None:
+            query = query.filter(DBComponent.name == name)
 
         return query.all()
 
@@ -133,6 +136,7 @@ class Component_ManagementPersistenceController(Controller):
         component_db.URL = component.URL
         component_db.Version = component.Version
         component_db.UUID = component.UUID
+        component_db.name = component.name
         self.ses.commit()
 
     # Begin methods for component table

@@ -24,5 +24,6 @@ class Component(Component_ManagementBase):
     URL: Mapped[str]
     Version: Mapped[str]
     UUID: Mapped[str]
+    name: Mapped[str]
 
 
