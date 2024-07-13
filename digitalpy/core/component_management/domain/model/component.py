@@ -20,6 +20,7 @@ class Component(Node):
         self._URL: 'str' = None
         self._Version: 'str' = None
         self._UUID: 'str' = None
+        self._name: 'str' = None
 
     @property
     def import_root(self) -> 'str':

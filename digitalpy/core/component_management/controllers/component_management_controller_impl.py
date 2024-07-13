@@ -1,32 +1,14 @@
 from typing import TYPE_CHECKING
-import os
-from pathlib import PurePath
-import importlib
 
-import pkg_resources
 
-from digitalpy.core.component_management.configuration.component_management_constants import (
-    DIGITALPY,
-    MANIFEST,
-    NAME,
-    REQUIRED_ALFA_VERSION,
-    VERSION,
-    DEPENDENCIES,
-    VERSION_DELIMITER,
-    ID,
-    DEPENDENCY_DELIMITER,
-)
+from digitalpy.core.component_management.controllers.component_discovery_controller import ComponentDiscoveryController
 from digitalpy.core.component_management.controllers.component_installation_controller import (
     ComponentInstallationController,
 )
 from digitalpy.core.component_management.controllers.component_management_controller import (
     Component_ManagementController,
 )
-from digitalpy.core.digipy_configuration.impl.inifile_configuration import (
-    InifileConfiguration,
-)
 from digitalpy.core.main.object_factory import ObjectFactory
-from digitalpy.core.serialization.configuration.serialization_constants import Protocols
 
 # import builders
 from digitalpy.core.component_management.domain.builder.component_builder import (
@@ -73,6 +55,9 @@ class Component_ManagementControllerImpl(Component_ManagementController):
         self.component_installation_controller = ComponentInstallationController(
             request, response, sync_action_mapper, configuration
         )
+        self.component_discovery_controller = ComponentDiscoveryController(
+            request, response, sync_action_mapper, configuration
+        )
 
     def initialize(self, request: "Request", response: "Response"):
         """This function is used to initialize the controller.
@@ -81,16 +66,17 @@ class Component_ManagementControllerImpl(Component_ManagementController):
         self.Error_builder.initialize(request, response)
         self.Component_Management_persistence_controller.initialize(request, response)
         self.component_installation_controller.initialize(request, response)
+        self.component_discovery_controller.initialize(request, response)
         return super().initialize(request, response)
 
     def GETComponentStatus(
-        self, ID: "str", client: "NetworkClient", config_loader, *args, **kwargs
+        self, ID: str, client: "NetworkClient", config_loader, *args, **kwargs
     ):  # pylint: disable=unused-argument
         """returns the status of the component or the last error"""
         return None
 
     def POSTComponentRegister(
-        self, ID: "str", client: "NetworkClient", config_loader, *args, **kwargs
+        self, ID: str, client: "NetworkClient", config_loader, *args, **kwargs
     ) -> "Component":  # pylint: disable=unused-argument
         """register a component"""
         components = self.Component_Management_persistence_controller.get_component(
@@ -145,3 +131,20 @@ class Component_ManagementControllerImpl(Component_ManagementController):
 
         # publish the records
         self.response.set_action("publish")
+
+    def GETComponentDiscovery(
+        self,
+        Directory: "str",
+        import_root: "str",
+        client: "NetworkClient",
+        config_loader,
+        *args,
+        **kwargs,
+    ) -> "Component":  # pylint: disable=unused-argument
+        """discover a list of components, other than list components, returns also components that are not activated or installed"""
+        components: list["Component"] = []
+        for component in self.component_discovery_controller.discover_components(Directory, config_loader):
+            components.append(component)
+
+        self.response.set_action("publish")
+        self.response.set_value("message", components)

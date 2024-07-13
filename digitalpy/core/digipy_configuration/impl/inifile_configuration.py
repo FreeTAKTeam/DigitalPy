@@ -1,6 +1,7 @@
+from io import StringIO, TextIOBase
 import os
 import re
-from typing import Any
+from typing import Any, Union
 
 from digitalpy.core.digipy_configuration.configuration import Configuration
 import collections.abc
@@ -17,15 +18,21 @@ class InifileConfiguration(Configuration):
         self.cache_path = cache_path
         self.config_array = {}
         self.contained_files = []
+        self.lookup_table = {}
 
     # TODO: implement this method
     def get_configuration(self):
         raise NotImplementedError("get_configuration is not yet implemented")
 
-    def add_configuration(self, name, process_values=True):
-        """@see Configuration::add_configuration() Name is the ini file to be parsed
-        (relative to config_path)
-           @note ini files referenced in section 'config' key 'include' are parsed
+    def add_configuration(self, name: Union[str, StringIO], process_values=True) -> None:
+        """
+        Args:
+            name (str): the name of the configuration file to be added
+
+        Raises:
+            ValueError: raised if the file does not exist
+
+        @note ini files referenced in section 'config' key 'include' are parsed
         afterwards
         """
         filename = self.config_path + name
@@ -37,6 +44,7 @@ class InifileConfiguration(Configuration):
         else:
             last_file = ""
 
+        # if the last file is the same as the current file and the last file is not newer than the serialized data
         if (
             num_parsed_files > 0
             and last_file is filename
@@ -47,7 +55,7 @@ class InifileConfiguration(Configuration):
             return
 
         if not os.path.exists(filename):
-            raise ValueError("Could not find configuration file "+str(filename))
+            raise ValueError("Could not find configuration file " + str(filename))
 
         self.__added_files.append(filename)
         result = self.process_file(filename, self.config_array, self.contained_files)
@@ -68,10 +76,21 @@ class InifileConfiguration(Configuration):
         """Notify configuration change listeners"""
         raise NotImplementedError("this method has not yet been implemented")
 
-    def process_file(self, filename, config_array={}, parsed_files=[]):
+    def process_file(
+        self,
+        filename,
+        config_array: Union[dict, None] = None,
+        parsed_files: Union[list, None] = None,
+    ) -> dict:
         """Process the given file recursively"""
+        self.lookup_table = {}
+        if config_array is None:
+            config_array = {}
+        if parsed_files is None:
+            parsed_files = []
         if filename not in parsed_files:
             parsed_files.append(filename)
+            # parse the file into a dictionary
             content = self.parse_ini_file(filename)
             # merge the config sections giving the new content precedence over the config array
             merged = self._merge_dictionaries(config_array, content)
@@ -79,7 +98,7 @@ class InifileConfiguration(Configuration):
 
     def _merge_dictionaries(self, dict_one, dict_two):
         """merge two dictionaries, recursively
-        
+
         Args:
             dict_one (dict): the subject dictionary
             dict_two (dict): the primary dictionary which takes precedence over dict_one
@@ -96,51 +115,83 @@ class InifileConfiguration(Configuration):
         section_matches = None
         re.match("/(?:^|,)(config)(?:,|$)/i", dictionary.keys().join(","))
 
-    def parse_ini_file(self, filename):
+    def parse_ini_file(self, filename: str):
         """Load in the ini file specified in filename, and return the settings in a
         multidimensional array, with the section names and settings included. All
         section names and keys are lowercased.
-        @param $filename The filename of the ini file to parse
-        @return An associative array containing the data
-        @author: Sebastien Cevey <seb@cine_7.net> Original Code base: <info@megaman.nl> Added comment handling/Removed process sections flag: Ingo Herwig
+
+        Args:
+            filename (str): the path to the ini file to be parsed
+
+        Raises:
+            FileExistsError: raised if the file does not exist
+
+        Returns:
+            dict: an associative array containing the data
+
+        Author:
+            Sebastien Cevey <seb@cine_7.net> Original Code base: <info@megaman.nl> Added comment handling/Removed process sections flag: Ingo Herwig
         """
         if not os.path.exists(filename):
             raise FileExistsError
         config_array = {}
         section_name = ""
-        with open(filename) as f:
-            lines = f.readlines()
-            for line in lines:
-                try:
-                    line = line.strip()
-                    if line == "" or line[0] == ";":
-                        continue
-                    if line.startswith("[") and line.endswith("]"):
-                        section_name = line[1 : len(line) - 1]
-                        config_array[section_name] = {}
-                    else:
-                        parts = line.split("=", 1)
-                        key = parts[0].strip()
-                        value = parts[1].strip()
-                        config_array[section_name][key] = value
-                except Exception as ex:
-                    raise ValueError(f"line: {line} in file: {filename} is invalid with error: {str(ex)}") from ex
+        with open(filename, "r", encoding="utf-8") as f:
+            try:
+                self.parse_ini_stream(config_array, f)
+            except Exception as ex:
+                raise ValueError(
+                        f"{filename} is invalid with error: {str(ex)}"
+                    ) from ex
 
         return config_array
+
+    def parse_ini_stream(self, config_array: dict, stream: TextIOBase):
+        """Parse the ini file stream and populate the config_array.
+
+        Args:
+            config_array (dict): the configuration array to be populated
+            stream (TextIOBase): the stream to be parsed
+        """
+        lines = stream.readlines()
+        for line in lines:
+            line = line.strip()
+                # ignore comments and empty lines
+            if line == "" or line[0] == ";":
+                continue
+                # check for section
+            if line.startswith("[") and line.endswith("]"):
+                section_name = line[1 : len(line) - 1]
+                config_array[section_name] = {}
+                # check for key value pair
+            else:
+                parts = line.split("=", 1)
+                key = parts[0].strip()
+                value = parts[1].strip()
+                config_array[section_name][key] = value
+            
 
     def get_config_path(self):
         """Get the file system path to the configuration files."""
         return self.config_path
 
     def get_sections(self):
+        """Get the sections in the configuration."""
         return self.config_array.keys()
 
-    def has_section(self, section):
+    def has_section(self, section: str) -> bool:
+        """Check if a section exists in the configuration.
+        
+        Args:
+            section (str): the name of the section to be checked
+
+        Returns:
+            bool: True if the section exists, False otherwise
+        """
         return self._lookup(section) != None
 
     def _build_lookup_table(self):
         """Build the internal lookup table"""
-        self.lookup_table = {}
         for section, entry in self.config_array.items():
             lookup_section_key = section.lower() + ":"
             self.lookup_table[lookup_section_key] = [section]
@@ -149,7 +200,10 @@ class InifileConfiguration(Configuration):
                     lookup_key = lookup_section_key.lower() + key.lower()
                     self.lookup_table[lookup_key] = [section, key]
             except Exception as ex:
-                raise ValueError(f"section: {section} is invalid with error: {str(ex)}") from ex
+                raise ValueError(
+                    f"section: {section} is invalid with error: {str(ex)}"
+                ) from ex
+
     def has_value(self, key, section):
         return self._lookup(section, key) != None
 
@@ -197,11 +251,20 @@ class InifileConfiguration(Configuration):
                     if not re.match("/^__/", key)
                 }
 
-    def _lookup(self, section, key=""):
-        """Lookup section and key."""
+    def _lookup(self, section: str, key: str="") -> Union[list, None]:
+        """Lookup section and key.
+        
+        Args:
+            section (str): the name of the section to be looked up
+            key (str, optional): the name of the key to be looked up. Defaults to "".
+
+        Returns:
+            list: a list containing the section and key if found, None otherwise
+        """
         lookup_key = section.lower() + ":" + key.lower()
         if lookup_key in self.lookup_table:
             return self.lookup_table[lookup_key]
+        #TODO: instead of returning None, should return an empty list
         return None
 
     def build_lookup_table(self) -> Any:

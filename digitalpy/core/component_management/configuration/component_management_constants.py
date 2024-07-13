@@ -31,6 +31,7 @@ DB_PATH = "sqlite:///" + str(CURRENT_COMPONENT_PATH / "persistence/Component_Man
 COMPONENT = "Component"
 ERROR = "Error"
 MANIFEST = "manifest"
+RELATIVE_MANIFEST_PATH = "configuration/manifest.ini"
 DIGITALPY = "digitalpy"
 REQUIRED_ALFA_VERSION = "requiredAlfaVersion"
 NAME = "name"

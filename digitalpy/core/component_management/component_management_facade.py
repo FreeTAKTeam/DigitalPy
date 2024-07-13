@@ -5,7 +5,6 @@ from digitalpy.core.zmanager.impl.async_action_mapper import AsyncActionMapper
 from digitalpy.core.zmanager.impl.default_action_mapper import DefaultActionMapper
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
-from .controllers.component_management_controller import Component_ManagementController
 from .configuration.component_management_constants import (
     ACTION_MAPPING_PATH,
     LOGGING_CONFIGURATION_PATH,
