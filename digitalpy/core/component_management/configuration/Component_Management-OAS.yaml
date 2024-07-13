@@ -1,0 +1,327 @@
+openapi: 3.0.1
+info:
+  title: Component Management
+  version: '23.0.0'
+  description: >-
+    This core component contains functions related to Management of DigitalPy Components, this includes  Discovery, Registration,  installation and de-installation.
+    Discovery exposes an end point in the rest API that goes trough all the folder in the component and search for non installed ones.
+    Also describes the interfaces required to be implemented by components.
+    Connects to service management to register services on behalf of the component 
+  contact:
+    name: FreeTAKTeam
+    url: github.com
+    email: FreeTAKTeam@gmail.com
+  license:
+    name: EPL
+paths:
+  /Component:
+    delete:
+      tags:
+       - Component
+      x-scope: public
+      description: >-
+        physically remove the component from the disk
+      summary: TODO
+      operationId: DeinstallComponent
+      parameters:
+        - $ref: '#/components/parameters/ID'
+      responses:
+        '200':
+          $ref: '#/components/responses/200Component_delete'
+    post:
+      tags:
+       - Component
+      x-scope: public
+      description: >-
+      summary: TODO
+      operationId: InstallComponent
+      requestBody:
+        $ref: '#/components/requestBodies/Component'
+      responses:
+        '200':
+          $ref: '#/components/responses/200Component_post'
+    get:
+      tags:
+       - Component
+      x-scope: public
+      description: >-
+        list all the installed components only. DIscovered components will also list non installed or activated ones
+      summary: TODO
+      operationId: ListComponents
+      responses:
+        '200':
+          $ref: '#/components/responses/200Component_get'
+    patch:
+      tags:
+       - Component
+      x-scope: public
+      description: >-
+        update an existing component
+      summary: TODO
+      operationId: UpdateComponent
+      requestBody:
+        $ref: '#/components/requestBodies/Component'
+      responses:
+        '200':
+          $ref: '#/components/responses/200Component_patch'
+  /Component/{id}:
+    get:
+      tags:
+       - Component
+      x-scope: public
+      description: >-
+        get component information
+      summary: TODO
+      operationId: RetreiveComponent
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          $ref: '#/components/responses/200Component_post'
+  /InstallAllComponents:
+    post:
+      tags:
+       - Component
+      x-scope: package
+      description: >-
+        install all components in the directory with the given import root, this will typically
+        be used for the system startup only
+      summary: install all components that are not installed yet
+      operationId: InstallAllComponents
+      parameters:
+        - $ref: '#/components/parameters/Directory'
+        - $ref: '#/components/parameters/import_root'
+      responses:
+        '200':
+          $ref: '#/components/responses/200'
+  /ComponentStatus:
+    get:
+      x-scope: package
+      tags:
+       - Component
+      description: >-
+        returns the status of the component or the last error
+      summary: returns the status of the component or the last error
+      operationId: ComponentStatus
+      parameters:
+        - $ref: '#/components/parameters/ID'
+      responses:
+        '200':
+          $ref: '#/components/responses/200'
+  /ComponentRegister:
+    post:
+      x-scope: package
+      tags:
+       - Component
+      description: >-
+        register a component
+      summary: register a component
+      operationId: RegisterComponent
+      parameters:
+        - $ref: '#/components/parameters/ID'
+      responses:
+        '200':
+          $ref: '#/components/responses/200Component_post'
+  /ComponentDiscovery:
+    get:
+      x-scope: package
+      tags:
+       - Component
+      description: >-
+        discover a list of components, other than list components, returns also components that are not activated or installed
+      summary: discover a list of components, other than list components, returns also components that are not activated or installed
+      operationId: DiscoverComponent
+      parameters:
+        - $ref: '#/components/parameters/Directory'
+        - $ref: '#/components/parameters/import_root'
+      responses:
+        '200':
+          $ref: '#/components/responses/200Component_get'
+components:
+  schemas:
+    Component:
+      allOf:
+        - type: object
+          properties:
+            import_root:
+              type: string
+              description: >-
+                The root from which the components are imported
+            installation_path:
+              type: string
+              description: >-
+                The path where the component is installed.
+            author:
+              type: string
+              description: >-
+                The name of the author of this component.
+            author_email:
+              type: string
+              description: >-
+                The email address of the author.
+            description:
+              type: string
+              description: >-
+                A detailed description of the component.
+            License:
+              type: string
+              description: >-
+                the type of license for this component
+            repo:
+              type: string
+              description: >-
+                the location of the repository for the component
+            requiredAlfaVersion:
+              type: string
+              description: >-
+                the required minimal version of the {Aphrodites Framework (e.g. DigitalPy) that is need to support the component
+            URL:
+              type: string
+              description: >-
+                universal Location where the component need to be installed. If empty will be installed inside the current system
+            Version:
+              type: string
+              description: >-
+                The version of the component, following semantic versioning
+            UUID:
+              type: string
+              description: >-
+                A unique identifier for the component e.g. D3BCB981-6D28-4664-905E-AF1C7B871A6D
+    Error:
+      description: Error
+  parameters:
+    ID:
+      name: id
+      required: true
+      description: >-
+        TODO
+      schema:
+        type: string
+      in: query
+    id:
+      name: id
+      required: true
+      description: >-
+        TODO
+      schema:
+        type: string
+      in: path
+    Directory:
+      name: Directory
+      required: true
+      description: >-
+        this is the directory where the components are located
+      schema:
+        type: string
+      in: query
+    import_root:
+      name: import_root
+      required: true
+      description: >-
+        this is the root from which the components are imported
+      schema:
+        type: string
+      in: query
+
+  responses:
+    200Component_delete:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Component'
+    200Component_post:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Component'
+    200Component_get:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Component'
+    200Component_patch:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Component'
+    '200':
+      description: OK
+    '201':
+      description: Added Object
+    '202':
+      description: Accepted
+    '204':
+      description: Deleted
+    '400':
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '405':
+      description: Method Not allowed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '409':
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '501':
+      description: Not Implemented
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '503':
+      description: Service Unavailable
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    'Error':
+      description: Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  requestBodies:
+    Component:
+      description: >-
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Component'
+      required: true
+

@@ -25,6 +25,7 @@ from digitalpy.core.telemetry.tracer import Tracer
 from digitalpy.core.telemetry.tracing_provider import TracingProvider
 from digitalpy.core.zmanager.response import Response
 from digitalpy.core.service_management.domain.service_manager_operations import ServiceManagerOperations
+from digitalpy.core.component_management.component_management_facade import ComponentManagement
 
 from digitalpy.core.zmanager.subject import Subject
 from digitalpy.core.zmanager.impl.zmq_pusher import ZMQPusher
@@ -36,8 +37,11 @@ from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.service_management.controllers.service_management_main import ServiceManagementMain
 from digitalpy.core.service_management.digitalpy_service import COMMAND_PROTOCOL, COMMAND_ACTION
 
-if TYPE_CHECKING:
-    from digitalpy.core.domain.domain.service_health import ServiceHealth
+from digitalpy.core.domain.domain_facade import Domain
+from digitalpy.core.IAM.IAM_facade import IAM
+from digitalpy.core.serialization.serialization_facade import Serialization
+from digitalpy.core.domain.domain.service_health import ServiceHealth
+from digitalpy.core.service_management.service_management_facade import ServiceManagement
 
 
 class DigitalPy(ZmqSubscriber, ZMQPusher):
@@ -101,25 +105,34 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
             "DigitalPy.Main")
 
     def register_components(self):
-        """register all components of the application
+        """register digitalpy core components, these must be registered before any other components
+        furthermore, these are registered without the use of component management to avoid circular
+        dependencies. This method of registration also assumes that the components are defined in the
+        digitalpy/core/action_mapping.ini file and are located in the digitalpy/core folder. Any inheriting
+        classes should override this method to register their own components using the component management
+        facade. and should call super().register_components() to ensure that the core components are registered.
         """
-        # register base digitalpy components
-        digipy_components = ComponentRegistrationHandler.discover_components(
-            component_folder_path=pathlib.PurePath(
-                str(
-                    pathlib.PurePath(
-                        os.path.abspath(__file__)
-                    ).parent.parent
-                ),
-            )
-        )
+        config = ObjectFactory.get_instance("Configuration")
 
-        for digipy_component in digipy_components:
-            ComponentRegistrationHandler.register_component(
-                digipy_component,  # type: ignore
-                "digitalpy.core",
-                self.configuration,  # type: ignore
-            )
+        ComponentManagement(
+            None, None, None, None
+        ).register(config)
+
+        Domain(
+            None, None, None, None
+        ).register(config)
+
+        IAM(
+            None, None, None, None
+        ).register(config)
+
+        Serialization(
+            None, None, None, None
+        ).register(config)
+
+        ServiceManagement(
+            None, None, None, None
+        ).register(config)
 
     def test_event_loop(self):
         """ the main event loop of the application should be called within a continuous while loop

@@ -274,6 +274,19 @@ class DefaultFactory(Factory):
         tmp_dict = self.__dict__.copy()
         if "modules" in tmp_dict:
             del tmp_dict["modules"]
+        # store the necessary instances in the instance dictionary but delete all others
+        # this is to prevent serialization issues as some instances may reference an unserializable object
+        if "instances" in tmp_dict:
+            # the internal action mappers of all components are necessary to initialize the component
+            # as it is a dependency of the component which must be injected. In other words, without
+            # the action mapper, trying to initialize the component will result in an infinite loop
+            # with the component trying to initialize the action mapper and the action mapper trying to
+            # initialize the component.
+            for key in list(tmp_dict["instances"].keys()):
+                if not key.endswith("actionmapper"):
+                    del tmp_dict["instances"][key]
+            tmp_dict["instances"]["configuration"] = self.configuration
+            tmp_dict["instances"]["factory"] = self
         return tmp_dict
 
     def __setstate__(self, state: dict) -> None:
