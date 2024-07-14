@@ -1,5 +1,8 @@
 # DigitalPy
-A framework to support digital engineering in the Python language
+<div style="float: left; margin-right: 10px;">
+  <img src="https://github.com/user-attachments/assets/7a99812d-b018-4eea-a681-9712f2f54edf" alt="DigitalPyLogo" width="150"/>
+</div> A framework to support digital engineering in the Python language
+
 
 ## introduction
 The [Digital Architecture Framework](https://github.com/FreeTAKTeam/DigitalArchitectureFramework) (DAF) Metamodel is a modeling language which defines the notation for all elements used in the different stages of an organization life cycle to support the concept of Digital Engineering (DE), from the requirement to the application. DAF is intended to be used within a DE scope.
