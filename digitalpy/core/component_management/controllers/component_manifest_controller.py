@@ -89,7 +89,7 @@ class ComponentManifestController(Controller):
         return list(result.values())[0]
     
     def validate_manifest(
-        self, manifest: InifileConfiguration, component_name: "str"
+        self, manifest: dict, component_name: "str"
     ) -> "bool":
         """this method is used to validate a component's manifest
 
@@ -102,22 +102,11 @@ class ComponentManifestController(Controller):
             bool: whether the manifest is valid
         """
 
-        try:
-            # get the manifest section from the configuration
-            section = manifest.get_section(component_name + MANIFEST, include_meta=True)
-        except ValueError as exc:
-
-            raise ValueError(
-                f"manifest section missing, requires name {component_name+MANIFEST} please add the\
-                following section to the manifest [{component_name+MANIFEST}], for more information\
-                on component manifests please refer to the digitalpy documentation"
-            ) from exc
-
         # validate the component name matches the name specified in the manifest
-        if component_name != section[NAME]:
+        if component_name != manifest[NAME]:
             return False
 
-        if not self.check_version(section[REQUIRED_ALFA_VERSION]):
+        if not self.check_version(manifest[REQUIRED_ALFA_VERSION]):
             return False
 
         return True

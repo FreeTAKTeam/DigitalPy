@@ -1,13 +1,20 @@
-from typing import TYPE_CHECKING
+from pathlib import PurePath
+from typing import TYPE_CHECKING, Union
 
-
-from digitalpy.core.component_management.controllers.component_discovery_controller import ComponentDiscoveryController
+from digitalpy.core.serialization.configuration.serialization_constants import Protocols
+from digitalpy.core.component_management.controllers.component_discovery_controller import (
+    ComponentDiscoveryController,
+)
 from digitalpy.core.component_management.controllers.component_installation_controller import (
     ComponentInstallationController,
 )
 from digitalpy.core.component_management.controllers.component_management_controller import (
     Component_ManagementController,
 )
+from digitalpy.core.component_management.controllers.component_pull_controller import (
+    ComponentPullController,
+)
+from digitalpy.core.domain.domain.network_client import NetworkClient
 from digitalpy.core.main.object_factory import ObjectFactory
 
 # import builders
@@ -58,6 +65,9 @@ class Component_ManagementControllerImpl(Component_ManagementController):
         self.component_discovery_controller = ComponentDiscoveryController(
             request, response, sync_action_mapper, configuration
         )
+        self.component_pull_controller = ComponentPullController(
+            request, response, sync_action_mapper, configuration
+        )
 
     def initialize(self, request: "Request", response: "Response"):
         """This function is used to initialize the controller.
@@ -75,6 +85,35 @@ class Component_ManagementControllerImpl(Component_ManagementController):
         """returns the status of the component or the last error"""
         return None
 
+    def POSTComponent(
+        self, body: str, client: NetworkClient, config_loader, *args, **kwargs
+    ):
+        """install a component which has been discovered. This endpoint assumes that the component
+        has been discovered and is ready to be installed, it also assumes that the component is
+        in the current discovery directory.
+
+        """
+        # initialize Component builder
+        self.Component_builder.build_empty_object(config_loader=config_loader)
+        self.Component_builder.add_object_data(
+            mapped_object=body, protocol=Protocols.JSON
+        )
+        domain_obj = self.Component_builder.get_result()
+
+        # install the component
+        component = self.component_installation_controller.install_component(
+            domain_obj, config_loader
+        )
+
+        # return the records
+        self.response.set_value("message", [component])
+
+        # set the target
+        self.response.set_value("recipients", [str(client.get_oid())])
+
+        # publish the records
+        self.response.set_action("publish")
+
     def POSTComponentRegister(
         self, ID: str, client: "NetworkClient", config_loader, *args, **kwargs
     ) -> "Component":  # pylint: disable=unused-argument
@@ -88,7 +127,7 @@ class Component_ManagementControllerImpl(Component_ManagementController):
 
         # instantiate the facade
         facade = self.component_installation_controller.retrieve_facade(
-            component.installation_path, component.import_root
+            component.installation_path
         )
 
         # register the configuration
@@ -105,46 +144,63 @@ class Component_ManagementControllerImpl(Component_ManagementController):
 
     def POSTInstallAllComponents(
         self,
-        Directory: "str",
-        import_root: "str",
         config_loader,
+        client: Union["NetworkClient", None] = None,
         *args,
         **kwargs,
     ):  # pylint: disable=unused-argument
-        """this method is used to discover zipped components in a given directory
+        """this method is used to discover zipped components in a given directory.
 
-        Args:
-            component_folder_path (str): the path in which to search for components. the searchable
-            folder should be in the following format:\n
-                component_folder_path \n
-                |-- component_A.zip
-                |-- component_B.zip
         Returns:
             List[str]: a list of available components in the given path
         """
-        self.component_installation_controller.install_all_components(
-            Directory, import_root, config_loader
+        components = self.component_installation_controller.register_all_components(
+            config_loader
         )
 
         # return the records
-        # self.response.set_value("message", components)
+        self.response.set_value("message", components)
 
         # publish the records
         self.response.set_action("publish")
 
+        # allow calling without a defined client
+        if client is not None:
+            # set the target
+            self.response.set_value("recipients", [str(client.get_oid())])
+
     def GETComponentDiscovery(
         self,
-        Directory: "str",
-        import_root: "str",
         client: "NetworkClient",
         config_loader,
         *args,
         **kwargs,
-    ) -> "Component":  # pylint: disable=unused-argument
-        """discover a list of components, other than list components, returns also components that are not activated or installed"""
+    ) -> list["Component"]:  # pylint: disable=unused-argument
+        """discover a list of components, other than list components, returns also components
+        that are not activated or installed"""
         components: list["Component"] = []
-        for component in self.component_discovery_controller.discover_components(Directory, config_loader):
+
+        for component in self.component_discovery_controller.discover_components(
+            config_loader
+        ):
             components.append(component)
 
         self.response.set_action("publish")
         self.response.set_value("message", components)
+        # set the target
+        self.response.set_value("recipients", [str(client.get_oid())])
+        return components
+
+    def PullComponent(
+        self, url: str, client: "NetworkClient", config_loader, *args, **kwargs
+    ) -> "PurePath":
+        """pull a component from a remote datasource"""
+        save_location = self.component_pull_controller.pull_component_http(
+            url, config_loader
+        )
+
+        self.response.set_action("publish")
+        self.response.set_value("message", [save_location])
+        # set the target
+        self.response.set_value("recipients", [str(client.get_oid())])
+        return save_location

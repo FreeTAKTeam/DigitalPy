@@ -84,8 +84,6 @@ def POSTInstallAllComponents():
         	"POSTInstallAllComponents",
         	"^InstallAllComponents",
         	{
-        "Directory": request.args.get('Directory'),
-        "import_root": request.args.get('import_root'),
         }) # type: ignore
         return '', 200
     except Exception as e:
@@ -127,8 +125,6 @@ def GETComponentDiscovery():
         	"GETComponentDiscovery",
         	"^ComponentDiscovery",
         	{
-        "Directory": request.args.get('Directory'),
-        "import_root": request.args.get('import_root'),
         }) # type: ignore
         return response.get_value("message"), 200
     except Exception as e:

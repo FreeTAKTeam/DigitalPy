@@ -24,7 +24,8 @@ class ComponentManagement(DefaultFacade):
     def __init__(self, sync_action_mapper: DefaultActionMapper, request: Request,
                  response: Response, configuration,
                  action_mapper: AsyncActionMapper = None,  # type: ignore
-                 tracing_provider_instance=None):  # type: ignore
+                 tracing_provider_instance=None,
+                ):  # type: ignore
         super().__init__(
             # the path to the external action mapping
             action_mapping_path=str(ACTION_MAPPING_PATH),
@@ -120,3 +121,8 @@ class ComponentManagement(DefaultFacade):
         """discover a list of components, other than list components, returns also components that are not activated or installed
         """
         self.Component_Management_controller.GETComponentDiscovery(*args, **kwargs)
+    @DefaultFacade.public
+    def GETPullComponent(self, *args, **kwargs):
+        """pull a component from a remote datasource
+        """
+        self.Component_Management_controller.PullComponent(*args, **kwargs)

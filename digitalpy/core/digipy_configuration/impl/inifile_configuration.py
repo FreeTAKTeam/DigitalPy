@@ -24,7 +24,9 @@ class InifileConfiguration(Configuration):
     def get_configuration(self):
         raise NotImplementedError("get_configuration is not yet implemented")
 
-    def add_configuration(self, name: Union[str, StringIO], process_values=True) -> None:
+    def add_configuration(
+        self, name: Union[str, StringIO], process_values=True
+    ) -> None:
         """
         Args:
             name (str): the name of the configuration file to be added
@@ -95,6 +97,8 @@ class InifileConfiguration(Configuration):
             # merge the config sections giving the new content precedence over the config array
             merged = self._merge_dictionaries(config_array, content)
             return {"config": merged, "files": parsed_files}
+        else:
+            return {"config": config_array, "files": parsed_files}
 
     def _merge_dictionaries(self, dict_one, dict_two):
         """merge two dictionaries, recursively
@@ -140,9 +144,7 @@ class InifileConfiguration(Configuration):
             try:
                 self.parse_ini_stream(config_array, f)
             except Exception as ex:
-                raise ValueError(
-                        f"{filename} is invalid with error: {str(ex)}"
-                    ) from ex
+                raise ValueError(f"{filename} is invalid with error: {str(ex)}") from ex
 
         return config_array
 
@@ -156,7 +158,7 @@ class InifileConfiguration(Configuration):
         lines = stream.readlines()
         for line in lines:
             line = line.strip()
-                # ignore comments and empty lines
+            # ignore comments and empty lines
             if line == "" or line[0] == ";":
                 continue
                 # check for section
@@ -169,7 +171,6 @@ class InifileConfiguration(Configuration):
                 key = parts[0].strip()
                 value = parts[1].strip()
                 config_array[section_name][key] = value
-            
 
     def get_config_path(self):
         """Get the file system path to the configuration files."""
@@ -181,7 +182,7 @@ class InifileConfiguration(Configuration):
 
     def has_section(self, section: str) -> bool:
         """Check if a section exists in the configuration.
-        
+
         Args:
             section (str): the name of the section to be checked
 
@@ -251,9 +252,9 @@ class InifileConfiguration(Configuration):
                     if not re.match("/^__/", key)
                 }
 
-    def _lookup(self, section: str, key: str="") -> Union[list, None]:
+    def _lookup(self, section: str, key: str = "") -> Union[list, None]:
         """Lookup section and key.
-        
+
         Args:
             section (str): the name of the section to be looked up
             key (str, optional): the name of the key to be looked up. Defaults to "".
@@ -264,7 +265,7 @@ class InifileConfiguration(Configuration):
         lookup_key = section.lower() + ":" + key.lower()
         if lookup_key in self.lookup_table:
             return self.lookup_table[lookup_key]
-        #TODO: instead of returning None, should return an empty list
+        # TODO: instead of returning None, should return an empty list
         return None
 
     def build_lookup_table(self) -> Any:

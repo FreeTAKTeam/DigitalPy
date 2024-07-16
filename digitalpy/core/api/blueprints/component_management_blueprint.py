@@ -112,8 +112,20 @@ def GETComponentDiscovery():
         	"GETComponentDiscovery",
         	"^ComponentDiscovery",
         	{
-        "Directory": request.args.get('Directory'),
-        "import_root": request.args.get('import_root'),
+        }) # type: ignore
+        return response.get_value("message"), 200
+    except Exception as e:
+    	return str(e), 500
+@page.route('/PullComponent', methods=["GET"])
+def POSTPullComponent():
+    """Pull a component from a given URL"""
+    try:
+        # send data to the NetworkInterface
+        response = BlueprintCommunicator().send_message_sync(
+        	"GETPullComponent",
+        	"^PullComponent",
+        	{
+        "url": request.args.get('url'),
         }) # type: ignore
         return response.get_value("message"), 200
     except Exception as e:

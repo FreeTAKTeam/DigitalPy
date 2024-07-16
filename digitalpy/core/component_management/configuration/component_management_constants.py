@@ -28,6 +28,7 @@ CONFIGURATION_PATH_TEMPLATE = Template(
 )
 
 DB_PATH = "sqlite:///" + str(CURRENT_COMPONENT_PATH / "persistence/Component_Management.db")
+COMPONENT_DOWNLOAD_PATH = CURRENT_COMPONENT_PATH / "persistence/downloads"
 COMPONENT = "Component"
 ERROR = "Error"
 MANIFEST = "manifest"

@@ -21,6 +21,7 @@ from .component_management_persistence_controller import (
     Component_ManagementPersistenceController,
 )
 from digitalpy.core.component_management.configuration.component_management_constants import (
+    COMPONENT_DOWNLOAD_PATH,
     MANIFEST_PATH,
     RELATIVE_MANIFEST_PATH
 )
@@ -73,7 +74,7 @@ class ComponentDiscoveryController(Controller):
         self.Component_Management_persistence_controller.initialize(request, response)
         return super().initialize(request, response)
 
-    def discover_components(self, directory: PurePath, config_loader) -> Generator[Component, None, None]:
+    def discover_components(self, config_loader) -> Generator[Component, None, None]:
         """this functions is used to discover components in a directory, components are
         expected to be in the form of zip files. To identify a component we simply look for
         a manifest file in the zip file under the path "[rootFolder]/configuration/manifest.ini".
@@ -82,14 +83,13 @@ class ComponentDiscoveryController(Controller):
         This function only searches a single level deep in the directory and only indexes .zip files.
         
         Args:
-            directory (PurePath): the directory to search for components
             config_loader: the configuration loader object
         
         Returns:
             Generator[Component, None, None]: a generator that yields a component object for each component found
         """
 
-        for root, _, files in os.walk(directory):
+        for root, _, files in os.walk(COMPONENT_DOWNLOAD_PATH):
             for file in files:
                 if file.endswith(".zip"):
                     component = self._discover_component(PurePath(root, file), config_loader)
