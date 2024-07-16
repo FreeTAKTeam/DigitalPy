@@ -211,7 +211,7 @@ class InifileConfiguration(Configuration):
     def get_value(self, key, section):
         lookup_entry = self._lookup(section, key)
         if lookup_entry is None or len(lookup_entry) == 1:
-            raise Exception(f"No key {key} found in section {section}")
+            raise KeyError(f"No key {key} found in section {section}")
         else:
             return self.config_array[lookup_entry[0]][lookup_entry[1]]
 
@@ -356,11 +356,21 @@ class InifileConfiguration(Configuration):
 
     def remove_key(self, key: Any, section: Any) -> Any:
         """@see WritableConfiguration::remove_key()"""
-        raise NotImplementedError("this method has not yet been implemented")
+        lookup_entry = self._lookup(section, key)
+        if lookup_entry is None:
+            raise ValueError(f"key {key} not found in section {section}")
+        else:
+            del self.config_array[lookup_entry[0]][lookup_entry[1]]
+            self._build_lookup_table()
 
     def remove_section(self, section: Any) -> Any:
         """@see WritableConfiguration::remove_section()"""
-        raise NotImplementedError("this method has not yet been implemented")
+        lookup_entry = self._lookup(section)
+        if lookup_entry is None:
+            raise ValueError(f"section {section} not found")
+        else:
+            del self.config_array[lookup_entry[0]]
+            self._build_lookup_table()
 
     def rename_key(self, oldname: Any, newname: Any, section: Any) -> Any:
         """@see WritableConfiguration::rename_key()"""
