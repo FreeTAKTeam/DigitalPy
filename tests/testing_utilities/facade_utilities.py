@@ -8,9 +8,15 @@ from digitalpy.core.digipy_configuration.impl.inifile_configuration import Inifi
 from digitalpy.core.main.factory import Factory
 from digitalpy.core.main.impl.default_factory import DefaultFactory
 from digitalpy.core.main.object_factory import ObjectFactory
-from digitalpy.core.component_management.impl.component_registration_handler import ComponentRegistrationHandler
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
+
+from digitalpy.core.component_management.component_management_facade import ComponentManagement
+from digitalpy.core.domain.domain_facade import Domain
+from digitalpy.core.IAM.IAM_facade import IAM
+from digitalpy.core.serialization.serialization_facade import Serialization
+from digitalpy.core.domain.domain.service_health import ServiceHealth
+from digitalpy.core.service_management.service_management_facade import ServiceManagement
 
 def initialize_facade(facade_class: str, request: Request, response: Response) -> Union[DefaultFacade, Request, Response]:
     """intialize the given facade class
@@ -28,7 +34,7 @@ def initialize_facade(facade_class: str, request: Request, response: Response) -
     facade.initialize(request, response)
     return facade
 
-def initialize_test_environment():
+def initialize_test_environment() -> tuple[Request, Response]:
     """initialize the test environment
     """
 
@@ -61,25 +67,26 @@ def initialize_configuration() -> Configuration:
     test_configuration.add_configuration("digitalpy/core/action_mapping.ini")
     return test_configuration
 
-def register_components(configuration: Configuration):
+def register_components(config: Configuration):
     """register all core digitalpy components
     """
-    ComponentRegistrationHandler.clear()
-    
-    # register base digitalpy components
-    digipy_components = ComponentRegistrationHandler.discover_components(
-        component_folder_path=pathlib.PurePath(
-            str(
-                pathlib.PurePath(
-                    os.path.abspath(__file__)
-                ).parent.parent.parent
-            ), "digitalpy", "core"
-        )
-    )
 
-    for digipy_component in digipy_components:
-        ComponentRegistrationHandler.register_component(
-            digipy_component,  # type: ignore
-            "digitalpy.core",
-            configuration,  # type: ignore
-        )
+    ComponentManagement(
+        None, None, None, None
+    ).register(config)
+
+    Domain(
+        None, None, None, None
+    ).register(config)
+
+    IAM(
+        None, None, None, None
+    ).register(config)
+
+    Serialization(
+        None, None, None, None
+    ).register(config)
+
+    ServiceManagement(
+        None, None, None, None
+    ).register(config)

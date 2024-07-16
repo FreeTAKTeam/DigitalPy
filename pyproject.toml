@@ -19,6 +19,7 @@ xmltodict="*"
 flask_cors="*"
 sqlalchemy="^2.0.30"
 flask_jwt_extended="*"
+requests="*"
 
 [tool.poetry.extras]
 dev = ["pytest"]
