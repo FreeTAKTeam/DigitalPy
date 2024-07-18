@@ -163,7 +163,7 @@ This enables component developpers to quickly add exposed functionality without 
 ## Routing
 Routing is the process of selecting the correct Controller for a given Request. DigitalPy distinguishes between internal and external routing. DP inspects the action key formed from it's sender, context and action name and parameters (if any).
 * Sender: the original emitter of the request (e.g. a component in external routing)
-* Context: in certain circostances the same Sender can reuse the same action name
+* Context: in certain circumstances  the same Sender can reuse the same action name
 * Action: the name of the Action that is called 
 
 ### Internal routing
@@ -175,7 +175,7 @@ External routing can be executed Between:
  -  Two Components
  - a Core function and a component
 
-example of extenal routing
+example of external routing
 ```
 [actionmapping]
 Health?api?CreateHealthPOST = components.health.health_facade.Health.create_health_post
@@ -183,6 +183,9 @@ Health?api?CreateHealthPOST = components.health.health_facade.Health.create_heal
 
 > [!CAUTION]
 > Action Keys must not use the `~` character as this will break routing
+
+## Topic system
+DigitalPy also supports a Pub-Sub protocol.  
 
 # DigitalPy components
 
