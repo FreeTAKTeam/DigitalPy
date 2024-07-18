@@ -1,5 +1,6 @@
 from io import StringIO, TextIOBase
 import os
+from pathlib import PurePath
 import re
 from typing import Any, Union
 
@@ -85,7 +86,6 @@ class InifileConfiguration(Configuration):
         parsed_files: Union[list, None] = None,
     ) -> dict:
         """Process the given file recursively"""
-        self.lookup_table = {}
         if config_array is None:
             config_array = {}
         if parsed_files is None:
@@ -354,7 +354,7 @@ class InifileConfiguration(Configuration):
         """
         raise NotImplementedError("this method has not yet been implemented")
 
-    def remove_key(self, key: Any, section: Any) -> Any:
+    def remove_key(self, key: str, section: str) -> None:
         """@see WritableConfiguration::remove_key()"""
         lookup_entry = self._lookup(section, key)
         if lookup_entry is None:
@@ -363,7 +363,7 @@ class InifileConfiguration(Configuration):
             del self.config_array[lookup_entry[0]][lookup_entry[1]]
             self._build_lookup_table()
 
-    def remove_section(self, section: Any) -> Any:
+    def remove_section(self, section: str) -> None:
         """@see WritableConfiguration::remove_section()"""
         lookup_entry = self._lookup(section)
         if lookup_entry is None:
@@ -371,6 +371,54 @@ class InifileConfiguration(Configuration):
         else:
             del self.config_array[lookup_entry[0]]
             self._build_lookup_table()
+
+    def remove_configuration(self, name: str) -> None:
+        """Remove a configuration and all of its sections and keys from the configuration.
+        NOTE: This method does not remove the configuration file from the file system. n'or does it remove
+        any keys which have been modified since the configuration was added.
+
+        Args:
+            name (str): the name of the configuration to be removed
+
+        Raises:
+            ValueError: raised if the configuration is not found
+
+        Returns:
+            None
+        """
+        found = False
+        for file in self.__added_files:
+            if PurePath(file) == PurePath(name):
+                found = True
+                self.__added_files.remove(file)
+
+        if not found:
+            raise ValueError(f"Configuration {name} not found")
+
+        # remove the keys defined in the configuration
+        conf = {}
+        self.process_file(name, conf, [])
+        for section in conf.keys():
+            self._remove_modified_section(conf, section)
+
+    def _remove_modified_section(self, conf: dict, section: str) -> None:
+        """Remove a section from the configuration if it has not been modified since the configuration was added.
+
+        Args:
+            conf (dict): the configuration dictionary
+            section (str): the name of the section to be
+
+        Returns:
+            None
+        """
+        items = self.get_section(section).items()
+        if items == conf[section].items():
+            self.remove_section(section)
+        else:
+            # remove only the keys that have not been modified
+            for key, value in items:
+                if value == conf[section].get(key):
+                    self.remove_key(key, section)
 
     def rename_key(self, oldname: Any, newname: Any, section: Any) -> Any:
         """@see WritableConfiguration::rename_key()"""
@@ -452,3 +500,6 @@ class InifileConfiguration(Configuration):
     # comment is attached to the following section/key) the key ';' holds the
     # comments at the end of the file
     __lookupTable = []
+
+    def __str__(self) -> str:
+        return str(self.config_array)

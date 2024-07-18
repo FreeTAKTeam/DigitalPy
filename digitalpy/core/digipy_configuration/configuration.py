@@ -68,3 +68,15 @@ class Configuration(ABC):
     @abstractmethod
     def set_value(self, key: str, value: Any, section: str):
         """Set a configuration value."""
+
+    @abstractmethod
+    def remove_section(self, section: str):
+        """Remove a section."""
+
+    @abstractmethod
+    def remove_key(self, key: str, section: str):
+        """Remove a key from a section."""
+
+    @abstractmethod
+    def remove_configuration(self, name: str):
+        """Remove a configuration."""

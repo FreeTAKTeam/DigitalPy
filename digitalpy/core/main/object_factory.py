@@ -1,6 +1,7 @@
 from digitalpy.core.main.factory import Factory
 from typing import Any
 
+
 class ObjectFactory:
     __factory = None
 
@@ -58,3 +59,9 @@ class ObjectFactory:
         """Register a shared instance with a given name."""
         ObjectFactory.__check_config()
         ObjectFactory.__factory.register_instance(name, instance)
+
+    @staticmethod
+    def clear_instance(name):
+        """Remove a shared instance with a given name."""
+        ObjectFactory.__check_config()
+        ObjectFactory.__factory.clear_instance(name)

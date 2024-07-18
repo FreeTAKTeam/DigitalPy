@@ -5,7 +5,9 @@ from types import ModuleType
 from digitalpy.core.main.controller import Controller
 from digitalpy.core.domain.node import Node
 from digitalpy.core.parsing.load_configuration import LoadConfiguration
-from digitalpy.core.digipy_configuration.impl.inifile_configuration import InifileConfiguration
+from digitalpy.core.digipy_configuration.impl.inifile_configuration import (
+    InifileConfiguration,
+)
 from digitalpy.core.zmanager.impl.default_action_mapper import DefaultActionMapper
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
@@ -46,9 +48,9 @@ class DefaultFacade(Controller):
             component_name (str, optional): the name of this component. Defaults to the class name.
             type_mapping (str, optional): the path to the type mapping for this component if there is one
                 type mapping maps a type to a action. Defaults to None.
-            action_mapper (DefaultActionMapper, optional): the action mapper registered to the 
+            action_mapper (DefaultActionMapper, optional): the action mapper registered to the
                 internal_action_mapping path, in other words, the internal action mapper. Defaults to None.
-            base (package, optional): the package containing the base classes for the component, 
+            base (package, optional): the package containing the base classes for the component,
                 e.g. the component specific action mapper. Defaults to object.
             request (Request, optional): a request object to instantiate the facade with. Defaults to None.
             response (Response, optional): a response object to instantiate the facade with. Defaults to None.
@@ -103,7 +105,10 @@ class DefaultFacade(Controller):
             self.config_loader = None
 
         self.injected_values = {
-            "logger": self.logger, "config_loader": self.config_loader, "tracer": self.tracer}
+            "logger": self.logger,
+            "config_loader": self.config_loader,
+            "tracer": self.tracer,
+        }
 
     def initialize(self, request, response):
         super().initialize(request, response)
@@ -169,6 +174,11 @@ class DefaultFacade(Controller):
         )
         self._register_type_mapping()
 
+    def unregister(self, config: InifileConfiguration, **kwargs):
+        """unregister the component from the system"""
+        ObjectFactory.clear_instance(f"{self.component_name.lower()}actionmapper")
+        config.remove_configuration(self.action_mapping_path)
+
     def get_manifest(self, **kwargs):
         """returns the current manifest configuration"""
         return self.manifest
@@ -189,8 +199,7 @@ class DefaultFacade(Controller):
             request.set_action("RegisterHumanToMachineMapping")
             # reverse the mapping and save the reversed mapping
             request.set_value(
-                "human_to_machine_mapping", {
-                    k: v for v, k in self.type_mapping.items()}
+                "human_to_machine_mapping", {k: v for v, k in self.type_mapping.items()}
             )
 
             actionmapper = ObjectFactory.get_instance("SyncActionMapper")
@@ -202,6 +211,7 @@ class DefaultFacade(Controller):
 
     def __setstate__(self, state: dict) -> None:
         from .. import base
+
         self.__dict__ = state
         if "base" in state:
             self.base = base

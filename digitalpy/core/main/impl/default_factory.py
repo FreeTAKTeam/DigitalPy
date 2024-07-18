@@ -32,8 +32,8 @@ class DefaultFactory(Factory):
         # the instances in the instance dictionary can be preserved when the
         # new object factory is instantiated in the sub-process
         self.instances = {
-            'configuration': self.configuration,
-            'factory': self,
+            "configuration": self.configuration,
+            "factory": self,
         }
         # store imported modules to prevent multiple imports
         self.modules = {}
@@ -44,8 +44,8 @@ class DefaultFactory(Factory):
     def clear(self):
         self.current_stack = []
         self.instances = {
-            'configuration': self.configuration,
-            'factory': self,
+            "configuration": self.configuration,
+            "factory": self,
         }
         self.modules = {}
         DefaultFactory.required_interfaces = {
@@ -70,7 +70,10 @@ class DefaultFactory(Factory):
         instance = None
         self.current_stack.append(name)
         instance_key = self.get_instance_key(name, dynamic_configuration)
-        if instance_key in self.instances and dynamic_configuration.get("__cached", True) is True:
+        if (
+            instance_key in self.instances
+            and dynamic_configuration.get("__cached", True) is True
+        ):
             instance = self.instances[instance_key]
         else:
             static_configuration = self.configuration.get_section(name, True)
@@ -85,7 +88,7 @@ class DefaultFactory(Factory):
 
         # remove the __cached key from the configuration
         key_conf.pop("__cached", None)
-        
+
         if len(key_conf) == 0:
             instance_key = name.lower()
         else:
@@ -142,8 +145,7 @@ class DefaultFactory(Factory):
                         c_params[param_name] = self.get_instance(param_name)
                     # check if a section with the name of the parameter in lowercase exists
                     elif self.configuration.has_section(param_instance_key):
-                        c_params[param_name] = self.get_instance(
-                            param_instance_key)
+                        c_params[param_name] = self.get_instance(param_instance_key)
                     elif isinstance(param_default, inspect._empty):
                         raise Exception(
                             f"constructor parameter {param_name} in class {name} cannot be injected"
@@ -292,3 +294,11 @@ class DefaultFactory(Factory):
     def __setstate__(self, state: dict) -> None:
         self.__dict__.update(state)
         self.modules = {}
+
+    def __str__(self) -> str:
+        return f"""DefaultFactory(
+        Configuration: 
+            {self.configuration}
+        Instances:
+            {self.instances}
+        )"""

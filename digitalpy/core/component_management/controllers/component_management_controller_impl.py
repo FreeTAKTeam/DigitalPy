@@ -204,3 +204,76 @@ class Component_ManagementControllerImpl(Component_ManagementController):
         # set the target
         self.response.set_value("recipients", [str(client.get_oid())])
         return save_location
+
+    def DELETEComponent(
+        self, ID: "str", client: "NetworkClient", config_loader, *args, **kwargs
+    ):  # pylint: disable=unused-argument
+        """TODO"""
+        db_records = self.Component_Management_persistence_controller.get_component(
+            oid=ID
+        )
+
+        if len(db_records) <= 0:
+            raise ValueError("No record found for the given ID")
+        else:
+            db_record = db_records[0]
+
+        self.Component_builder.build_empty_object(config_loader=config_loader)
+        self.Component_builder.add_object_data(db_record)
+        record = self.Component_builder.get_result()
+
+        self.component_installation_controller.uninstall_component(record)
+
+        self.Component_Management_persistence_controller.remove_component(record)
+
+        # set the target
+        self.response.set_value("recipients", [str(client.get_oid())])
+
+        # return the records
+        self.response.set_value("message", [record])
+
+        # publish the records
+        self.response.set_action("publish")
+
+    def PATCHComponent(self, body: 'Component',  client: 'NetworkClient', config_loader, *args, **kwargs):  # pylint: disable=unused-argument
+        """update a component record in the database and update the component in the installation directory if necessary.
+        Notably, we don't want to delete the database record.
+
+        Args:
+            body (Component): the component object to be updated
+            client (NetworkClient): the client object
+            config_loader (Configuration): the configuration loader
+        
+        Raises:
+            ValueError: if the component is not found in the database
+        
+        Returns:
+            None: return a none
+        """
+        # create the basic domain object from the json data
+        self.Component_builder.build_empty_object(config_loader)
+        self.Component_builder.add_object_data(body, Protocols.JSON)
+        domain_obj = self.Component_builder.get_result()
+
+        # get from the database
+        db_obj = self.Component_Management_persistence_controller.get_component(oid=str(domain_obj.oid))[0]
+
+        if db_obj is None:
+            raise ValueError("Component not found in the database")
+        
+        # initialize the object
+        self.Component_builder.build_empty_object(config_loader)
+        self.Component_builder.add_object_data(db_obj)
+        # update the object with json data
+        self.Component_builder.add_object_data(body, Protocols.JSON)
+        # Save the Schedule record to the database
+        self.Component_Management_persistence_controller.update_component(domain_obj)
+        
+        # set the target
+        self.response.set_value("recipients", [str(client.get_oid())])
+
+        # return the records
+        self.response.set_value("message", [domain_obj])
+
+        # publish the records
+        self.response.set_action("publish")

@@ -3,6 +3,7 @@ This module is responsible for discovering components and all the operations tha
 """
 
 import io
+import shutil
 from typing import TYPE_CHECKING, Generator
 from pathlib import PurePath
 
@@ -51,8 +52,8 @@ if TYPE_CHECKING:
 
 
 class ComponentInstallationController(Controller):
-    """In accordance with the SRP this controller is responsible for discovering components
-    and all the operations that are related to this task.
+    """This class is responsible for discovering components and all the operations that are related to managing the physical components in the
+    file system. It is responsible for installing, uninstalling, updating, and registering components.
     """
 
     def __init__(
@@ -133,9 +134,7 @@ class ComponentInstallationController(Controller):
                     component.name,
                     component.name + "_blueprint.py",
                 ),
-                PurePath(
-                    self.component_blueprint_path, component.name + "_blueprint.py"
-                ),
+                self._get_blueprint_path(component),
             )
             component = self._register_component(
                 PurePath(self.component_installation_path, component.name),
@@ -264,3 +263,88 @@ class ComponentInstallationController(Controller):
         )
 
         return facade_instance
+
+    def uninstall_component(self, component: Component):
+        """this method is used to uninstall a component
+
+        Args:
+            component (Component): the component to uninstall
+        """
+
+        external_action_mapping = self._get_external_action_mapping_path(component)
+
+        if not os.path.exists(external_action_mapping):
+            raise FileNotFoundError(
+                f"External action mapping not found at {external_action_mapping}"
+            )
+
+        self.configuration.remove_configuration(str(external_action_mapping))
+
+        shutil.rmtree(self._get_component_path(component))
+
+        # remove the blueprint from the blueprint directory
+        os.remove(self._get_blueprint_path(component))
+
+    def update_component(self, component: Component, config_loader):
+        """this method is used to update a component
+
+        Args:
+            component (Component): the component to update
+        """
+        
+        # identify files that are persistent
+        self._find_persistent_files(component)
+
+        # remove the component except for the persistent files
+
+        # install the new component
+
+
+    def _find_persistent_files(self, component: Component) -> None:
+        """this method is used to save the persistent files of a component 
+
+        Args:
+            component (Component): the component to save the persistent files of
+        """
+
+    def _get_blueprint_path(self, component: Component) -> "PurePath":
+        """this method is used to get the blueprint path of a component
+
+        Args:
+            component (Component): the component to get the blueprint path of
+
+        Returns:
+            PurePath: the blueprint path
+        """
+        return PurePath(self.component_blueprint_path, component.name + "_blueprint.py")
+
+    def _get_component_path(self, component: Component) -> "PurePath":
+        """this method is used to get the component path of a component
+
+        Args:
+            component (Component): the component to get the component path of
+
+        Returns:
+            PurePath: the component path
+        """
+        if (
+            component.installation_path != None
+            and component.installation_path != "None"
+        ):
+            return PurePath(component.installation_path)
+        else:
+            return PurePath(self.component_installation_path, component.name)
+
+    def _get_external_action_mapping_path(self, component: Component) -> "PurePath":
+        """this method is used to get the external action mapping path of a component
+
+        Args:
+            component (Component): the component to get the external action mapping path of
+
+        Returns:
+            PurePath: the external action mapping path
+        """
+        return PurePath(
+            self._get_component_path(component)
+            / "configuration/external_action_mapping.ini"
+        )
