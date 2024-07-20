@@ -136,7 +136,7 @@ class Component_ManagementController(Controller):
         """TODO"""
 
         # retrieve the Component record from the database
-        db_records = self.Component_Management_persistence_controller.get_component(ID = ID)
+        db_records = self.Component_Management_persistence_controller.get_component(UUID = ID)
         domain_records: List['Component'] = []
 
         # convert the records to the domain object

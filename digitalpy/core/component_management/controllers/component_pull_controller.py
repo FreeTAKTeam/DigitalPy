@@ -72,10 +72,10 @@ class ComponentPullController(Controller):
         r = requests.get(url, stream=True, timeout=10)
 
         if r.status_code != 200:
-            raise Exception("Failed to pull component")
+            raise requests.exceptions.RequestException("Failed to pull component")
         
         with open(str(COMPONENT_DOWNLOAD_PATH/url.split('/')[-1]), "wb") as f:
             for chunk in r.iter_content(chunk_size=1024):
                 if chunk:
                     f.write(chunk)
-        return str(COMPONENT_DOWNLOAD_PATH/str(hash(r.raw)))
+        return str(COMPONENT_DOWNLOAD_PATH/url.split('/')[-1])

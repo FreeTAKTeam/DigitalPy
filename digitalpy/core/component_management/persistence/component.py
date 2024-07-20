@@ -13,7 +13,6 @@ class Component(Component_ManagementBase):
 
     __tablename__ = 'Component'
     oid: Mapped[str] = mapped_column(primary_key=True)
-    import_root: Mapped[str]
     installation_path: Mapped[str]
     author: Mapped[str]
     author_email: Mapped[str]

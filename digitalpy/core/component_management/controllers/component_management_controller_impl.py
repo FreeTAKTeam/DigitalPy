@@ -98,11 +98,11 @@ class Component_ManagementControllerImpl(Component_ManagementController):
         self.Component_builder.add_object_data(
             mapped_object=body, protocol=Protocols.JSON
         )
-        domain_obj = self.Component_builder.get_result()
+        component = self.Component_builder.get_result()
 
         # install the component
-        component = self.component_installation_controller.install_component(
-            domain_obj, config_loader
+        self.component_installation_controller.install_component(
+            component
         )
 
         # return the records
@@ -121,26 +121,7 @@ class Component_ManagementControllerImpl(Component_ManagementController):
         components = self.Component_Management_persistence_controller.get_component(
             UUID=ID
         )
-        if len(components) <= 0:
-            return None
-        component = components[0]
-
-        # instantiate the facade
-        facade = self.component_installation_controller.retrieve_facade(
-            component.installation_path
-        )
-
-        # register the configuration
-        facade.register(ObjectFactory.get_instance("Configuration"))
-
-        # set the target
-        self.response.set_value("recipients", [str(client.get_oid())])
-
-        # return the records
-        self.response.set_value("message", [component])
-
-        # publish the records
-        self.response.set_action("publish")
+        self.component_installation_controller.register_component(components[0])
 
     def POSTInstallAllComponents(
         self,
@@ -157,6 +138,13 @@ class Component_ManagementControllerImpl(Component_ManagementController):
         components = self.component_installation_controller.register_all_components(
             config_loader
         )
+
+        for component in components:
+            existing_components = self.Component_Management_persistence_controller.get_component(UUID=component.UUID)
+            if len(existing_components) > 0:
+                self.Component_Management_persistence_controller.update_component(component)
+            else:
+                self.Component_Management_persistence_controller.save_component(component)
 
         # return the records
         self.response.set_value("message", components)
@@ -266,6 +254,9 @@ class Component_ManagementControllerImpl(Component_ManagementController):
         self.Component_builder.add_object_data(db_obj)
         # update the object with json data
         self.Component_builder.add_object_data(body, Protocols.JSON)
+        
+        self.component_installation_controller.update_component(self.Component_builder.get_result(), config_loader)
+
         # Save the Schedule record to the database
         self.Component_Management_persistence_controller.update_component(domain_obj)
         

@@ -372,7 +372,7 @@ class InifileConfiguration(Configuration):
             del self.config_array[lookup_entry[0]]
             self._build_lookup_table()
 
-    def remove_configuration(self, name: str) -> None:
+    def remove_configuration(self, name: str):
         """Remove a configuration and all of its sections and keys from the configuration.
         NOTE: This method does not remove the configuration file from the file system. n'or does it remove
         any keys which have been modified since the configuration was added.
@@ -382,9 +382,6 @@ class InifileConfiguration(Configuration):
 
         Raises:
             ValueError: raised if the configuration is not found
-
-        Returns:
-            None
         """
         found = False
         for file in self.__added_files:

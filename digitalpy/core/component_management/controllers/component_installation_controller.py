@@ -4,6 +4,7 @@ This module is responsible for discovering components and all the operations tha
 
 import io
 import shutil
+from tempfile import TemporaryDirectory, TemporaryFile
 from typing import TYPE_CHECKING, Generator
 from pathlib import PurePath
 
@@ -11,6 +12,9 @@ import os
 import importlib
 import zipfile
 
+from digitalpy.core.component_management.controllers.component_filesystem_controller import (
+    ComponentFilesystemController,
+)
 from digitalpy.core.component_management.configuration.component_management_constants import (
     COMPONENT_DOWNLOAD_PATH,
     RELATIVE_MANIFEST_PATH,
@@ -52,7 +56,7 @@ if TYPE_CHECKING:
 
 
 class ComponentInstallationController(Controller):
-    """This class is responsible for discovering components and all the operations that are related to managing the physical components in the
+    """This class is responsible for discovering components and all the operations that are related to managing the components in the
     file system. It is responsible for installing, uninstalling, updating, and registering components.
     """
 
@@ -79,18 +83,14 @@ class ComponentInstallationController(Controller):
             request, response, sync_action_mapper, configuration
         )
 
-        if configuration:
-            self.component_installation_path: str = configuration.get_section(
-                "ComponentManagement"
-            ).get("component_installation_path", None)
+        self.component_filesystem_controller = ComponentFilesystemController(
+            request, response, sync_action_mapper, configuration
+        )
 
+        if configuration:
             self.component_import_root: str = configuration.get_section(
                 "ComponentManagement"
             ).get("component_import_root", None)
-
-            self.component_blueprint_path: str = configuration.get_section(
-                "ComponentManagement"
-            ).get("component_blueprint_path", None)
 
     def initialize(self, request: "Request", response: "Response"):
         """This function is used to initialize the controller.
@@ -98,50 +98,21 @@ class ComponentInstallationController(Controller):
         self.Component_builder.initialize(request, response)
         self.Error_builder.initialize(request, response)
         self.Component_Management_persistence_controller.initialize(request, response)
+        self.component_filesystem_controller.initialize(request, response)
         return super().initialize(request, response)
 
-    def install_component(self, component: Component, config_loader) -> Component:
+    def install_component(self, component: Component):
         """this method is used to install a component
 
         Args:
             component_path (str): the path to the component
-
-        Returns:
-            Component: the installed component
         """
 
-        with zipfile.ZipFile(
-            COMPONENT_DOWNLOAD_PATH / f"{component.name}.zip", "r"
-        ) as zip_ref:
-            if component.UUID:
-                with io.TextIOWrapper(
-                    zip_ref.open(RELATIVE_MANIFEST_PATH), encoding="utf-8"
-                ) as stream:
-                    manifest = self.component_manifest_controller.read_manifest(stream)
-                    if not manifest[ID] == component.UUID:
-                        raise ValueError(
-                            "The manifest UUID does not match the given component UUID"
-                        )
+        component_path = self.component_filesystem_controller.unzip_component(component)
 
-            zip_ref.extractall(
-                PurePath(self.component_installation_path, component.name)
-            )
+        component.installation_path = str(component_path)
 
-            # move the blueprint to the blueprint directory
-            os.rename(
-                PurePath(
-                    self.component_installation_path,
-                    component.name,
-                    component.name + "_blueprint.py",
-                ),
-                self._get_blueprint_path(component),
-            )
-            component = self._register_component(
-                PurePath(self.component_installation_path, component.name),
-                manifest,
-                config_loader,
-            )
-            return component
+        self.register_component(component)
 
     def register_all_components(self, config_loader) -> list[Component]:
         """this method is used to install all components in the component installation directory
@@ -155,7 +126,7 @@ class ComponentInstallationController(Controller):
         for (
             potential_component,
             facade_path,
-        ) in self.search_component_directory(self.component_installation_path):
+        ) in self.component_filesystem_controller.search_component_directory():
             # retrieve the manifest
             with open(
                 facade_path.parent / RELATIVE_MANIFEST_PATH, "r", encoding="utf-8"
@@ -168,91 +139,71 @@ class ComponentInstallationController(Controller):
             ):
                 continue
 
-            # install the component
-            component = self._register_component(
-                potential_component, manifest, config_loader
-            )
+            # get component object
+            component = self._get_component(manifest, config_loader)
 
+            # register the component
+            self.register_component(component)
+
+            component.installation_path = str(potential_component)
+
+            # add the component to the list
             components.append(component)
 
         return components
 
-    def _register_component(
+    def register_component(
         self,
-        potential_component: "PurePath",
-        manifest: "dict",
-        config_loader,
-    ) -> "Component":
-        """this method is used to install a component
+        component: "Component",
+    ):
+        """this method is used to register a component in the central configuration
 
         Args:
-            potential_component (PurePath): the component to install
-            manifest (dict): the manifest of the component
-            config_loader: the configuration loader to use
-
-        Returns:
-            Component: the installed component
+            component (Component): the component to register
         """
-        config = ObjectFactory.get_instance("Configuration")
-        facade = self.retrieve_facade(potential_component)
+
         # create the component object and add it to the list
+
+        facade: DefaultFacade = self.retrieve_facade(component)
+
+        config: Configuration = ObjectFactory.get_instance("Configuration")
+
+        ObjectFactory.register_instance(
+            f"{component.name.lower()}actionmapper",
+            facade.get_action_mapper(),
+        )
+
+        config.add_configuration(facade.get_action_mapping_path())
+
+        facade.setup()
+
+    def _get_component(self, manifest, config_loader):
+        """this method is used to get a component object from a manifest
+
+        Args:
+            manifest: the manifest to use
+            config_loader: the configuration loader to use
+        """
         self.Component_builder.build_empty_object(config_loader=config_loader)
         self.Component_builder.add_object_data(manifest)
         component_obj = self.Component_builder.get_result()
+        return component_obj
 
-        facade.register(config)
-        # get the component from the database if it exists or save to the db
-        db_components = self.Component_Management_persistence_controller.get_component(
-            UUID=component_obj.UUID
-        )
-        if len(db_components) > 0:
-            db_component = db_components[0]
-        else:
-            db_component = (
-                self.Component_Management_persistence_controller.save_component(
-                    component_obj
-                )
-            )
-
-        self.Component_builder.build_empty_object(config_loader=config_loader)
-        self.Component_builder.add_object_data(db_component)
-        return self.Component_builder.get_result()
-
-    def search_component_directory(
-        self, path: "str"
-    ) -> Generator[tuple[PurePath, PurePath], None, None]:
-        """this method is used to search the component directory potential components
-
-        Args:
-            path (str): the path to search
-
-        Returns:
-            list: a list of components found in the directory
-        """
-        potential_components = os.scandir(path)
-        for potential_component in potential_components:
-            facade_path = PurePath(
-                potential_component.path, potential_component.name + "_facade.py"
-            )
-            if os.path.exists(facade_path):
-                yield PurePath(potential_component), facade_path
-
-    def retrieve_facade(self, component_path: "PurePath") -> "DefaultFacade":
+    def retrieve_facade(self, component: "Component") -> "DefaultFacade":
         """this method is used to validate a component
 
         Args:
-            component_path (str): the component to validate
+            component (Component): the component to validate
 
         Returns:
             DefaultFacade: the component facade
         """
-        component_name = component_path.name.replace("_component", "")
 
         component_facade = getattr(
             importlib.import_module(
-                f"{self.component_import_root}.{component_path.name}.{component_name}_facade"
+                f"{self.component_import_root}.{component.name}.{component.name}_facade"
             ),
-            f"{''.join([name.capitalize() if name[0].isupper()==False else name for name in component_name.split('_')])}",
+            f"{''.join([name.capitalize() if name[0].isupper()==False else name for name in component.name.split('_')])}",
         )
 
         facade_instance: "DefaultFacade" = component_facade(
@@ -271,7 +222,11 @@ class ComponentInstallationController(Controller):
             component (Component): the component to uninstall
         """
 
-        external_action_mapping = self._get_external_action_mapping_path(component)
+        external_action_mapping = (
+            self.component_filesystem_controller.get_external_action_mapping_path(
+                component
+            )
+        )
 
         if not os.path.exists(external_action_mapping):
             raise FileNotFoundError(
@@ -280,10 +235,7 @@ class ComponentInstallationController(Controller):
 
         self.configuration.remove_configuration(str(external_action_mapping))
 
-        shutil.rmtree(self._get_component_path(component))
-
-        # remove the blueprint from the blueprint directory
-        os.remove(self._get_blueprint_path(component))
+        self.component_filesystem_controller.delete_component(component)
 
     def update_component(self, component: Component, config_loader):
         """this method is used to update a component
@@ -291,60 +243,22 @@ class ComponentInstallationController(Controller):
         Args:
             component (Component): the component to update
         """
-        
-        # identify files that are persistent
-        self._find_persistent_files(component)
 
-        # remove the component except for the persistent files
+        # identify files that are persistent
+        persistent_files = self.component_filesystem_controller.find_persistent_files(
+            component
+        )
+
+        # save the persistent files
+        temp_files = self.component_filesystem_controller.copy_temp_files(
+            persistent_files
+        )
+
+        # uninstall the component
+        self.uninstall_component(component)
 
         # install the new component
+        self.install_component(component)
 
-
-    def _find_persistent_files(self, component: Component) -> None:
-        """this method is used to save the persistent files of a component 
-
-        Args:
-            component (Component): the component to save the persistent files of
-        """
-
-    def _get_blueprint_path(self, component: Component) -> "PurePath":
-        """this method is used to get the blueprint path of a component
-
-        Args:
-            component (Component): the component to get the blueprint path of
-
-        Returns:
-            PurePath: the blueprint path
-        """
-        return PurePath(self.component_blueprint_path, component.name + "_blueprint.py")
-
-    def _get_component_path(self, component: Component) -> "PurePath":
-        """this method is used to get the component path of a component
-
-        Args:
-            component (Component): the component to get the component path of
-
-        Returns:
-            PurePath: the component path
-        """
-        if (
-            component.installation_path != None
-            and component.installation_path != "None"
-        ):
-            return PurePath(component.installation_path)
-        else:
-            return PurePath(self.component_installation_path, component.name)
-
-    def _get_external_action_mapping_path(self, component: Component) -> "PurePath":
-        """this method is used to get the external action mapping path of a component
-
-        Args:
-            component (Component): the component to get the external action mapping path of
-
-        Returns:
-            PurePath: the external action mapping path
-        """
-        return PurePath(
-            self._get_component_path(component)
-            / "configuration/external_action_mapping.ini"
-        )
+        # restore the persistent files
+        self.component_filesystem_controller.restore_files(temp_files)

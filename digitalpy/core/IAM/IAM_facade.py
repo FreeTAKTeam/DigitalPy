@@ -105,8 +105,8 @@ class IAM(DefaultFacade):
         # self.persistency_controller.initialize(request, response)
         # self.persistency_controller.initialize(request, response)
 
-    def register(self, *args, **kwargs):
-        super().register(*args, **kwargs)
+    def setup(self, *args, **kwargs):
+        super().setup(*args, **kwargs)
         self.persistency_controller.clear_sessions()
         self.persistency_controller.create_default_permissions()
         self.persistency_controller.create_default_groups()

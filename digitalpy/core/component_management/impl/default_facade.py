@@ -161,17 +161,22 @@ class DefaultFacade(Controller):
         config = InifileConfiguration(config_path=self.action_mapping_path)
         return config.config_array
 
-    def register(self, config: InifileConfiguration, **kwargs):
-        config.add_configuration(self.action_mapping_path)
+    def get_action_mapping_path(self) -> str:
+        """get the action mapping path for the component"""
+        return self.action_mapping_path
+
+    def get_action_mapper(self) -> DefaultActionMapper:
+        """get the action mapper for the component"""
         internal_config = InifileConfiguration("")
         internal_config.add_configuration(self.internal_action_mapping_path)
-        ObjectFactory.register_instance(
-            f"{self.component_name.lower()}actionmapper",
-            self.base.ActionMapper(  # type: ignore
+        return self.base.ActionMapper(  # type: ignore
                 ObjectFactory.get_instance("event_manager"),
                 internal_config,
             ),
-        )
+
+    def setup(self, **kwargs):
+        """setup the component"""
+        self.action_mapper = self.get_action_mapper()
         self._register_type_mapping()
 
     def unregister(self, config: InifileConfiguration, **kwargs):

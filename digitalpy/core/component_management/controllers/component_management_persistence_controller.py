@@ -3,7 +3,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 # import tables in initialization order
-from digitalpy.core.component_management.persistence.component import Component as DBComponent
+from digitalpy.core.component_management.persistence.component import (
+    Component as DBComponent,
+)
 from digitalpy.core.component_management.persistence.error import Error as DBError
 
 # import domain model classes
@@ -11,8 +13,12 @@ from digitalpy.core.component_management.domain.model.component import Component
 from digitalpy.core.component_management.domain.model.error import Error
 
 from digitalpy.core.main.controller import Controller
-from digitalpy.core.component_management.persistence.component_management_base import Component_ManagementBase
-from digitalpy.core.component_management.configuration.component_management_constants import DB_PATH
+from digitalpy.core.component_management.persistence.component_management_base import (
+    Component_ManagementBase,
+)
+from digitalpy.core.component_management.configuration.component_management_constants import (
+    DB_PATH,
+)
 
 if TYPE_CHECKING:
     from digitalpy.core.zmanager.request import Request
@@ -28,10 +34,10 @@ class Component_ManagementPersistenceController(Controller):
 
     def __init__(
         self,
-        request: 'Request',
-        response: 'Response',
-        sync_action_mapper: 'ActionMapper',
-        configuration: 'Configuration',
+        request: "Request",
+        response: "Response",
+        sync_action_mapper: "ActionMapper",
+        configuration: "Configuration",
     ):
         super().__init__(request, response, sync_action_mapper, configuration)
         self.ses = self.create_db_session()
@@ -53,8 +59,7 @@ class Component_ManagementPersistenceController(Controller):
 
     # Begin methods for component table
 
-
-    def save_component(self, component: Component, *args, **kwargs) -> 'DBComponent':
+    def save_component(self, component: Component, *args, **kwargs) -> "DBComponent":
         if not isinstance(component, Component):
             raise TypeError("'Component' must be an instance of Component")
 
@@ -76,7 +81,6 @@ class Component_ManagementPersistenceController(Controller):
         self.ses.commit()
         return db_component
 
-
     def remove_component(self, component: Component, *args, **kwargs):
         if not isinstance(component, Component):
             raise TypeError("'Component' must be an instance of Component")
@@ -84,7 +88,24 @@ class Component_ManagementPersistenceController(Controller):
         self.ses.delete(component_db)
         self.ses.commit()
 
-    def get_component(self, import_root:Union['str', None] = None, installation_path:Union['str', None] = None, author:Union['str', None] = None, author_email:Union['str', None] = None, description:Union['str', None] = None, License:Union['str', None] = None, repo:Union['str', None] = None, requiredAlfaVersion:Union['str', None] = None, URL:Union['str', None] = None, Version:Union['str', None] = None, UUID:Union['str', None] = None, name:Union['str', None] = None, oid: 'str' = None, *args, **kwargs) -> List[DBComponent]:
+    def get_component(
+        self,
+        import_root: Union["str", None] = None,
+        installation_path: Union["str", None] = None,
+        author: Union["str", None] = None,
+        author_email: Union["str", None] = None,
+        description: Union["str", None] = None,
+        License: Union["str", None] = None,
+        repo: Union["str", None] = None,
+        requiredAlfaVersion: Union["str", None] = None,
+        URL: Union["str", None] = None,
+        Version: Union["str", None] = None,
+        UUID: Union["str", None] = None,
+        name: Union["str", None] = None,
+        oid: "str" = None,
+        *args,
+        **kwargs
+    ) -> List[DBComponent]:
 
         query = self.ses.query(DBComponent)
 
@@ -117,14 +138,13 @@ class Component_ManagementPersistenceController(Controller):
 
         return query.all()
 
-
     def get_all_component(self, *args, **kwargs) -> list[DBComponent]:
         return self.ses.query(DBComponent).all()
 
     def update_component(self, component: Component, *args, **kwargs):
         if not isinstance(component, Component):
             raise TypeError("'component' must be an instance of Component")
-        component_db = self.get_component(oid = component.oid)[0]
+        component_db = self.get_component(UUID=component.UUID)[0]
         component_db.import_root = component.import_root
         component_db.installation_path = component.installation_path
         component_db.author = component.author
@@ -143,8 +163,7 @@ class Component_ManagementPersistenceController(Controller):
 
     # Begin methods for error table
 
-
-    def save_error(self, error: Error, *args, **kwargs) -> 'DBError':
+    def save_error(self, error: Error, *args, **kwargs) -> "DBError":
         if not isinstance(error, Error):
             raise TypeError("'Error' must be an instance of Error")
 
@@ -154,7 +173,6 @@ class Component_ManagementPersistenceController(Controller):
         self.ses.commit()
         return db_error
 
-
     def remove_error(self, error: Error, *args, **kwargs):
         if not isinstance(error, Error):
             raise TypeError("'Error' must be an instance of Error")
@@ -162,7 +180,7 @@ class Component_ManagementPersistenceController(Controller):
         self.ses.delete(error_db)
         self.ses.commit()
 
-    def get_error(self, oid: 'str' = None, *args, **kwargs) -> List[DBError]:
+    def get_error(self, oid: "str" = None, *args, **kwargs) -> List[DBError]:
 
         query = self.ses.query(DBError)
 
@@ -171,18 +189,16 @@ class Component_ManagementPersistenceController(Controller):
 
         return query.all()
 
-
     def get_all_error(self, *args, **kwargs) -> list[DBError]:
         return self.ses.query(DBError).all()
 
     def update_error(self, error: Error, *args, **kwargs):
         if not isinstance(error, Error):
             raise TypeError("'error' must be an instance of Error")
-        error_db = self.get_error(oid = error.oid)[0]
+        error_db = self.get_error(oid=error.oid)[0]
         self.ses.commit()
 
     # Begin methods for error table
-
 
     def __getstate__(self) -> object:
         state: dict = super().__getstate__()  # type: ignore
