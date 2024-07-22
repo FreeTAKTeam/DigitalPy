@@ -10,7 +10,7 @@ def test_connection():
     """
     Test the connection functionality of the IAM user controller.
     """
-    request, response = initialize_test_environment()
+    request, response, _ = initialize_test_environment()
     iam_facade = initialize_facade("digitalpy.core.IAM.IAM_facade.IAM", request, response)
     network_client = initialize_test_network_client()
 

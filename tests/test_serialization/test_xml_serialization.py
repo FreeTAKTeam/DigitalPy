@@ -12,7 +12,7 @@ from digitalpy.core.serialization.configuration.serialization_constants import P
 import lxml
 
 def test_xml_serialization_controller_simple_object():
-    request, response = initialize_test_environment()
+    request, response, _ = initialize_test_environment()
     simple_obj = initialize_simple_object(request, response)
     message = '<SimpleObject string="abc" number="1"/>'
 
@@ -28,7 +28,7 @@ def test_xml_serialization_controller_simple_object():
 
 def test_json_serialization_controller_simple_list():
     """Test the JSON serialization controller with an object containing a list of strings"""
-    request, response = initialize_test_environment()
+    request, response, _ = initialize_test_environment()
     #simple_obj = initialize_simple_list(request, response)
     #message = json.dumps({"string": "some string data", "number": 1234, "string_list": ["abc", "def", "hij"]})
 
@@ -52,7 +52,7 @@ def test_json_serialization_controller_simple_list():
 
 def test_xml_serialization_controller_list_object_optional():
     """Test the xml serialization controller with an optional list object"""
-    request, response = initialize_test_environment()
+    request, response, _ = initialize_test_environment()
     list_obj = initialize_list_object(request, response)
     message = '<ListObject string="some other string"><list_data string="abc" number="1"/><list_data string="def" number ="2"/><list_data string="hij" number="3"/></ListObject>'
 
@@ -78,7 +78,7 @@ def test_xml_serialization_controller_list_object_optional():
 
 def test_xml_serialization_controller_list_object_with_minimum():
     """Test the xml serialization controller with an optional list object with minimum values"""
-    request, response = initialize_test_environment()
+    request, response, _ = initialize_test_environment()
     list_obj = initialize_list_object_with_min(request, response)
     message = '<ListObject string="some other string"><list_data string="abc" number="1"/><list_data string="def" number ="2"/><list_data string="hij" number="3"/></ListObject>'
 
@@ -104,7 +104,7 @@ def test_xml_serialization_controller_list_object_with_minimum():
 
 def test_xml_serialization_controller_nested_object_optional():
     """Test the xml serialization controller with an optional nested object"""
-    request, response = initialize_test_environment()
+    request, response, _ = initialize_test_environment()
     nested_obj = initialize_nested_object(request, response)
     message = {"string": "some other string", "nested": {"string": "abc", "number": 1}}
 
@@ -125,7 +125,7 @@ def test_xml_serialization_controller_nested_object_optional():
 
 def test_xml_serialization_controller_nested_object_required():
     """Test the xml serialization controller with a required nested object"""
-    request, response = initialize_test_environment()
+    request, response, _ = initialize_test_environment()
     nested_obj = initialize_nested_object_required(request, response)
     message = {"string": "some other string", "nested": {"string": "abc", "number": 1}}
 

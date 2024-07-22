@@ -5,25 +5,23 @@ from pathlib import PurePath
 import os
 import zipfile
 
-from digitalpy.core.component_management.controllers.component_manifest_controller import ComponentManifestController
+from digitalpy.core.component_management.controllers.component_management_persistence_controller_impl import Component_managementPersistenceControllerImpl
+from digitalpy.core.component_management.controllers.component_manifest_controller import (
+    ComponentManifestController,
+)
 
-from digitalpy.core.component_management.domain.builder.component_builder_impl import ComponentBuilderImpl
+from digitalpy.core.component_management.domain.builder.component_builder_impl import (
+    ComponentBuilderImpl,
+)
 from digitalpy.core.main.controller import Controller
 
 # import builders
-from digitalpy.core.component_management.domain.builder.component_builder import (
-    ComponentBuilder,
-)
 from digitalpy.core.component_management.domain.builder.error_builder import (
     ErrorBuilder,
 )
-from .component_management_persistence_controller import (
-    Component_ManagementPersistenceController,
-)
 from digitalpy.core.component_management.configuration.component_management_constants import (
     COMPONENT_DOWNLOAD_PATH,
-    MANIFEST_PATH,
-    RELATIVE_MANIFEST_PATH
+    RELATIVE_MANIFEST_PATH,
 )
 
 from digitalpy.core.component_management.domain.model.component import Component
@@ -35,13 +33,12 @@ if TYPE_CHECKING:
     from digitalpy.core.zmanager.request import Request
     from digitalpy.core.zmanager.response import Response
     from digitalpy.core.domain.domain.network_client import NetworkClient
-    
+
     from digitalpy.core.component_management.domain.model.error import Error
 
 
 class ComponentDiscoveryController(Controller):
-    """This controller is responsible for discovering **compressed** components in a directory.
-    """
+    """This controller is responsible for discovering **compressed** components in a directory."""
 
     def __init__(
         self,
@@ -58,7 +55,7 @@ class ComponentDiscoveryController(Controller):
             request, response, sync_action_mapper, configuration
         )
         self.Component_Management_persistence_controller = (
-            Component_ManagementPersistenceController(
+            Component_managementPersistenceControllerImpl(
                 request, response, sync_action_mapper, configuration
             )
         )
@@ -81,10 +78,10 @@ class ComponentDiscoveryController(Controller):
         We then parse the manifest file and create a component object with the data we find.
         This function returns a generator that yields a component object for each component found.
         This function only searches a single level deep in the directory and only indexes .zip files.
-        
+
         Args:
             config_loader: the configuration loader object
-        
+
         Returns:
             Generator[Component, None, None]: a generator that yields a component object for each component found
         """
@@ -92,27 +89,35 @@ class ComponentDiscoveryController(Controller):
         for root, _, files in os.walk(COMPONENT_DOWNLOAD_PATH):
             for file in files:
                 if file.endswith(".zip"):
-                    component = self._discover_component(PurePath(root, file), config_loader)
+                    component = self._discover_component(
+                        PurePath(root, file), config_loader
+                    )
                     if component:
                         yield component
-    
-    def _discover_component(self, path: PurePath, config_loader) -> Union[Component, None]:
+
+    def _discover_component(
+        self, path: PurePath, config_loader
+    ) -> Union[Component, None]:
         """This function is used to discover a single component. It reads the manifest file
         from the component zip file and creates a component object with the data found in the manifest.
 
         Args:
             path (PurePath): the path to the component zip file
             config_loader: the configuration loader object
-            
+
         Returns:
             Component: the component object created from the manifest data
         """
         if not zipfile.is_zipfile(path):
             raise ValueError("File is not a zip file")
-        
-        with zipfile.ZipFile(path, 'r') as zip_ref:
-            with io.TextIOWrapper(zip_ref.open(name = RELATIVE_MANIFEST_PATH, mode = "r"), encoding="utf-8") as manifest_file:
-                manifest = self.component_manifest_controller.read_manifest(manifest_file)
+
+        with zipfile.ZipFile(path, "r") as zip_ref:
+            with io.TextIOWrapper(
+                zip_ref.open(name=RELATIVE_MANIFEST_PATH, mode="r"), encoding="utf-8"
+            ) as manifest_file:
+                manifest = self.component_manifest_controller.read_manifest(
+                    manifest_file
+                )
                 if manifest:
                     self.Component_builder.build_empty_object(config_loader)
                     self.Component_builder.add_object_data(manifest, path)

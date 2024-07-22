@@ -8,8 +8,10 @@ from digitalpy.core.component_management.configuration.component_management_cons
 
 # import domain model classes
 from digitalpy.core.component_management.domain.model.component import Component
+from digitalpy.core.component_management.domain.model.actionkey import ActionKey
 
 from digitalpy.core.component_management.persistence.component import Component as DBComponent
+from digitalpy.core.component_management.persistence.actionkey import ActionKey as DBActionKey
 
 class ComponentBuilder(Builder):
     """Builds a Component object"""
@@ -26,6 +28,7 @@ class ComponentBuilder(Builder):
 
         self.result = super()._create_model_object(
           configuration, extended_domain={"Component": Component,
+                                            "ActionKey": ActionKey,
                                         })
 
     def add_object_data(self, mapped_object: Union[bytes, str, DBComponent], protocol=None):
@@ -48,8 +51,6 @@ class ComponentBuilder(Builder):
         self.request.set_value("model_object", self.result)
         self.request.set_value("message", db_object)
         self.result.oid = db_object.oid
-        self.result.import_root = db_object.import_root
-        self.result.installation_path = db_object.installation_path
         self.result.author = db_object.author
         self.result.author_email = db_object.author_email
         self.result.description = db_object.description
@@ -59,6 +60,9 @@ class ComponentBuilder(Builder):
         self.result.URL = db_object.URL
         self.result.Version = db_object.Version
         self.result.UUID = db_object.UUID
+        self.result.isActive = db_object.isActive
+        self.result.isInstalled = db_object.isInstalled
+        self.result.installationPath = db_object.installationPath
         self.result.name = db_object.name
     def get_result(self):
         """gets the result of the builder"""

@@ -1,2 +1,2 @@
-class Component_ManagementDomain():
+class Component_managementDomain():
     pass

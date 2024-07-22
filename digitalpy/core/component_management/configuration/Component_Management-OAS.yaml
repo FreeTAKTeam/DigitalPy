@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
-  title: Component Management
-  version: '23.0.0'
+  title: component management
+  version: '2024.07.17'
   description: >-
     This core component contains functions related to Management of DigitalPy Components, this includes  Discovery, Registration,  installation and de-installation.
     Discovery exposes an end point in the rest API that goes trough all the folder in the component and search for non installed ones.
@@ -14,11 +14,26 @@ info:
   license:
     name: EPL
 paths:
-  /Component:
-    delete:
+  /Component/RequiredAlfaVersion:
+    post:
+      x-scope: package
       tags:
        - Component
+      description: >-
+        a component must support a certain version of the Aphrodite Specification (alpha). If the component.requiredAlfaVersion &gt; system.installedAlfaVersion return false else returns true
+      operationId: CheckRequiredAlfaVersion
+      parameters:
+        - $ref: '#/components/parameters/system_installedAlfaVersion'
+      requestBody:
+        $ref: '#/components/requestBodies/Component'
+      responses:
+        '200':
+          $ref: '#/components/responses/200'
+  /Component:
+    delete:
       x-scope: public
+      tags:
+       - Component
       description: >-
         physically remove the component from the disk
       summary: TODO
@@ -29,9 +44,9 @@ paths:
         '200':
           $ref: '#/components/responses/200Component_delete'
     post:
+      x-scope: public
       tags:
        - Component
-      x-scope: public
       description: >-
       summary: TODO
       operationId: InstallComponent
@@ -41,20 +56,20 @@ paths:
         '200':
           $ref: '#/components/responses/200Component_post'
     get:
+      x-scope: public
       tags:
        - Component
-      x-scope: public
       description: >-
-        list all the installed components only. DIscovered components will also list non installed or activated ones
+        list all the installed and activated components only. check DIscoveredComponents  for a list of non installed or activated ones
       summary: TODO
       operationId: ListComponents
       responses:
         '200':
           $ref: '#/components/responses/200Component_get'
     patch:
+      x-scope: public
       tags:
        - Component
-      x-scope: public
       description: >-
         update an existing component
       summary: TODO
@@ -66,37 +81,21 @@ paths:
           $ref: '#/components/responses/200Component_patch'
   /Component/{id}:
     get:
+      x-scope: public
       tags:
        - Component
-      x-scope: public
       description: >-
-        get component information
+        get component information from the system
       summary: TODO
       operationId: RetreiveComponent
       parameters:
         - $ref: '#/components/parameters/id'
       responses:
         '200':
-          $ref: '#/components/responses/200Component_post'
-  /InstallAllComponents:
-    post:
-      tags:
-       - Component
-      x-scope: package
-      description: >-
-        install all components in the directory with the given import root, this will typically
-        be used for the system startup only
-      summary: install all components that are not installed yet
-      operationId: InstallAllComponents
-      parameters:
-        - $ref: '#/components/parameters/Directory'
-        - $ref: '#/components/parameters/import_root'
-      responses:
-        '200':
-          $ref: '#/components/responses/200'
+          $ref: '#/components/responses/200Component_get'
   /ComponentStatus:
     get:
-      x-scope: package
+      x-scope: public
       tags:
        - Component
       description: >-
@@ -108,9 +107,56 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/200'
-  /ComponentRegister:
+  /ActionKey:
     post:
-      x-scope: package
+      x-scope: public
+      tags:
+       - ActionKey
+      description: >-
+      summary: TODO
+      operationId: CreateActionKey
+      requestBody:
+        $ref: '#/components/requestBodies/ActionKey'
+      responses:
+        '200':
+          $ref: '#/components/responses/200ActionKey_post'
+    delete:
+      x-scope: public
+      tags:
+       - ActionKey
+      description: >-
+      summary: TODO
+      operationId: DeleteActionKey
+      parameters:
+        - $ref: '#/components/parameters/ID'
+      responses:
+        '200':
+          $ref: '#/components/responses/200ActionKey_delete'
+    get:
+      x-scope: public
+      tags:
+       - ActionKey
+      description: >-
+      summary: TODO
+      operationId: ListActionKey
+      responses:
+        '200':
+          $ref: '#/components/responses/200ActionKey_get'
+    patch:
+      x-scope: public
+      tags:
+       - ActionKey
+      description: >-
+      summary: TODO
+      operationId: PatchActionKey
+      requestBody:
+        $ref: '#/components/requestBodies/ActionKey'
+      responses:
+        '200':
+          $ref: '#/components/responses/200ActionKey_patch'
+  /ComponentRegister:
+    get:
+      x-scope: public
       tags:
        - Component
       description: >-
@@ -124,33 +170,49 @@ paths:
           $ref: '#/components/responses/200Component_post'
   /ComponentDiscovery:
     get:
-      x-scope: package
+      x-scope: public
       tags:
        - Component
       description: >-
-        discover a list of components, other than list components, returns also components that are not activated or installed
-      summary: discover a list of components, other than list components, returns also components that are not activated or installed
+        discover a list of components, other that 'list components', returns also components that are not activated or installed. 
+      summary: TODO
       operationId: DiscoverComponent
-      parameters:
-        - $ref: '#/components/parameters/Directory'
-        - $ref: '#/components/parameters/import_root'
       responses:
         '200':
           $ref: '#/components/responses/200Component_get'
+  /PullComponent:
+    get:
+      x-scope: public
+      tags:
+       - Component
+      description: >-
+        pull a component from a remote repository
+      summary: pull a component from a remote repository
+      operationId: PullComponent
+      parameters:
+        - $ref: '#/components/parameters/URL'
+      responses:
+        '200':
+          $ref: '#/components/responses/200Component_post'
+  /ActionKey/{id}:
+    get:
+      x-scope: public
+      tags:
+       - ActionKey
+      description: >-
+      summary: TODO
+      operationId: RetreiveActionKey
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          $ref: '#/components/responses/200ActionKey_get'
 components:
   schemas:
     Component:
       allOf:
         - type: object
           properties:
-            import_root:
-              type: string
-              description: >-
-                The root from which the components are imported
-            installation_path:
-              type: string
-              description: >-
-                The path where the component is installed.
             author:
               type: string
               description: >-
@@ -187,10 +249,58 @@ components:
               type: string
               description: >-
                 A unique identifier for the component e.g. D3BCB981-6D28-4664-905E-AF1C7B871A6D
-            name:
+            isActive:
               type: string
               description: >-
-                The name of the component.
+                true if the component's is currently running
+            isInstalled:
+              type: string
+              description: >-
+                true if the component's physical code has been deployed
+            installationPath:
+              type: string
+              description: >-
+                the location of the component on the disk
+            actionKey:
+              description: >-
+                contains the list of action keys that are valid for this component
+              nullable: false
+              type: array
+              items:
+                type: string
+                x-reference: '#/components/schemas/ActionKey'
+    ActionKey:
+      allOf:
+        - type: object
+          properties:
+            action:
+              type: string
+              description: >-
+                The action, which is triggered. If empty, any action is valid
+            context:
+              type: string
+              description: >-
+                The context, in which this association is valid. If empty, any context is valid. 
+            decorator:
+              type: string
+              description: >-
+                Optional, Allows to dynamically attach special behaviors to the result operation without changing his implementation . e.g. a decorator REST, will expose this action as a REST service. (e.g. REST, Pub, Sub, All, etc)
+            config:
+              type: string
+              description: >-
+                The configuration, or configuration section in which this Action is defined
+            target:
+              type: string
+              description: >-
+                the qualified name of the target of the action, this can also include the method name
+            source:
+              type: string
+              description: >-
+                the qualified name of the originator of the action
+            referencedBehaviour:
+              type: string
+              description: >-
+                optional, the name of the target function, to be attached to the qualified name of the target.
     Error:
       description: Error
   parameters:
@@ -210,23 +320,22 @@ components:
       schema:
         type: string
       in: path
-    Directory:
-      name: Directory
+    system_installedAlfaVersion:
+      name: system_installedalfaversion
       required: true
       description: >-
-        this is the directory where the components are located
+        TODO
+      schema:
+        type: integer
+      in: query
+    URL:
+      name: url
+      required: true
+      description: >-
+        TODO
       schema:
         type: string
       in: query
-    import_root:
-      name: import_root
-      required: true
-      description: >-
-        this is the root from which the components are imported
-      schema:
-        type: string
-      in: query
-
   responses:
     200Component_delete:
       description: Success
@@ -252,6 +361,30 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Component'
+    200ActionKey_post:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ActionKey'
+    200ActionKey_delete:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ActionKey'
+    200ActionKey_get:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ActionKey'
+    200ActionKey_patch:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ActionKey'
     '200':
       description: OK
     '201':
@@ -321,6 +454,21 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
   requestBodies:
+    ActionKey:
+      description: >-
+        An action key is a combination of a resource, context and action that can be represented as a single string. 
+        An action key describes the state of a omponent and the action to be performed next. The state, results from than operation and the context, in which it is executed. Controllers must exist as classes, whereas contexts and actions can be arbitrary strings.
+        The string representation of an action key is as follows:
+        source?context?action = target
+        Node?InitialLoad?GetNodeParent = digitalpy.core.domain.domain_facade.Domain
+        example with referenced behaviour and decorator
+        Node?InitialLoad@REST?GetNodeParent = digitalpy.core.domain.domain_facade.Domain.get_parent
+        
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ActionKey'
+      required: true
     Component:
       description: >-
       content:
@@ -328,4 +476,16 @@ components:
           schema:
             $ref: '#/components/schemas/Component'
       required: true
+x-uml-relationships:
+  
+  - name: "actionKey"
+    x-ea-guid: 20D06F1F-45D8-4d92-AB43-44918BF579E1
+    source:
+      schema: "#/components/schemas/Component"
+      multiplicity: "1..1"
+      navigability: Unspecified
+    target:
+      schema: "#/components/schemas/ActionKey"
+      multiplicity: "0..-1"
+      navigability: Unspecified
 

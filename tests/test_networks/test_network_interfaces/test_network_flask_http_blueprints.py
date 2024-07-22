@@ -32,7 +32,7 @@ async def test_network_connection():
     tests that the connection action is not triggered when a session cookie is sent.
     """
     # initialize the test environment
-    request, response = initialize_test_environment()
+    request, response, _ = initialize_test_environment()
     network = FlaskHTTPNetworkBlueprints()
     test_service_desc = initialize_test_service_description(request, response)
     network.intialize_network('127.0.0.1', 5000, [testBlueprint], test_service_desc)

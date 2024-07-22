@@ -8,8 +8,8 @@ from digitalpy.core.component_management.domain.builder.component_builder_impl i
 from digitalpy.core.main.controller import Controller
 
 # import builders
-from .component_management_persistence_controller import (
-    Component_ManagementPersistenceController,
+from .component_management_persistence_controller_impl import (
+    Component_managementPersistenceControllerImpl,
 )
 
 
@@ -40,7 +40,7 @@ class ComponentPullController(Controller):
             request, response, sync_action_mapper, configuration
         )
         self.Component_Management_persistence_controller = (
-            Component_ManagementPersistenceController(
+            Component_managementPersistenceControllerImpl(
                 request, response, sync_action_mapper, configuration
             )
         )

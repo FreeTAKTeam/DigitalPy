@@ -59,5 +59,7 @@ class ComponentBuilderImpl(ComponentBuilder):
         self.result.Version = str(mapped_object.get("Version"))
         self.result.UUID = str(mapped_object.get("UUID"))
         self.result.name = str(mapped_object.get("name"))
-        self.result.installation_path = None
-        self.result.import_root = None
+        self.result.installationPath = str(mapped_object.get("installationPath"))
+        self.result.isActive = bool(mapped_object.get("isActive"))
+        self.result.isInstalled = bool(mapped_object.get("isInstalled"))
+        self.result.name = str(mapped_object.get("name"))

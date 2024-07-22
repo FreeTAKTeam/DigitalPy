@@ -2,23 +2,16 @@
 This module is responsible for discovering components and all the operations that are related to this task.
 """
 
-import io
-import shutil
-from tempfile import TemporaryDirectory, TemporaryFile
-from typing import TYPE_CHECKING, Generator
-from pathlib import PurePath
+from typing import TYPE_CHECKING
 
 import os
 import importlib
-import zipfile
 
 from digitalpy.core.component_management.controllers.component_filesystem_controller import (
     ComponentFilesystemController,
 )
 from digitalpy.core.component_management.configuration.component_management_constants import (
-    COMPONENT_DOWNLOAD_PATH,
     RELATIVE_MANIFEST_PATH,
-    ID,
 )
 
 from digitalpy.core.component_management.controllers.component_manifest_controller import (
@@ -33,14 +26,11 @@ from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.main.controller import Controller
 
 # import builders
-from digitalpy.core.component_management.domain.builder.component_builder import (
-    ComponentBuilder,
-)
 from digitalpy.core.component_management.domain.builder.error_builder import (
     ErrorBuilder,
 )
-from .component_management_persistence_controller import (
-    Component_ManagementPersistenceController,
+from .component_management_persistence_controller_impl import (
+    Component_managementPersistenceControllerImpl,
 )
 from digitalpy.core.component_management.domain.model.component import Component
 
@@ -75,7 +65,7 @@ class ComponentInstallationController(Controller):
             request, response, sync_action_mapper, configuration
         )
         self.Component_Management_persistence_controller = (
-            Component_ManagementPersistenceController(
+            Component_managementPersistenceControllerImpl(
                 request, response, sync_action_mapper, configuration
             )
         )
@@ -101,18 +91,35 @@ class ComponentInstallationController(Controller):
         self.component_filesystem_controller.initialize(request, response)
         return super().initialize(request, response)
 
-    def install_component(self, component: Component):
+    def install_component(self, component: Component) -> dict:
         """this method is used to install a component
 
         Args:
-            component_path (str): the path to the component
+            component (Component): the initial component to install
+
+        Raises:
+            ValueError: if the manifest is invalid
+
+        Returns:
+            dict: the component manifest
         """
 
-        component_path = self.component_filesystem_controller.unzip_component(component)
+        component_manifest = self.component_filesystem_controller.unzip_component(
+            component
+        )
 
-        component.installation_path = str(component_path)
+        # validate the manifest
+        if not self.component_manifest_controller.validate_manifest(
+            manifest=component_manifest, component_name=component.name
+        ):
+            # delete the component if the manifest is invalid
+            self.component_filesystem_controller.delete_component(component)
+            raise ValueError("Manifest validation failed")
 
+        # get the component object
         self.register_component(component)
+
+        return component_manifest
 
     def register_all_components(self, config_loader) -> list[Component]:
         """this method is used to install all components in the component installation directory
@@ -145,7 +152,11 @@ class ComponentInstallationController(Controller):
             # register the component
             self.register_component(component)
 
-            component.installation_path = str(potential_component)
+            component.installationPath = str(potential_component)
+
+            component.isActive = True
+
+            component.isInstalled = True
 
             # add the component to the list
             components.append(component)

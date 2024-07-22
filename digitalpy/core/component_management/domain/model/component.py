@@ -9,8 +9,6 @@ class Component(Node):
     """"""
     def __init__(self, model_configuration, model, oid=None, node_type="Component") -> None:
         super().__init__(node_type, model_configuration=model_configuration, model=model, oid=oid)
-        self._import_root: 'str' = None
-        self._installation_path: 'str' = None
         self._author: 'str' = None
         self._author_email: 'str' = None
         self._description: 'str' = None
@@ -20,31 +18,10 @@ class Component(Node):
         self._URL: 'str' = None
         self._Version: 'str' = None
         self._UUID: 'str' = None
+        self._isActive: 'str' = None
+        self._isInstalled: 'str' = None
+        self._installationPath: 'str' = None
         self._name: 'str' = None
-
-    @property
-    def import_root(self) -> 'str':
-        """The root from which the components are imported"""
-        return self._import_root
-
-    @import_root.setter
-    def import_root(self, import_root: 'str'):
-        import_root = str(import_root)
-        if not isinstance(import_root, str):
-            raise TypeError("'import_root' must be of type str")
-        self._import_root= import_root
-
-    @property
-    def installation_path(self) -> 'str':
-        """The path where the component is installed."""
-        return self._installation_path
-
-    @installation_path.setter
-    def installation_path(self, installation_path: 'str'):
-        installation_path = str(installation_path)
-        if not isinstance(installation_path, str):
-            raise TypeError("'installation_path' must be of type str")
-        self._installation_path= installation_path
 
     @property
     def author(self) -> 'str':
@@ -155,8 +132,44 @@ class Component(Node):
         self._UUID= UUID
 
     @property
+    def isActive(self) -> 'str':
+        """true if the component's is currently running"""
+        return self._isActive
+
+    @isActive.setter
+    def isActive(self, isActive: 'str'):
+        isActive = str(isActive)
+        if not isinstance(isActive, str):
+            raise TypeError("'isActive' must be of type str")
+        self._isActive= isActive
+
+    @property
+    def isInstalled(self) -> 'str':
+        """true if the component's physical code has been deployed"""
+        return self._isInstalled
+
+    @isInstalled.setter
+    def isInstalled(self, isInstalled: 'str'):
+        isInstalled = str(isInstalled)
+        if not isinstance(isInstalled, str):
+            raise TypeError("'isInstalled' must be of type str")
+        self._isInstalled= isInstalled
+
+    @property
+    def installationPath(self) -> 'str':
+        """the location of the component on the disk"""
+        return self._installationPath
+
+    @installationPath.setter
+    def installationPath(self, installationPath: 'str'):
+        installationPath = str(installationPath)
+        if not isinstance(installationPath, str):
+            raise TypeError("'installationPath' must be of type str")
+        self._installationPath= installationPath
+
+    @property
     def name(self) -> 'str':
-        """The name of the component."""
+        """"""
         return self._name
 
     @name.setter

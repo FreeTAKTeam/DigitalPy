@@ -1,12 +1,10 @@
 from io import TextIOBase
 from typing import TYPE_CHECKING
-from pathlib import PurePath
 
 import pkg_resources
 
 from digitalpy.core.component_management.configuration.component_management_constants import (
     DIGITALPY,
-    MANIFEST,
     NAME,
     REQUIRED_ALFA_VERSION,
     VERSION_DELIMITER,
@@ -26,10 +24,10 @@ from digitalpy.core.component_management.domain.builder.component_builder import
 from digitalpy.core.component_management.domain.builder.error_builder import (
     ErrorBuilder,
 )
-from digitalpy.core.main.object_factory import ObjectFactory
-from .component_management_persistence_controller import (
-    Component_ManagementPersistenceController,
+from .component_management_persistence_controller_impl import (
+    Component_managementPersistenceControllerImpl,
 )
+
 if TYPE_CHECKING:
     from digitalpy.core.component_management.impl.default_facade import DefaultFacade
     from digitalpy.core.digipy_configuration.configuration import Configuration
@@ -37,13 +35,12 @@ if TYPE_CHECKING:
     from digitalpy.core.zmanager.request import Request
     from digitalpy.core.zmanager.response import Response
     from digitalpy.core.domain.domain.network_client import NetworkClient
-    
+
     from digitalpy.core.component_management.domain.model.error import Error
 
 
 class ComponentManifestController(Controller):
-    """This controller is responsible for managing the component manifest files.
-    """
+    """This controller is responsible for managing the component manifest files."""
 
     def __init__(
         self,
@@ -60,7 +57,7 @@ class ComponentManifestController(Controller):
             request, response, sync_action_mapper, configuration
         )
         self.Component_Management_persistence_controller = (
-            Component_ManagementPersistenceController(
+            Component_managementPersistenceControllerImpl(
                 request, response, sync_action_mapper, configuration
             )
         )
@@ -75,10 +72,10 @@ class ComponentManifestController(Controller):
 
     def read_manifest(self, stream: TextIOBase) -> dict:
         """this method is used to read a component's manifest
-        
+
         Args:
             path (PurePath): the path to the manifest file
-        
+
         Returns:
             dict: the manifest configuration
         """
@@ -87,10 +84,8 @@ class ComponentManifestController(Controller):
         manifest.parse_ini_stream(result, stream)
         # return only the contents of the first section
         return list(result.values())[0]
-    
-    def validate_manifest(
-        self, manifest: dict, component_name: "str"
-    ) -> "bool":
+
+    def validate_manifest(self, manifest: dict, component_name: "str") -> "bool":
         """this method is used to validate a component's manifest
 
         Args:

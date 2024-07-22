@@ -34,7 +34,7 @@ def initialize_facade(facade_class: str, request: Request, response: Response) -
     facade.initialize(request, response)
     return facade
 
-def initialize_test_environment() -> tuple[Request, Response]:
+def initialize_test_environment() -> tuple[Request, Response, Configuration]:
     """initialize the test environment
     """
 
@@ -48,7 +48,7 @@ def initialize_test_environment() -> tuple[Request, Response]:
     # initialize the request and response objects
     request = ObjectFactory.get_new_instance("request")
     response = ObjectFactory.get_new_instance("response")
-    return request, response
+    return request, response, configuration
 
 def initialize_factory(configuration: Configuration):
     """initialize and configure the base factory object
@@ -71,22 +71,22 @@ def register_components(config: Configuration):
     """register all core digitalpy components
     """
 
-    ComponentManagement(
-        None, None, None, None
-    ).register(config)
+    register_component(ComponentManagement(None, None, None, None), config)
 
-    Domain(
-        None, None, None, None
-    ).register(config)
+    register_component(Domain(None, None, None, None), config)
 
-    IAM(
-        None, None, None, None
-    ).register(config)
+    register_component(IAM(None, None, None, None), config)
 
-    Serialization(
-        None, None, None, None
-    ).register(config)
+    register_component(Serialization(None, None, None, None), config)
 
-    ServiceManagement(
-        None, None, None, None
-    ).register(config)
+    register_component(ServiceManagement(None, None, None, None), config)
+
+def register_component(facade: DefaultFacade, config: Configuration):
+    config.add_configuration(facade.get_action_mapping_path())
+
+    ObjectFactory.register_instance(
+        facade.__class__.__name__.lower()+"actionmapper",
+        facade.get_action_mapper(),
+    )
+
+    facade.setup()

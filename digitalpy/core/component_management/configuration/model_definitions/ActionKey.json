@@ -4,7 +4,41 @@
 	"type": "object",
 	"definitions":
 	{
-		"Component":
+		"ActionKey":
+		{
+			"type": "object",
+			"properties": {
+				"action":
+				{
+					"type": "string"
+				},
+				"context":
+				{
+					"type": "string"
+				},
+				"decorator":
+				{
+					"type": "string"
+				},
+				"config":
+				{
+					"type": "string"
+				},
+				"target":
+				{
+					"type": "string"
+				},
+				"source":
+				{
+					"type": "string"
+				},
+				"referencedBehaviour":
+				{
+					"type": "string"
+				}
+			}
+		}
+		,"Component":
 		{
 			"type": "object",
 			"properties": {
@@ -53,40 +87,6 @@
 					"type": "string"
 				},
 				"installationPath":
-				{
-					"type": "string"
-				}
-			}
-		}
-		,"ActionKey":
-		{
-			"type": "object",
-			"properties": {
-				"action":
-				{
-					"type": "string"
-				},
-				"context":
-				{
-					"type": "string"
-				},
-				"decorator":
-				{
-					"type": "string"
-				},
-				"config":
-				{
-					"type": "string"
-				},
-				"target":
-				{
-					"type": "string"
-				},
-				"source":
-				{
-					"type": "string"
-				},
-				"referencedBehaviour":
 				{
 					"type": "string"
 				}

@@ -4,7 +4,7 @@ import pathlib
 
 from string import Template
 
-COMPONENT_NAME = "Component_Management"
+COMPONENT_NAME = "component_management"
 
 CONFIGURATION_FORMAT = "json"
 
@@ -27,9 +27,10 @@ CONFIGURATION_PATH_TEMPLATE = Template(
     f".{CONFIGURATION_FORMAT}"
 )
 
-DB_PATH = "sqlite:///" + str(CURRENT_COMPONENT_PATH / "persistence/Component_Management.db")
+DB_PATH = "sqlite:///" + str(CURRENT_COMPONENT_PATH / "persistence/component_management.db")
 COMPONENT_DOWNLOAD_PATH = CURRENT_COMPONENT_PATH / "persistence/downloads"
 COMPONENT = "Component"
+ACTIONKEY = "ActionKey"
 ERROR = "Error"
 MANIFEST = "manifest"
 RELATIVE_MANIFEST_PATH = "configuration/manifest.ini"

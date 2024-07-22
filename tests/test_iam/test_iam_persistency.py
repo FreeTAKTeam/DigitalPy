@@ -5,7 +5,7 @@ from digitalpy.core.IAM.configuration import iam_constants
 iam_constants.DB_PATH = "sqlite+pysqlite:///:memory:"
 
 def test_default_admin_instantiation():
-    request, response = initialize_test_environment()
+    request, response, _ = initialize_test_environment()
     iam_facade = initialize_facade("digitalpy.core.IAM.IAM_facade.IAM", request, response)    
     request.set_value("cn", "Administrator")
     iam_facade.execute("get_user_by_cn")
@@ -30,7 +30,7 @@ def test_default_admin_instantiation():
         assert False
 
 def test_default_anonymous_instantiation():
-    request, response = initialize_test_environment()
+    request, response, _ = initialize_test_environment()
     iam_facade = initialize_facade("digitalpy.core.IAM.IAM_facade.IAM", request, response)    
     request.set_value("cn", "Anonymous")
     iam_facade.execute("get_user_by_cn")

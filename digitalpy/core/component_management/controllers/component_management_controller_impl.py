@@ -9,23 +9,22 @@ from digitalpy.core.component_management.controllers.component_installation_cont
     ComponentInstallationController,
 )
 from digitalpy.core.component_management.controllers.component_management_controller import (
-    Component_ManagementController,
+    Component_managementController,
 )
 from digitalpy.core.component_management.controllers.component_pull_controller import (
     ComponentPullController,
 )
 from digitalpy.core.domain.domain.network_client import NetworkClient
-from digitalpy.core.main.object_factory import ObjectFactory
 
 # import builders
-from digitalpy.core.component_management.domain.builder.component_builder import (
-    ComponentBuilder,
+from digitalpy.core.component_management.domain.builder.component_builder_impl import (
+    ComponentBuilderImpl,
 )
 from digitalpy.core.component_management.domain.builder.error_builder import (
     ErrorBuilder,
 )
-from .component_management_persistence_controller import (
-    Component_ManagementPersistenceController,
+from .component_management_persistence_controller_impl import (
+    Component_managementPersistenceControllerImpl,
 )
 
 if TYPE_CHECKING:
@@ -38,7 +37,7 @@ if TYPE_CHECKING:
     from digitalpy.core.component_management.domain.model.error import Error
 
 
-class Component_ManagementControllerImpl(Component_ManagementController):
+class Component_managementControllerImpl(Component_managementController):
 
     def __init__(
         self,
@@ -48,14 +47,14 @@ class Component_ManagementControllerImpl(Component_ManagementController):
         configuration: "Configuration",
     ):
         super().__init__(request, response, sync_action_mapper, configuration)
-        self.Component_builder = ComponentBuilder(
+        self.Component_builder = ComponentBuilderImpl(
             request, response, sync_action_mapper, configuration
         )
         self.Error_builder = ErrorBuilder(
             request, response, sync_action_mapper, configuration
         )
         self.Component_Management_persistence_controller = (
-            Component_ManagementPersistenceController(
+            Component_managementPersistenceControllerImpl(
                 request, response, sync_action_mapper, configuration
             )
         )
@@ -101,8 +100,14 @@ class Component_ManagementControllerImpl(Component_ManagementController):
         component = self.Component_builder.get_result()
 
         # install the component
-        self.component_installation_controller.install_component(
-            component
+        manifest = self.component_installation_controller.install_component(component)
+
+        # add the manifest data to the component object
+        self.Component_builder.add_object_data(manifest)
+
+        # Save the component record to the database
+        self.Component_Management_persistence_controller.save_component(
+            self.Component_builder.get_result()
         )
 
         # return the records
@@ -140,11 +145,19 @@ class Component_ManagementControllerImpl(Component_ManagementController):
         )
 
         for component in components:
-            existing_components = self.Component_Management_persistence_controller.get_component(UUID=component.UUID)
+            existing_components = (
+                self.Component_Management_persistence_controller.get_component(
+                    UUID=component.UUID
+                )
+            )
             if len(existing_components) > 0:
-                self.Component_Management_persistence_controller.update_component(component)
+                self.Component_Management_persistence_controller.update_component(
+                    component
+                )
             else:
-                self.Component_Management_persistence_controller.save_component(component)
+                self.Component_Management_persistence_controller.save_component(
+                    component
+                )
 
         # return the records
         self.response.set_value("message", components)
@@ -223,7 +236,9 @@ class Component_ManagementControllerImpl(Component_ManagementController):
         # publish the records
         self.response.set_action("publish")
 
-    def PATCHComponent(self, body: 'Component',  client: 'NetworkClient', config_loader, *args, **kwargs):  # pylint: disable=unused-argument
+    def PATCHComponent(
+        self, body: "Component", client: "NetworkClient", config_loader, *args, **kwargs
+    ):  # pylint: disable=unused-argument
         """update a component record in the database and update the component in the installation directory if necessary.
         Notably, we don't want to delete the database record.
 
@@ -231,10 +246,10 @@ class Component_ManagementControllerImpl(Component_ManagementController):
             body (Component): the component object to be updated
             client (NetworkClient): the client object
             config_loader (Configuration): the configuration loader
-        
+
         Raises:
             ValueError: if the component is not found in the database
-        
+
         Returns:
             None: return a none
         """
@@ -244,27 +259,57 @@ class Component_ManagementControllerImpl(Component_ManagementController):
         domain_obj = self.Component_builder.get_result()
 
         # get from the database
-        db_obj = self.Component_Management_persistence_controller.get_component(oid=str(domain_obj.oid))[0]
+        db_obj = self.Component_Management_persistence_controller.get_component(
+            oid=str(domain_obj.oid)
+        )[0]
 
         if db_obj is None:
             raise ValueError("Component not found in the database")
-        
+
         # initialize the object
         self.Component_builder.build_empty_object(config_loader)
         self.Component_builder.add_object_data(db_obj)
         # update the object with json data
         self.Component_builder.add_object_data(body, Protocols.JSON)
-        
-        self.component_installation_controller.update_component(self.Component_builder.get_result(), config_loader)
+
+        self.component_installation_controller.update_component(
+            self.Component_builder.get_result(), config_loader
+        )
 
         # Save the Schedule record to the database
         self.Component_Management_persistence_controller.update_component(domain_obj)
-        
+
         # set the target
         self.response.set_value("recipients", [str(client.get_oid())])
 
         # return the records
         self.response.set_value("message", [domain_obj])
+
+        # publish the records
+        self.response.set_action("publish")
+
+    def GETComponentId(
+        self, id: "str", client: "NetworkClient", config_loader, *args, **kwargs
+    ):  # pylint: disable=unused-argument
+        """TODO"""
+
+        # retrieve the Component record from the database
+        db_records = (
+            self.component_management_persistence_controller_impl.get_component(UUID=id)
+        )
+        domain_records: list["Component"] = []
+
+        # convert the records to the domain object
+        for record in db_records:
+            self.Component_builder.build_empty_object(config_loader=config_loader)
+            self.Component_builder.add_object_data(record)
+            domain_records.append(self.Component_builder.get_result())
+
+        # set the target
+        self.response.set_value("recipients", [str(client.get_oid())])
+
+        # return the records
+        self.response.set_value("message", domain_records)
 
         # publish the records
         self.response.set_action("publish")

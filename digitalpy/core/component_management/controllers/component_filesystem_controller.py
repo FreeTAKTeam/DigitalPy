@@ -4,12 +4,11 @@ This module is responsible for modifying the component filesystem.
 
 import io
 import shutil
-from tempfile import TemporaryDirectory, TemporaryFile
+from tempfile import TemporaryFile
 from typing import TYPE_CHECKING, Generator
 from pathlib import PurePath
 
 import os
-import importlib
 import zipfile
 
 from digitalpy.core.component_management.configuration.component_management_constants import (
@@ -24,20 +23,16 @@ from digitalpy.core.component_management.controllers.component_manifest_controll
 from digitalpy.core.component_management.domain.builder.component_builder_impl import (
     ComponentBuilderImpl,
 )
-from digitalpy.core.main.object_factory import ObjectFactory
 
 
 from digitalpy.core.main.controller import Controller
 
 # import builders
-from digitalpy.core.component_management.domain.builder.component_builder import (
-    ComponentBuilder,
-)
 from digitalpy.core.component_management.domain.builder.error_builder import (
     ErrorBuilder,
 )
-from .component_management_persistence_controller import (
-    Component_ManagementPersistenceController,
+from .component_management_persistence_controller_impl import (
+    Component_managementPersistenceControllerImpl,
 )
 from digitalpy.core.component_management.domain.model.component import Component
 
@@ -70,7 +65,7 @@ class ComponentFilesystemController(Controller):
             request, response, sync_action_mapper, configuration
         )
         self.Component_Management_persistence_controller = (
-            Component_ManagementPersistenceController(
+            Component_managementPersistenceControllerImpl(
                 request, response, sync_action_mapper, configuration
             )
         )
@@ -92,8 +87,9 @@ class ComponentFilesystemController(Controller):
         It is intiated by the service manager."""
         return super().initialize(request, response)
 
-    def unzip_component(self, component: Component) -> PurePath:
-        """this method is used to unzip a component and add its blueprint to the blueprint directory
+    def unzip_component(self, component: Component) -> dict:
+        """this method is used to unzip a component and add its blueprint to the blueprint directory,
+        it returns the component manifest as a dictionary and sets the commponent installation path.
 
         Args:
             component (Component): the component to unzip
@@ -102,7 +98,7 @@ class ComponentFilesystemController(Controller):
             ValueError: if the manifest UUID does not match the given component UUID
 
         Returns:
-            PurePath: the path to the component
+            dict: the component manifest
         """
         with zipfile.ZipFile(
             COMPONENT_DOWNLOAD_PATH / f"{component.name}.zip", "r"
@@ -130,8 +126,8 @@ class ComponentFilesystemController(Controller):
             ),
             self._get_blueprint_path(component),
         )
-
-        return self._get_component_path(component)
+        component.installationPath = str(self._get_component_path(component))
+        return manifest
 
     def search_component_directory(
         self,
@@ -206,7 +202,7 @@ class ComponentFilesystemController(Controller):
         # get all db files, currently these are the only persistent files, this will be expanded
         # to include other configuration files in the future
         db_files = []
-        for root, _, files in os.walk(component.installation_path):
+        for root, _, files in os.walk(component.installationPath):
             for file in files:
                 if file.endswith(".db"):
                     db_files.append(PurePath(root, file))
@@ -232,11 +228,8 @@ class ComponentFilesystemController(Controller):
         Returns:
             PurePath: the component path
         """
-        if (
-            component.installation_path != None
-            and component.installation_path != "None"
-        ):
-            return PurePath(component.installation_path)
+        if component.installationPath != None and component.installationPath != "None":
+            return PurePath(component.installationPath)
         else:
             return PurePath(self.component_installation_path, component.name)
 
