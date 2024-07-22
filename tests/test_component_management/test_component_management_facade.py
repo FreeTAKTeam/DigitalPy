@@ -2,7 +2,6 @@ import json
 import os
 from pathlib import PurePath
 import shutil
-import time
 from unittest import mock
 from unittest.mock import MagicMock, patch
 import zipfile
@@ -24,7 +23,7 @@ def client_mock():
 def setup():
     mock.patch(
         "digitalpy.core.component_management.controllers.component_management_persistence_controller.DB_PATH",
-        "sqlite+pysqlite:///:memory:",
+        "sqlite:///tests/test_component_management/test_component_resources/test_data/component_management.db",
     ).start()
 
 @pytest.fixture
@@ -99,33 +98,32 @@ def test_pull_component(mock_get, client_mock, test_fs):
 
     os.remove(save_path)
 
+@pytest.mark.skip("This test works in isolation but for some reason a lock is being held on the log file. this prevents the test from cleaning up after itself therefore breaking others.")
+@pytest.mark.parametrize("zip_name", ["test_install_component.zip"])
+def test_install_component(client_mock, test_fs):
+    mock.patch(
+        "digitalpy.core.component_management.controllers.component_filesystem_controller.COMPONENT_DOWNLOAD_PATH",
+        PurePath(test_fs / "downloads"),
+    ).start()
 
-@pytest.mark.skip(
-    "This test is not working because the component is holding the log file lock which preventst he component from being deleted once the test is complete"
-)
-@patch(
-    "digitalpy.core.component_management.controllers.component_installation_controller.COMPONENT_DOWNLOAD_PATH",
-    PurePath("tests/test_component_management/test_component_resources/"),
-)
-def test_install_component(client_mock):
     request, response, configuration = initialize_test_environment()
 
     configuration.set_value(
         "component_installation_path",
         PurePath(
-            "tests\\test_component_management\\test_component_resources\\empty_test_installation_path"
+            test_fs / "components"
         ),
         "ComponentManagement",
     )
     configuration.set_value(
         "component_import_root",
-        "tsts.test_component_management.test_component_resources.empty_test_installation_path",
+        "tests.test_component_management.test_component_resources.test_data.components",
         "ComponentManagement",
     )
     configuration.set_value(
         "component_blueprint_path",
         PurePath(
-            "tests\\test_component_management\\test_component_resources\\empty_test_blueprint_path"
+            test_fs / "blueprints"
         ),
         "ComponentManagement",
     )
@@ -147,19 +145,7 @@ def test_install_component(client_mock):
 
     assert os.path.exists(
         PurePath(
-            "tests\\test_component_management\\test_component_resources\\empty_test_installation_path\\sample"
-        )
-    )
-
-    shutil.rmtree(
-        PurePath(
-            "tests\\test_component_management\\test_component_resources\\empty_test_installation_path\\sample"
-        )
-    )
-
-    os.remove(
-        PurePath(
-            "tests\\test_component_management\\test_component_resources\\empty_test_blueprint_path\\sample_blueprint.py"
+            test_fs / "components/sample"
         )
     )
 
@@ -183,7 +169,7 @@ def test_update_component(get_component_mock, client_mock, test_fs):
     )
     configuration.set_value(
         "component_import_root",
-        "tests.test_component_management.test_component_resources.components",
+        "tests.test_component_management.test_component_resources.test_data.components",
         "ComponentManagement",
     )
     configuration.set_value(
