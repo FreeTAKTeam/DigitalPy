@@ -1,2 +1,4 @@
+"""The domain for the component management component."""
+
 class Component_managementDomain():
-    pass
+    """The domain for the component management component."""

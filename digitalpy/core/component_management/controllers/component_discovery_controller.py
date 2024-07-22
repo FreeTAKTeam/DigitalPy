@@ -1,3 +1,5 @@
+"""This module contains the ComponentDiscoveryController class."""
+
 import io
 from typing import TYPE_CHECKING, Generator, Union
 from pathlib import PurePath
@@ -5,7 +7,9 @@ from pathlib import PurePath
 import os
 import zipfile
 
-from digitalpy.core.component_management.controllers.component_management_persistence_controller_impl import Component_managementPersistenceControllerImpl
+from digitalpy.core.component_management.controllers.component_management_persistence_controller_impl import (
+    Component_managementPersistenceControllerImpl,
+)
 from digitalpy.core.component_management.controllers.component_manifest_controller import (
     ComponentManifestController,
 )
@@ -38,7 +42,8 @@ if TYPE_CHECKING:
 
 
 class ComponentDiscoveryController(Controller):
-    """This controller is responsible for discovering **compressed** components in a directory."""
+    """This controller is responsible for discovering the **compressed** components in the
+    component download directory."""
 
     def __init__(
         self,
@@ -48,13 +53,13 @@ class ComponentDiscoveryController(Controller):
         configuration: "Configuration",
     ):
         super().__init__(request, response, sync_action_mapper, configuration)
-        self.Component_builder = ComponentBuilderImpl(
+        self.component_builder = ComponentBuilderImpl(
             request, response, sync_action_mapper, configuration
         )
-        self.Error_builder = ErrorBuilder(
+        self.error_builder = ErrorBuilder(
             request, response, sync_action_mapper, configuration
         )
-        self.Component_Management_persistence_controller = (
+        self.component_management_persistence_controller = (
             Component_managementPersistenceControllerImpl(
                 request, response, sync_action_mapper, configuration
             )
@@ -66,9 +71,9 @@ class ComponentDiscoveryController(Controller):
     def initialize(self, request: "Request", response: "Response"):
         """This function is used to initialize the controller.
         It is intiated by the service manager."""
-        self.Component_builder.initialize(request, response)
-        self.Error_builder.initialize(request, response)
-        self.Component_Management_persistence_controller.initialize(request, response)
+        self.component_builder.initialize(request, response)
+        self.error_builder.initialize(request, response)
+        self.component_management_persistence_controller.initialize(request, response)
         return super().initialize(request, response)
 
     def discover_components(self, config_loader) -> Generator[Component, None, None]:
@@ -119,7 +124,7 @@ class ComponentDiscoveryController(Controller):
                     manifest_file
                 )
                 if manifest:
-                    self.Component_builder.build_empty_object(config_loader)
-                    self.Component_builder.add_object_data(manifest, path)
-                    return self.Component_builder.get_result()
+                    self.component_builder.build_empty_object(config_loader)
+                    self.component_builder.add_object_data(manifest, path)
+                    return self.component_builder.get_result()
         return None

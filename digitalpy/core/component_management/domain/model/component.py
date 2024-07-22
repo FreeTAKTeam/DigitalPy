@@ -1,12 +1,11 @@
 # pylint: disable=invalid-name
-from digitalpy.core.domain.node import Node
-from digitalpy.core.domain.relationship import Relationship, RelationshipType
 
-from typing import TYPE_CHECKING
+from digitalpy.core.domain.node import Node
+
 # iterating associations
 
 class Component(Node):
-    """"""
+    """ A component is a piece of software that can be installed in the system. It is a part of the system that can be"""
     def __init__(self, model_configuration, model, oid=None, node_type="Component") -> None:
         super().__init__(node_type, model_configuration=model_configuration, model=model, oid=oid)
         self._author: 'str' = None
@@ -85,7 +84,8 @@ class Component(Node):
 
     @property
     def requiredAlfaVersion(self) -> 'str':
-        """the required minimal version of the {Aphrodites Framework (e.g. DigitalPy) that is need to support the component"""
+        """the required minimal version of the {Aphrodites Framework (e.g. DigitalPy) that
+        is need to support the component"""
         return self._requiredAlfaVersion
 
     @requiredAlfaVersion.setter
@@ -97,7 +97,8 @@ class Component(Node):
 
     @property
     def URL(self) -> 'str':
-        """universal Location where the component need to be installed. If empty will be installed inside the current system"""
+        """universal Location where the component need to be installed. If empty will be installed
+        inside the current system"""
         return self._URL
 
     @URL.setter
@@ -169,7 +170,7 @@ class Component(Node):
 
     @property
     def name(self) -> 'str':
-        """"""
+        """get the name of the component"""
         return self._name
 
     @name.setter

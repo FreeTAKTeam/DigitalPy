@@ -1,7 +1,6 @@
 from typing import Union
 from digitalpy.core.domain.builder import Builder
 from digitalpy.core.serialization.configuration.serialization_constants import Protocols
-from digitalpy.core.domain.object_id import ObjectId
 
 
 from digitalpy.core.component_management.configuration.component_management_constants import ERROR

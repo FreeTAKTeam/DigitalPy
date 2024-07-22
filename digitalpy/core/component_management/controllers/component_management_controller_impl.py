@@ -1,3 +1,4 @@
+"""This module contains the implementation of the component management controller."""
 from pathlib import PurePath
 from typing import TYPE_CHECKING, Union
 
@@ -32,13 +33,12 @@ if TYPE_CHECKING:
     from digitalpy.core.zmanager.impl.default_action_mapper import DefaultActionMapper
     from digitalpy.core.zmanager.request import Request
     from digitalpy.core.zmanager.response import Response
-    from digitalpy.core.domain.domain.network_client import NetworkClient
     from digitalpy.core.component_management.domain.model.component import Component
     from digitalpy.core.component_management.domain.model.error import Error
 
 
 class Component_managementControllerImpl(Component_managementController):
-
+    """This class is responsible for managing the components in the system."""
     def __init__(
         self,
         request: "Request",
@@ -47,13 +47,13 @@ class Component_managementControllerImpl(Component_managementController):
         configuration: "Configuration",
     ):
         super().__init__(request, response, sync_action_mapper, configuration)
-        self.Component_builder = ComponentBuilderImpl(
+        self.component_builder = ComponentBuilderImpl(
             request, response, sync_action_mapper, configuration
         )
-        self.Error_builder = ErrorBuilder(
+        self.error_builder = ErrorBuilder(
             request, response, sync_action_mapper, configuration
         )
-        self.Component_Management_persistence_controller = (
+        self.component_management_persistence_controller = (
             Component_managementPersistenceControllerImpl(
                 request, response, sync_action_mapper, configuration
             )
@@ -71,9 +71,9 @@ class Component_managementControllerImpl(Component_managementController):
     def initialize(self, request: "Request", response: "Response"):
         """This function is used to initialize the controller.
         It is intiated by the service manager."""
-        self.Component_builder.initialize(request, response)
-        self.Error_builder.initialize(request, response)
-        self.Component_Management_persistence_controller.initialize(request, response)
+        self.component_builder.initialize(request, response)
+        self.error_builder.initialize(request, response)
+        self.component_management_persistence_controller.initialize(request, response)
         self.component_installation_controller.initialize(request, response)
         self.component_discovery_controller.initialize(request, response)
         return super().initialize(request, response)
@@ -93,21 +93,21 @@ class Component_managementControllerImpl(Component_managementController):
 
         """
         # initialize Component builder
-        self.Component_builder.build_empty_object(config_loader=config_loader)
-        self.Component_builder.add_object_data(
+        self.component_builder.build_empty_object(config_loader=config_loader)
+        self.component_builder.add_object_data(
             mapped_object=body, protocol=Protocols.JSON
         )
-        component = self.Component_builder.get_result()
+        component = self.component_builder.get_result()
 
         # install the component
         manifest = self.component_installation_controller.install_component(component)
 
         # add the manifest data to the component object
-        self.Component_builder.add_object_data(manifest)
+        self.component_builder.add_object_data(manifest)
 
         # Save the component record to the database
-        self.Component_Management_persistence_controller.save_component(
-            self.Component_builder.get_result()
+        self.component_management_persistence_controller.save_component(
+            self.component_builder.get_result()
         )
 
         # return the records
@@ -123,7 +123,7 @@ class Component_managementControllerImpl(Component_managementController):
         self, ID: str, client: "NetworkClient", config_loader, *args, **kwargs
     ) -> "Component":  # pylint: disable=unused-argument
         """register a component"""
-        components = self.Component_Management_persistence_controller.get_component(
+        components = self.component_management_persistence_controller.get_component(
             UUID=ID
         )
         self.component_installation_controller.register_component(components[0])
@@ -146,16 +146,16 @@ class Component_managementControllerImpl(Component_managementController):
 
         for component in components:
             existing_components = (
-                self.Component_Management_persistence_controller.get_component(
+                self.component_management_persistence_controller.get_component(
                     UUID=component.UUID
                 )
             )
             if len(existing_components) > 0:
-                self.Component_Management_persistence_controller.update_component(
+                self.component_management_persistence_controller.update_component(
                     component
                 )
             else:
-                self.Component_Management_persistence_controller.save_component(
+                self.component_management_persistence_controller.save_component(
                     component
                 )
 
@@ -210,7 +210,7 @@ class Component_managementControllerImpl(Component_managementController):
         self, ID: "str", client: "NetworkClient", config_loader, *args, **kwargs
     ):  # pylint: disable=unused-argument
         """TODO"""
-        db_records = self.Component_Management_persistence_controller.get_component(
+        db_records = self.component_management_persistence_controller.get_component(
             oid=ID
         )
 
@@ -219,13 +219,13 @@ class Component_managementControllerImpl(Component_managementController):
         else:
             db_record = db_records[0]
 
-        self.Component_builder.build_empty_object(config_loader=config_loader)
-        self.Component_builder.add_object_data(db_record)
-        record = self.Component_builder.get_result()
+        self.component_builder.build_empty_object(config_loader=config_loader)
+        self.component_builder.add_object_data(db_record)
+        record = self.component_builder.get_result()
 
         self.component_installation_controller.uninstall_component(record)
 
-        self.Component_Management_persistence_controller.remove_component(record)
+        self.component_management_persistence_controller.remove_component(record)
 
         # set the target
         self.response.set_value("recipients", [str(client.get_oid())])
@@ -254,12 +254,12 @@ class Component_managementControllerImpl(Component_managementController):
             None: return a none
         """
         # create the basic domain object from the json data
-        self.Component_builder.build_empty_object(config_loader)
-        self.Component_builder.add_object_data(body, Protocols.JSON)
-        domain_obj = self.Component_builder.get_result()
+        self.component_builder.build_empty_object(config_loader)
+        self.component_builder.add_object_data(body, Protocols.JSON)
+        domain_obj = self.component_builder.get_result()
 
         # get from the database
-        db_obj = self.Component_Management_persistence_controller.get_component(
+        db_obj = self.component_management_persistence_controller.get_component(
             oid=str(domain_obj.oid)
         )[0]
 
@@ -267,17 +267,17 @@ class Component_managementControllerImpl(Component_managementController):
             raise ValueError("Component not found in the database")
 
         # initialize the object
-        self.Component_builder.build_empty_object(config_loader)
-        self.Component_builder.add_object_data(db_obj)
+        self.component_builder.build_empty_object(config_loader)
+        self.component_builder.add_object_data(db_obj)
         # update the object with json data
-        self.Component_builder.add_object_data(body, Protocols.JSON)
+        self.component_builder.add_object_data(body, Protocols.JSON)
 
         self.component_installation_controller.update_component(
-            self.Component_builder.get_result(), config_loader
+            self.component_builder.get_result()
         )
 
         # Save the Schedule record to the database
-        self.Component_Management_persistence_controller.update_component(domain_obj)
+        self.component_management_persistence_controller.update_component(domain_obj)
 
         # set the target
         self.response.set_value("recipients", [str(client.get_oid())])
@@ -301,9 +301,9 @@ class Component_managementControllerImpl(Component_managementController):
 
         # convert the records to the domain object
         for record in db_records:
-            self.Component_builder.build_empty_object(config_loader=config_loader)
-            self.Component_builder.add_object_data(record)
-            domain_records.append(self.Component_builder.get_result())
+            self.component_builder.build_empty_object(config_loader=config_loader)
+            self.component_builder.add_object_data(record)
+            domain_records.append(self.component_builder.get_result())
 
         # set the target
         self.response.set_value("recipients", [str(client.get_oid())])

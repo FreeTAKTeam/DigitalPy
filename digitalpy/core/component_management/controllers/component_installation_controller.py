@@ -1,53 +1,51 @@
 """
-This module is responsible for discovering components and all the operations that are related to this task.
+This module is responsible for discovering components and all the operations that are related to 
+this task.
 """
 
+import importlib
+import os
 from typing import TYPE_CHECKING
 
-import os
-import importlib
-
-from digitalpy.core.component_management.controllers.component_filesystem_controller import (
-    ComponentFilesystemController,
-)
 from digitalpy.core.component_management.configuration.component_management_constants import (
     RELATIVE_MANIFEST_PATH,
 )
-
+from digitalpy.core.component_management.controllers.component_filesystem_controller import (
+    ComponentFilesystemController,
+)
 from digitalpy.core.component_management.controllers.component_manifest_controller import (
     ComponentManifestController,
 )
 from digitalpy.core.component_management.domain.builder.component_builder_impl import (
     ComponentBuilderImpl,
 )
-from digitalpy.core.main.object_factory import ObjectFactory
-
-
-from digitalpy.core.main.controller import Controller
 
 # import builders
 from digitalpy.core.component_management.domain.builder.error_builder import (
     ErrorBuilder,
 )
+from digitalpy.core.component_management.domain.model.component import Component
+from digitalpy.core.main.controller import Controller
+from digitalpy.core.main.object_factory import ObjectFactory
+
 from .component_management_persistence_controller_impl import (
     Component_managementPersistenceControllerImpl,
 )
-from digitalpy.core.component_management.domain.model.component import Component
 
 if TYPE_CHECKING:
+    from digitalpy.core.component_management.domain.model.error import Error
     from digitalpy.core.component_management.impl.default_facade import DefaultFacade
     from digitalpy.core.digipy_configuration.configuration import Configuration
+    from digitalpy.core.domain.domain.network_client import NetworkClient
     from digitalpy.core.zmanager.impl.default_action_mapper import DefaultActionMapper
     from digitalpy.core.zmanager.request import Request
     from digitalpy.core.zmanager.response import Response
-    from digitalpy.core.domain.domain.network_client import NetworkClient
-
-    from digitalpy.core.component_management.domain.model.error import Error
 
 
 class ComponentInstallationController(Controller):
-    """This class is responsible for discovering components and all the operations that are related to managing the components in the
-    file system. It is responsible for installing, uninstalling, updating, and registering components.
+    """This class is responsible for discovering components and all the operations that
+    are related to managing the components in the file system. It is responsible for installing,
+    uninstalling, updating, and registering components.
     """
 
     def __init__(
@@ -58,13 +56,13 @@ class ComponentInstallationController(Controller):
         configuration: "Configuration",
     ):
         super().__init__(request, response, sync_action_mapper, configuration)
-        self.Component_builder = ComponentBuilderImpl(
+        self.component_builder = ComponentBuilderImpl(
             request, response, sync_action_mapper, configuration
         )
-        self.Error_builder = ErrorBuilder(
+        self.error_builder = ErrorBuilder(
             request, response, sync_action_mapper, configuration
         )
-        self.Component_Management_persistence_controller = (
+        self.component_management_persistence_controller = (
             Component_managementPersistenceControllerImpl(
                 request, response, sync_action_mapper, configuration
             )
@@ -85,9 +83,9 @@ class ComponentInstallationController(Controller):
     def initialize(self, request: "Request", response: "Response"):
         """This function is used to initialize the controller.
         It is intiated by the service manager."""
-        self.Component_builder.initialize(request, response)
-        self.Error_builder.initialize(request, response)
-        self.Component_Management_persistence_controller.initialize(request, response)
+        self.component_builder.initialize(request, response)
+        self.error_builder.initialize(request, response)
+        self.component_management_persistence_controller.initialize(request, response)
         self.component_filesystem_controller.initialize(request, response)
         return super().initialize(request, response)
 
@@ -195,9 +193,9 @@ class ComponentInstallationController(Controller):
             manifest: the manifest to use
             config_loader: the configuration loader to use
         """
-        self.Component_builder.build_empty_object(config_loader=config_loader)
-        self.Component_builder.add_object_data(manifest)
-        component_obj = self.Component_builder.get_result()
+        self.component_builder.build_empty_object(config_loader=config_loader)
+        self.component_builder.add_object_data(manifest)
+        component_obj = self.component_builder.get_result()
         return component_obj
 
     def retrieve_facade(self, component: "Component") -> "DefaultFacade":
@@ -214,7 +212,7 @@ class ComponentInstallationController(Controller):
             importlib.import_module(
                 f"{self.component_import_root}.{component.name}.{component.name}_facade"
             ),
-            f"{''.join([name.capitalize() if name[0].isupper()==False else name for name in component.name.split('_')])}",
+            f"{''.join([name.capitalize() if name[0].isupper() is False else name for name in component.name.split('_')])}",
         )
 
         facade_instance: "DefaultFacade" = component_facade(
@@ -248,7 +246,7 @@ class ComponentInstallationController(Controller):
 
         self.component_filesystem_controller.delete_component(component)
 
-    def update_component(self, component: Component, config_loader):
+    def update_component(self, component: Component):
         """this method is used to update a component
 
         Args:

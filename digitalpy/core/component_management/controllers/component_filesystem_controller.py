@@ -3,48 +3,39 @@ This module is responsible for modifying the component filesystem.
 """
 
 import io
+import os
 import shutil
+import zipfile
+from pathlib import PurePath
 from tempfile import TemporaryFile
 from typing import TYPE_CHECKING, Generator
-from pathlib import PurePath
-
-import os
-import zipfile
 
 from digitalpy.core.component_management.configuration.component_management_constants import (
-    COMPONENT_DOWNLOAD_PATH,
-    RELATIVE_MANIFEST_PATH,
-    ID,
-)
-
-from digitalpy.core.component_management.controllers.component_manifest_controller import (
-    ComponentManifestController,
-)
-from digitalpy.core.component_management.domain.builder.component_builder_impl import (
-    ComponentBuilderImpl,
-)
-
-
+    COMPONENT_DOWNLOAD_PATH, ID, RELATIVE_MANIFEST_PATH)
+from digitalpy.core.component_management.controllers.component_manifest_controller import \
+    ComponentManifestController
+from digitalpy.core.component_management.domain.builder.component_builder_impl import \
+    ComponentBuilderImpl
+# import builders
+from digitalpy.core.component_management.domain.builder.error_builder import \
+    ErrorBuilder
+from digitalpy.core.component_management.domain.model.component import \
+    Component
 from digitalpy.core.main.controller import Controller
 
-# import builders
-from digitalpy.core.component_management.domain.builder.error_builder import (
-    ErrorBuilder,
-)
-from .component_management_persistence_controller_impl import (
-    Component_managementPersistenceControllerImpl,
-)
-from digitalpy.core.component_management.domain.model.component import Component
+from .component_management_persistence_controller_impl import \
+    Component_managementPersistenceControllerImpl
 
 if TYPE_CHECKING:
-    from digitalpy.core.component_management.impl.default_facade import DefaultFacade
+    from digitalpy.core.component_management.domain.model.error import Error
+    from digitalpy.core.component_management.impl.default_facade import \
+        DefaultFacade
     from digitalpy.core.digipy_configuration.configuration import Configuration
-    from digitalpy.core.zmanager.impl.default_action_mapper import DefaultActionMapper
+    from digitalpy.core.domain.domain.network_client import NetworkClient
+    from digitalpy.core.zmanager.impl.default_action_mapper import \
+        DefaultActionMapper
     from digitalpy.core.zmanager.request import Request
     from digitalpy.core.zmanager.response import Response
-    from digitalpy.core.domain.domain.network_client import NetworkClient
-
-    from digitalpy.core.component_management.domain.model.error import Error
 
 
 class ComponentFilesystemController(Controller):
@@ -58,13 +49,13 @@ class ComponentFilesystemController(Controller):
         configuration: "Configuration",
     ):
         super().__init__(request, response, sync_action_mapper, configuration)
-        self.Component_builder = ComponentBuilderImpl(
+        self.component_builder = ComponentBuilderImpl(
             request, response, sync_action_mapper, configuration
         )
-        self.Error_builder = ErrorBuilder(
+        self.error_builder = ErrorBuilder(
             request, response, sync_action_mapper, configuration
         )
-        self.Component_Management_persistence_controller = (
+        self.component_management_persistence_controller = (
             Component_managementPersistenceControllerImpl(
                 request, response, sync_action_mapper, configuration
             )
@@ -88,8 +79,9 @@ class ComponentFilesystemController(Controller):
         return super().initialize(request, response)
 
     def unzip_component(self, component: Component) -> dict:
-        """this method is used to unzip a component and add its blueprint to the blueprint directory,
-        it returns the component manifest as a dictionary and sets the commponent installation path.
+        """this method is used to unzip a component and add its blueprint to the blueprint
+        directory, it returns the component manifest as a dictionary and sets the commponent 
+        installation path.
 
         Args:
             component (Component): the component to unzip
@@ -103,15 +95,14 @@ class ComponentFilesystemController(Controller):
         with zipfile.ZipFile(
             COMPONENT_DOWNLOAD_PATH / f"{component.name}.zip", "r"
         ) as zip_ref:
-            if component.UUID:
-                with io.TextIOWrapper(
-                    zip_ref.open(RELATIVE_MANIFEST_PATH), encoding="utf-8"
-                ) as stream:
-                    manifest = self.component_manifest_controller.read_manifest(stream)
-                    if not manifest[ID] == component.UUID:
-                        raise ValueError(
-                            "The manifest UUID does not match the given component UUID"
-                        )
+            with io.TextIOWrapper(
+                zip_ref.open(RELATIVE_MANIFEST_PATH), encoding="utf-8"
+            ) as stream:
+                manifest = self.component_manifest_controller.read_manifest(stream)
+                if component.UUID and manifest[ID] != component.UUID:
+                    raise ValueError(
+                        "The manifest UUID does not match the given component UUID"
+                    )
 
             zip_ref.extractall(
                 self._get_component_path(component),
@@ -228,7 +219,7 @@ class ComponentFilesystemController(Controller):
         Returns:
             PurePath: the component path
         """
-        if component.installationPath != None and component.installationPath != "None":
+        if component.installationPath is not None and component.installationPath != "None":
             return PurePath(component.installationPath)
         else:
             return PurePath(self.component_installation_path, component.name)

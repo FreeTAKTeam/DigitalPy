@@ -1,12 +1,10 @@
 # pylint: disable=invalid-name
 from digitalpy.core.domain.node import Node
-from digitalpy.core.domain.relationship import Relationship, RelationshipType
 
-from typing import TYPE_CHECKING
 # iterating associations
 
 class ActionKey(Node):
-    """"""
+    """An ActionKey is a key that is used to trigger an action. It is a part of the system that can be"""
     def __init__(self, model_configuration, model, oid=None, node_type="ActionKey") -> None:
         super().__init__(node_type, model_configuration=model_configuration, model=model, oid=oid)
         self._action: 'str' = None
@@ -44,7 +42,8 @@ class ActionKey(Node):
 
     @property
     def decorator(self) -> 'str':
-        """Optional, Allows to dynamically attach special behaviors to the result operation without changing his implementation . e.g. a decorator REST, will expose this action as a REST service. (e.g. REST, Pub, Sub, All, etc)"""
+        """Optional, Allows to dynamically attach special behaviors to the result operation without changing his implementation
+        . e.g. a decorator REST, will expose this action as a REST service. (e.g. REST, Pub, Sub, All, etc)"""
         return self._decorator
 
     @decorator.setter
@@ -92,7 +91,8 @@ class ActionKey(Node):
 
     @property
     def referencedBehaviour(self) -> 'str':
-        """optional, the name of the target function, to be attached to the qualified name of the target."""
+        """optional, the name of the target function, to be attached to the qualified 
+        name of the target."""
         return self._referencedBehaviour
 
     @referencedBehaviour.setter
@@ -104,7 +104,7 @@ class ActionKey(Node):
 
     @property
     def name(self) -> 'str':
-        """"""
+        """the name of the action key"""
         return self._name
 
     @name.setter

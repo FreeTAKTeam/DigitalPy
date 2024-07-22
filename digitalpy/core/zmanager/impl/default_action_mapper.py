@@ -75,9 +75,9 @@ class DefaultActionMapper(ActionMapper):
         )
         actionKeyProvider = ConfigActionKeyProvider(self.configuration, "actionmapping")
 
-        referrer = request.get_sender()
-        context = request.get_context()
-        action = request.get_action()
+        referrer: str = request.get_sender()
+        context: str = request.get_context()
+        action: str = request.get_action()
         response.set_sender(referrer)
         response.set_context(context)
         response.set_action(action)
@@ -90,6 +90,7 @@ class DefaultActionMapper(ActionMapper):
 
         if len(actionKey) == 0:
             # return, if action key is not defined
+            print("No action key found for " + referrer + "/" + context + "/" + action)
             raise ValueError("No action key found for " + referrer + "/" + context + "/" + action)
 
         # authenticate user

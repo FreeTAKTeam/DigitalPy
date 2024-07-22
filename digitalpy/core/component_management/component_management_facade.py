@@ -1,31 +1,27 @@
-from digitalpy.core.component_management.controllers.component_management_persistence_controller_impl import (
-    Component_managementPersistenceControllerImpl,
-)
-from .controllers.component_management_persistence_controller_impl import (
-    Component_managementPersistenceControllerImpl,
-)
-from digitalpy.core.component_management.impl.default_facade import DefaultFacade
+from digitalpy.core.component_management.controllers.component_management_persistence_controller_impl import \
+    Component_managementPersistenceControllerImpl
+from digitalpy.core.component_management.impl.default_facade import \
+    DefaultFacade
 from digitalpy.core.zmanager.impl.async_action_mapper import AsyncActionMapper
-from digitalpy.core.zmanager.impl.default_action_mapper import DefaultActionMapper
+from digitalpy.core.zmanager.impl.default_action_mapper import \
+    DefaultActionMapper
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
-from .controllers.component_management_controller_impl import (
-    Component_managementControllerImpl,
-)
-from .configuration.component_management_constants import (
-    ACTION_MAPPING_PATH,
-    LOGGING_CONFIGURATION_PATH,
-    INTERNAL_ACTION_MAPPING_PATH,
-    MANIFEST_PATH,
-    CONFIGURATION_PATH_TEMPLATE,
-    LOG_FILE_PATH,
-)
 
 from . import base
+from .configuration.component_management_constants import (
+    ACTION_MAPPING_PATH, CONFIGURATION_PATH_TEMPLATE,
+    INTERNAL_ACTION_MAPPING_PATH, LOG_FILE_PATH, LOGGING_CONFIGURATION_PATH,
+    MANIFEST_PATH)
+from .controllers.component_management_controller_impl import \
+    Component_managementControllerImpl
+from .controllers.component_management_persistence_controller_impl import \
+    Component_managementPersistenceControllerImpl
 
 
 class ComponentManagement(DefaultFacade):
-    """ """
+    """The facade for the component management component. This class is the entry point 
+    for all requests to the component."""
 
     def __init__(
         self,
@@ -86,7 +82,7 @@ class ComponentManagement(DefaultFacade):
                 self.request.set_value("tracer", self.tracer)
                 response = self.execute_sub_action(self.request.get_action())
                 self.response.set_values(response.get_values())
-        except Exception as e:
+        except Exception as e: # ignore
             self.logger.fatal(str(e))
 
     @DefaultFacade.public

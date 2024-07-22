@@ -11,7 +11,6 @@ from digitalpy.core.component_management.domain.model.actionkey import ActionKey
 from digitalpy.core.component_management.domain.model.component import Component
 
 from digitalpy.core.component_management.persistence.actionkey import ActionKey as DBActionKey
-from digitalpy.core.component_management.persistence.component import Component as DBComponent
 
 class ActionKeyBuilder(Builder):
     """Builds a ActionKey object"""
