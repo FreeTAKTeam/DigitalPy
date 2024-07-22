@@ -77,7 +77,7 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
         self.resources = []
         self.configuration: Configuration = InifileConfiguration("")
 
-        self.routing_proxy_service: Subject
+        self.subject_service: Subject
 
         # register the digitalpy action mapping under ../digitalpy/action_mapping.ini
         self.configuration.add_configuration(
@@ -206,7 +206,7 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
     def start_zmanager(self):
         self.set_zmanager_address()
         self.start_integration_manager_service()
-        self.start_routing_proxy_service()
+        self.start_subject_service()
 
     def start_services(self):
         self.start_service_manager()
@@ -225,31 +225,31 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
             COMMAND_PROTOCOL,
         )
 
-    def start_routing_proxy_service(self):
+    def start_subject_service(self):
         """this function is responsible for starting the routing proxy service"""
         try:
             # begin the routing proxy
-            self.routing_proxy_service: Subject = ObjectFactory.get_instance("Subject")
-            self.routing_proxy_process = multiprocessing.Process(
-                target=self.routing_proxy_service.begin_routing
+            self.subject_service: Subject = ObjectFactory.get_instance("Subject")
+            self.subject_process = multiprocessing.Process(
+                target=self.subject_service.begin_routing
             )
-            self.routing_proxy_process.start()
+            self.subject_process.start()
 
             return 1
 
         except Exception as ex:
             return -1
 
-    def stop_routing_proxy_service(self):
+    def stop_subject_service(self):
         """this function is responsible for stopping the routing proxy service"""
         try:
             # TODO: add a pre termination call to shutdown workers and sockets before a
             # termination to prevent hanging resources
-            if self.routing_proxy_process.is_alive():
-                self.routing_proxy_process.terminate()
-                self.routing_proxy_process.join()
+            if self.subject_process.is_alive():
+                self.subject_process.terminate()
+                self.subject_process.join()
             else:
-                self.routing_proxy_process.join()
+                self.subject_process.join()
             return 1
         except Exception as e:
             return -1
@@ -456,7 +456,7 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
 
     def stop_zmanager(self):
         self.stop_integration_manager_service()
-        self.stop_routing_proxy_service()
+        self.stop_subject_service()
 
     def restart(self):
         # End and then restart the execution of the application
