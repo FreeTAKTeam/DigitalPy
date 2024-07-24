@@ -1,5 +1,3 @@
-import pathlib
-import os
 from typing import Union
 
 from digitalpy.core.component_management.impl.default_facade import DefaultFacade
@@ -15,7 +13,6 @@ from digitalpy.core.component_management.component_management_facade import Comp
 from digitalpy.core.domain.domain_facade import Domain
 from digitalpy.core.IAM.IAM_facade import IAM
 from digitalpy.core.serialization.serialization_facade import Serialization
-from digitalpy.core.domain.domain.service_health import ServiceHealth
 from digitalpy.core.service_management.service_management_facade import ServiceManagement
 
 def initialize_facade(facade_class: str, request: Request, response: Response) -> Union[DefaultFacade, Request, Response]:

@@ -19,12 +19,19 @@ def client_mock():
     return MagicMock(spec=NetworkClient)
 
 
-@pytest.fixture(scope="session", autouse=True)
-def setup():
-    mock.patch(
+@pytest.fixture()
+def component_mgmt_db_mock():
+    db_mock = mock.patch(
         "digitalpy.core.component_management.controllers.component_management_persistence_controller.DB_PATH",
         "sqlite:///tests/test_component_management/test_component_resources/test_data/component_management.db",
-    ).start()
+    )
+    db_mock.start()
+
+    yield db_mock
+
+    db_mock.stop()
+
+    os.remove("tests/test_component_management/test_component_resources/test_data/component_management.db")
 
 @pytest.fixture
 def test_fs(zip_name: str):
@@ -39,6 +46,7 @@ def test_fs(zip_name: str):
     shutil.rmtree(content_path)
     
 @pytest.mark.parametrize("zip_name", ["test_discover_component.zip"])
+@pytest.mark.usefixtures("component_mgmt_db_mock")
 def test_discover_components(client_mock, test_fs):
     mock.patch(
         "digitalpy.core.component_management.controllers.component_discovery_controller.COMPONENT_DOWNLOAD_PATH",
@@ -66,6 +74,7 @@ def test_discover_components(client_mock, test_fs):
     "digitalpy.core.component_management.controllers.component_pull_controller.requests.get"
 )
 @pytest.mark.parametrize("zip_name", ["test_pull_component.zip"])
+@pytest.mark.usefixtures("component_mgmt_db_mock")
 def test_pull_component(mock_get, client_mock, test_fs):
     mock.patch(
         "digitalpy.core.component_management.controllers.component_pull_controller.COMPONENT_DOWNLOAD_PATH",
@@ -100,6 +109,7 @@ def test_pull_component(mock_get, client_mock, test_fs):
 
 @pytest.mark.skip("This test works in isolation but for some reason a lock is being held on the log file. this prevents the test from cleaning up after itself therefore breaking others.")
 @pytest.mark.parametrize("zip_name", ["test_install_component.zip"])
+@pytest.mark.usefixtures("component_mgmt_db_mock")
 def test_install_component(client_mock, test_fs):
     mock.patch(
         "digitalpy.core.component_management.controllers.component_filesystem_controller.COMPONENT_DOWNLOAD_PATH",
@@ -152,6 +162,7 @@ def test_install_component(client_mock, test_fs):
 
 @pytest.mark.parametrize("zip_name", ["test_update_component.zip"])
 @patch("digitalpy.core.component_management.controllers.component_management_persistence_controller_impl.Component_managementPersistenceControllerImpl.get_component")
+@pytest.mark.usefixtures("component_mgmt_db_mock")
 def test_update_component(get_component_mock, client_mock, test_fs):
     mock.patch(
         "digitalpy.core.component_management.controllers.component_filesystem_controller.COMPONENT_DOWNLOAD_PATH",
