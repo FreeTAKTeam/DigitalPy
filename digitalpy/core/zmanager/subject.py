@@ -15,6 +15,7 @@ class Subject:
         frontend_pull_address,
         frontend_pub_address,
         backend_address,
+        socket_timeout = 2000,
     ):
         self.workers = []
         self.configuration = configuration
@@ -24,6 +25,10 @@ class Subject:
         self.frontend_pub_address = frontend_pub_address
         self.backend_address = backend_address
         self.logger = logging.getLogger("DP-Subject_DEBUG")
+        self.running = multiprocessing.Event()
+        self.running.set()
+
+        self.socket_timeout = socket_timeout
 
     def start_workers(self):
         for _ in range(self.worker_count):
@@ -43,18 +48,28 @@ class Subject:
 
         self.frontend_pull = self.context.socket(zmq.PULL)
         self.frontend_pull.bind(self.frontend_pull_address)
+        # set the timeout for the frontend pull socket so that the subject can check if it should stop periodically
+        self.frontend_pull.setsockopt(zmq.RCVTIMEO, self.socket_timeout)
+
+    def cleanup(self):
+        self.backend_pusher.close()
+        self.frontend_pull.close()
+        self.context.term()
 
     def begin_routing(self):
         self.start_workers()
         self.initiate_sockets()
-        while True:
+        while self.running.is_set():
             try:
                 message = self.frontend_pull.recv_multipart()
                 self.logger.debug("receieved %s",str(message))
-                self.backend_pusher.send_multipart(message)
+                self.backend_pusher.send_multipart(message, copy=False)
+            except zmq.error.Again:
+                pass
             except Exception as ex:
                 self.logger.fatal(
                     "exception thrown in subject %s", ex, exc_info=True)
+        self.cleanup()
 
     def __getstate__(self):
         """delete objects that cannot be pickled or generally serialized"""

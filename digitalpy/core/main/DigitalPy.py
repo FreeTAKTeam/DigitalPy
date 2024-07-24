@@ -17,6 +17,7 @@ from time import sleep
 from typing import Callable, TYPE_CHECKING
 import signal
 
+from digitalpy.core.zmanager.integration_manager import IntegrationManager
 from digitalpy.core.digipy_configuration.configuration import Configuration
 from digitalpy.core.digipy_configuration.impl.inifile_configuration import (
     InifileConfiguration,
@@ -77,7 +78,7 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
         self.resources = []
         self.configuration: Configuration = InifileConfiguration("")
 
-        self.subject_service: Subject
+        self.subject: Subject
 
         # register the digitalpy action mapping under ../digitalpy/action_mapping.ini
         self.configuration.add_configuration(
@@ -229,9 +230,9 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
         """this function is responsible for starting the routing proxy service"""
         try:
             # begin the routing proxy
-            self.subject_service: Subject = ObjectFactory.get_instance("Subject")
+            self.subject: Subject = ObjectFactory.get_instance("Subject")
             self.subject_process = multiprocessing.Process(
-                target=self.subject_service.begin_routing
+                target=self.subject.begin_routing
             )
             self.subject_process.start()
 
@@ -245,6 +246,9 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
         try:
             # TODO: add a pre termination call to shutdown workers and sockets before a
             # termination to prevent hanging resources
+            self.subject.running.clear()
+            # wait for the subject to clean up its resources
+            self.subject_process.join(self.subject.socket_timeout/1000+2)
             if self.subject_process.is_alive():
                 self.subject_process.terminate()
                 self.subject_process.join()
@@ -263,11 +267,11 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
         try:
 
             # begin the integration_manager_service
-            self.integration_manager_service = ObjectFactory.get_instance(
+            self.integration_manager: IntegrationManager = ObjectFactory.get_instance(
                 "IntegrationManager"
             )
             self.integration_manager_process = multiprocessing.Process(
-                target=self.integration_manager_service.start
+                target=self.integration_manager.start
             )
             self.integration_manager_process.start()
 
@@ -282,6 +286,9 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
             bool: True if successful, False otherwise.
         """
         try:
+            self.integration_manager.running.clear()
+            # wait for the integration manager to clean up its resources
+            self.integration_manager_process.join(self.integration_manager.timeout/1000+2)
             if self.integration_manager_process.is_alive():
                 self.integration_manager_process.terminate()
                 self.integration_manager_process.join()
