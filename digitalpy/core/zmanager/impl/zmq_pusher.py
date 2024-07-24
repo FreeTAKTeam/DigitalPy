@@ -24,7 +24,7 @@ class ZMQPusher(Pusher):
             address (str): subject address
         """
         self.service_id = service_id
-        # added to fix hanging connect issue as per 
+        # added to fix hanging connect issue as per
         # https://stackoverflow.com/questions/44257579/zeromq-hangs-in-a-python-multiprocessing-class-object-solution
         if self.pusher_context == None:
             self.pusher_context = zmq.Context()
