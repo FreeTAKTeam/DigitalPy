@@ -7,7 +7,7 @@ import os
 
 class DefaultFileLogger(Logger):
 
-    base_logging_path = "FTSLogs/"
+    base_logging_path = "Logs/"
 
     log_level = logging.DEBUG
 

@@ -9,12 +9,17 @@ packages = [
 include = ["digitalpy/**/*.json", "digitalpy/**/*.py", "digitalpy/**/*.ini", "digitalpy/**/*.conf"]
 
 [tool.poetry.dependencies]
+python = "^3.10"
+setuptools="*"
 rule-engine="*"
 pyzmq="*"
 opentelemetry-sdk="*"
 lxml="*"
 xmltodict="*"
+flask_cors="*"
 sqlalchemy="^2.0.30"
+flask_jwt_extended="*"
+requests="*"
 
 [tool.poetry.extras]
 dev = ["pytest"]

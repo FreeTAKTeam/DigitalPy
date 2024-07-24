@@ -25,9 +25,9 @@ class SystemGroup(IAMBase):
     description: Mapped[Optional[str]]
 
     # relationships
-    system_group_permissions: Mapped[List['SystemGroupPermission']] = relationship(back_populates="system_groups")
+    system_group_permissions: Mapped[List['SystemGroupPermission']] = relationship(back_populates="system_group")
 
-    system_user_groups: Mapped[List['SystemUserGroups']] = relationship(back_populates="system_groups")
+    system_user_groups: Mapped[List['SystemUserGroups']] = relationship(back_populates="system_group")
 
     def __repr__(self) -> str:
         return super().__repr__() + f"uid={self.uid}, name={self.name}, description={self.description}"

@@ -17,14 +17,30 @@ from time import sleep
 from typing import Callable, TYPE_CHECKING
 import signal
 
+from digitalpy.core.zmanager.integration_manager import IntegrationManager
 from digitalpy.core.digipy_configuration.configuration import Configuration
-from digitalpy.core.digipy_configuration.impl.inifile_configuration import InifileConfiguration
-from digitalpy.core.component_management.impl.component_registration_handler import ComponentRegistrationHandler
-from digitalpy.core.service_management.configuration.message_keys import SECTION_NAME, TARGET_SERVICE_ID, COMMAND
+from digitalpy.core.digipy_configuration.impl.inifile_configuration import (
+    InifileConfiguration,
+)
+from digitalpy.core.component_management.impl.default_facade import DefaultFacade
+
+from digitalpy.core.component_management.impl.component_registration_handler import (
+    ComponentRegistrationHandler,
+)
+from digitalpy.core.service_management.configuration.message_keys import (
+    SECTION_NAME,
+    TARGET_SERVICE_ID,
+    COMMAND,
+)
 from digitalpy.core.telemetry.tracer import Tracer
 from digitalpy.core.telemetry.tracing_provider import TracingProvider
 from digitalpy.core.zmanager.response import Response
-from digitalpy.core.service_management.domain.service_manager_operations import ServiceManagerOperations
+from digitalpy.core.service_management.domain.service_manager_operations import (
+    ServiceManagerOperations,
+)
+from digitalpy.core.component_management.component_management_facade import (
+    ComponentManagement,
+)
 
 from digitalpy.core.zmanager.subject import Subject
 from digitalpy.core.zmanager.impl.zmq_pusher import ZMQPusher
@@ -33,11 +49,21 @@ from digitalpy.core.zmanager.request import Request
 from digitalpy.core.main.factory import Factory
 from digitalpy.core.main.impl.default_factory import DefaultFactory
 from digitalpy.core.main.object_factory import ObjectFactory
-from digitalpy.core.service_management.controllers.service_management_main import ServiceManagementMain
-from digitalpy.core.service_management.digitalpy_service import COMMAND_PROTOCOL, COMMAND_ACTION
+from digitalpy.core.service_management.controllers.service_management_main import (
+    ServiceManagementMain,
+)
+from digitalpy.core.service_management.digitalpy_service import (
+    COMMAND_PROTOCOL,
+    COMMAND_ACTION,
+)
 
-if TYPE_CHECKING:
-    from digitalpy.core.domain.domain.service_health import ServiceHealth
+from digitalpy.core.domain.domain_facade import Domain
+from digitalpy.core.IAM.IAM_facade import IAM
+from digitalpy.core.serialization.serialization_facade import Serialization
+from digitalpy.core.domain.domain.service_health import ServiceHealth
+from digitalpy.core.service_management.service_management_facade import (
+    ServiceManagement,
+)
 
 
 class DigitalPy(ZmqSubscriber, ZMQPusher):
@@ -52,7 +78,7 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
         self.resources = []
         self.configuration: Configuration = InifileConfiguration("")
 
-        self.routing_proxy_service: Subject
+        self.subject: Subject
 
         # register the digitalpy action mapping under ../digitalpy/action_mapping.ini
         self.configuration.add_configuration(
@@ -78,57 +104,77 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
 
     def set_zmanager_address(self):
         self.subject_address: str = self.configuration.get_value(
-            "subject_address", "Service")
+            "subject_address", "Service"
+        )
         self.subject_port: int = int(
-            self.configuration.get_value("subject_port", "Service"))
+            self.configuration.get_value("subject_port", "Service")
+        )
         self.subject_protocol: str = self.configuration.get_value(
-            "subject_protocol", "Service")
+            "subject_protocol", "Service"
+        )
         self.integration_manager_address: str = self.configuration.get_value(
-            "integration_manager_address", "Service")
+            "integration_manager_address", "Service"
+        )
         self.integration_manager_port: int = int(
-            self.configuration.get_value("integration_manager_port", "Service"))
+            self.configuration.get_value("integration_manager_port", "Service")
+        )
         self.integration_manager_protocol: str = self.configuration.get_value(
-            "integration_manager_protocol", "Service")
+            "integration_manager_protocol", "Service"
+        )
 
     def initialize_tracing(self):
         # the central tracing provider
         self._tracing_provider: TracingProvider = self.factory.get_instance(
-            "tracingprovider")
+            "tracingprovider"
+        )
 
         self._tracing_provider.initialize_tracing()
 
-        self.tracer: Tracer = self._tracing_provider.create_tracer(
-            "DigitalPy.Main")
+        self.tracer: Tracer = self._tracing_provider.create_tracer("DigitalPy.Main")
 
     def register_components(self):
-        """register all components of the application
-        """
-        # register base digitalpy components
-        digipy_components = ComponentRegistrationHandler.discover_components(
-            component_folder_path=pathlib.PurePath(
-                str(
-                    pathlib.PurePath(
-                        os.path.abspath(__file__)
-                    ).parent.parent
-                ),
-            )
-        )
+        """register digitalpy core components, these must be registered before any other components
+        furthermore, these are registered without the use of component management to avoid circular
+        dependencies. This method of registration also assumes that the components are defined in the
+        digitalpy/core/action_mapping.ini file and are located in the digitalpy/core folder. Any inheriting
+        classes should override this method to register their own components using the component management
+        facade. and should call super().register_components() to ensure that the core components are registered.
 
-        for digipy_component in digipy_components:
-            ComponentRegistrationHandler.register_component(
-                digipy_component,  # type: ignore
-                "digitalpy.core",
-                self.configuration,  # type: ignore
+        Inheriting classes should also set the following configuration values in their configuration file:
+        [ComponentManagement]
+        component_import_root = <path to the root of the component folder as a python import>
+        component_installation_path = <path to the root of the component folder as a file system path>
+        component_blueprint_path = <path to the blueprint file for the component>
+        """
+
+        config: Configuration = ObjectFactory.get_instance("Configuration")
+
+        def register_component(facade: DefaultFacade, config: Configuration):
+            config.add_configuration(facade.get_action_mapping_path())
+
+            ObjectFactory.register_instance(
+                facade.__class__.__name__.lower() + "actionmapper",
+                facade.get_action_mapper(),
             )
+
+            facade.setup()
+
+        register_component(ComponentManagement(None, None, None, None), config)
+
+        register_component(Domain(None, None, None, None), config)
+
+        register_component(IAM(None, None, None, None), config)
+
+        register_component(Serialization(None, None, None, None), config)
+
+        register_component(ServiceManagement(None, None, None, None), config)
 
     def test_event_loop(self):
-        """ the main event loop of the application should be called within a continuous while loop
-        """
+        """the main event loop of the application should be called within a continuous while loop"""
         sleep(1)
 
     def event_loop(self):
-        """ the main event loop of the application should be called within a continuous while loop
-        """
+        """the main event loop of the application should be called within a continuous while loop"""
         # TODO: what should this be in the default case
         sleep(1)
 
@@ -138,6 +184,7 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
 
         self.register_components()
         self.configure()
+        self.start_zmanager()
         self.start_services()
         if not testing:
             while True:
@@ -154,50 +201,59 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
                     self.handle_exception(ex)
 
     def handle_exception(self, error: Exception):
-        """Deal with errors that occur during the execution of the application
-        """
+        """Deal with errors that occur during the execution of the application"""
         print("error thrown :" + str(error))
 
-    def start_services(self):
+    def start_zmanager(self):
         self.set_zmanager_address()
         self.start_integration_manager_service()
-        self.start_routing_proxy_service()
+        self.start_subject_service()
+
+    def start_services(self):
         self.start_service_manager()
         self.initialize_connections()
         self.start_service("digitalpy.core_api")
 
     def initialize_connections(self):
         ZMQPusher.initiate_connections(
-            self, self.subject_port, self.subject_address, self.service_id)
-        self.broker_connect(self.integration_manager_address, self.integration_manager_port,
-                            self.integration_manager_protocol, self.service_id, COMMAND_PROTOCOL)
+            self, self.subject_port, self.subject_address, self.service_id
+        )
+        self.broker_connect(
+            self.integration_manager_address,
+            self.integration_manager_port,
+            self.integration_manager_protocol,
+            self.service_id,
+            COMMAND_PROTOCOL,
+        )
 
-    def start_routing_proxy_service(self):
+    def start_subject_service(self):
         """this function is responsible for starting the routing proxy service"""
         try:
             # begin the routing proxy
-            self.routing_proxy_service: Subject = ObjectFactory.get_instance(
-                "Subject")
-            self.routing_proxy_process = multiprocessing.Process(
-                target=self.routing_proxy_service.begin_routing
+            self.subject: Subject = ObjectFactory.get_instance("Subject")
+            self.subject_process = multiprocessing.Process(
+                target=self.subject.begin_routing
             )
-            self.routing_proxy_process.start()
+            self.subject_process.start()
 
             return 1
 
         except Exception as ex:
             return -1
 
-    def stop_routing_proxy_service(self):
+    def stop_subject_service(self):
         """this function is responsible for stopping the routing proxy service"""
         try:
             # TODO: add a pre termination call to shutdown workers and sockets before a
             # termination to prevent hanging resources
-            if self.routing_proxy_process.is_alive():
-                self.routing_proxy_process.terminate()
-                self.routing_proxy_process.join()
+            self.subject.running.clear()
+            # wait for the subject to clean up its resources
+            self.subject_process.join(self.subject.socket_timeout/1000+2)
+            if self.subject_process.is_alive():
+                self.subject_process.terminate()
+                self.subject_process.join()
             else:
-                self.routing_proxy_process.join()
+                self.subject_process.join()
             return 1
         except Exception as e:
             return -1
@@ -211,10 +267,12 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
         try:
 
             # begin the integration_manager_service
-            self.integration_manager_service = ObjectFactory.get_instance(
-                "IntegrationManager")
+            self.integration_manager: IntegrationManager = ObjectFactory.get_instance(
+                "IntegrationManager"
+            )
             self.integration_manager_process = multiprocessing.Process(
-                target=self.integration_manager_service.start)
+                target=self.integration_manager.start
+            )
             self.integration_manager_process.start()
 
             return True
@@ -228,6 +286,9 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
             bool: True if successful, False otherwise.
         """
         try:
+            self.integration_manager.running.clear()
+            # wait for the integration manager to clean up its resources
+            self.integration_manager_process.join(self.integration_manager.timeout/1000+2)
             if self.integration_manager_process.is_alive():
                 self.integration_manager_process.terminate()
                 self.integration_manager_process.join()
@@ -247,9 +308,15 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
 
             # begin the service_manager
             self.service_manager: ServiceManagementMain = ObjectFactory.get_instance(
-                "ServiceManager")
-            self.service_manager_process = multiprocessing.Process(target=self.service_manager.start, args=(ObjectFactory.get_instance(
-                "factory"), ObjectFactory.get_instance("tracingprovider")))
+                "ServiceManager"
+            )
+            self.service_manager_process = multiprocessing.Process(
+                target=self.service_manager.start,
+                args=(
+                    ObjectFactory.get_instance("factory"),
+                    ObjectFactory.get_instance("tracingprovider"),
+                ),
+            )
             self.service_manager_process.start()
             return True
         except Exception as ex:
@@ -263,8 +330,9 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
         """
         try:
 
-            self.stop_service(self.configuration.get_value(
-                "service_id", "servicemanager"))
+            self.stop_service(
+                self.configuration.get_value("service_id", "servicemanager")
+            )
             self.service_manager_process.join(10)
 
             if self.service_manager_process.is_alive():
@@ -277,21 +345,24 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
         except Exception as ex:
             raise ex
 
-    def get_all_service_health(self) -> dict[str, 'ServiceHealth']:
+    def get_all_service_health(self) -> dict[str, "ServiceHealth"]:
         """Gets the health of all services from the service manager."""
         try:
             req: Request = ObjectFactory.get_new_instance("Request")
             req.set_action("GetAllServiceHealth")
-            req.set_context(self.configuration.get_value(
-                "service_id", "ServiceManager"))
+            req.set_context(
+                self.configuration.get_value("service_id", "ServiceManager")
+            )
             req.set_value(COMMAND, "get_all_service_health")
             req.set_format("pickled")
-            self.subject_send_request(req, COMMAND_PROTOCOL, self.configuration.get_value(
-                "service_id", "ServiceManager"))
+            self.subject_send_request(
+                req,
+                COMMAND_PROTOCOL,
+                self.configuration.get_value("service_id", "ServiceManager"),
+            )
             response = self.broker_receive_response(req.get_id(), timeout=10)
             if response is None:
-                raise IOError(
-                    "No response received from the service manager in time")
+                raise IOError("No response received from the service manager in time")
             return response.get_value("message")
         except Exception as ex:
             raise ex
@@ -308,18 +379,23 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
         try:
             req: Request = ObjectFactory.get_new_instance("Request")
             req.set_action("StartServer")
-            req.set_context(self.configuration.get_value(
-                "service_id", "ServiceManager"))
-            req.set_value(
-                COMMAND, ServiceManagerOperations.START_SERVICE.value)
+            req.set_context(
+                self.configuration.get_value("service_id", "ServiceManager")
+            )
+            req.set_value(COMMAND, ServiceManagerOperations.START_SERVICE.value)
 
             req.set_value(SECTION_NAME, service_section_name)
-            req.set_value(TARGET_SERVICE_ID, self.configuration.get_value(
-                "service_id", service_section_name))
+            req.set_value(
+                TARGET_SERVICE_ID,
+                self.configuration.get_value("service_id", service_section_name),
+            )
 
             req.set_format("pickled")
-            self.subject_send_request(req, COMMAND_PROTOCOL, self.configuration.get_value(
-                "service_id", "ServiceManager"))
+            self.subject_send_request(
+                req,
+                COMMAND_PROTOCOL,
+                self.configuration.get_value("service_id", "ServiceManager"),
+            )
             return True
         except Exception as ex:
             raise ex
@@ -336,14 +412,17 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
         try:
             req: Request = ObjectFactory.get_new_instance("Request")
             req.set_action(COMMAND_ACTION)
-            req.set_context(self.configuration.get_value(
-                "service_id", "servicemanager"))
-            req.set_value(
-                COMMAND, ServiceManagerOperations.STOP_SERVICE.value)
+            req.set_context(
+                self.configuration.get_value("service_id", "servicemanager")
+            )
+            req.set_value(COMMAND, ServiceManagerOperations.STOP_SERVICE.value)
             req.set_value(TARGET_SERVICE_ID, service_id)
             req.set_format("pickled")
-            self.subject_send_request(req, COMMAND_PROTOCOL, self.configuration.get_value(
-                "service_id", "ServiceManager"))
+            self.subject_send_request(
+                req,
+                COMMAND_PROTOCOL,
+                self.configuration.get_value("service_id", "ServiceManager"),
+            )
             return True
         except Exception as ex:
             raise ex
@@ -360,14 +439,17 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
         try:
             req: Request = ObjectFactory.get_new_instance("Request")
             req.set_action(COMMAND_ACTION)
-            req.set_context(self.configuration.get_value(
-                "service_id", "ServiceManager"))
-            req.set_value(
-                COMMAND, ServiceManagerOperations.RESTART_SERVICE.value)
+            req.set_context(
+                self.configuration.get_value("service_id", "ServiceManager")
+            )
+            req.set_value(COMMAND, ServiceManagerOperations.RESTART_SERVICE.value)
             req.set_value(TARGET_SERVICE_ID, service_id)
             req.set_format("pickled")
-            self.subject_send_request(req, COMMAND_PROTOCOL, self.configuration.get_value(
-                "service_id", "ServiceManager"))
+            self.subject_send_request(
+                req,
+                COMMAND_PROTOCOL,
+                self.configuration.get_value("service_id", "ServiceManager"),
+            )
             return True
         except Exception as ex:
             raise ex
@@ -375,10 +457,13 @@ class DigitalPy(ZmqSubscriber, ZMQPusher):
     def stop(self):
         """End the execution of the application"""
         self.stop_service_manager()
-        self.stop_integration_manager_service()
-        self.stop_routing_proxy_service()
+        self.stop_zmanager()
 
         exit(0)
+
+    def stop_zmanager(self):
+        self.stop_integration_manager_service()
+        self.stop_subject_service()
 
     def restart(self):
         # End and then restart the execution of the application

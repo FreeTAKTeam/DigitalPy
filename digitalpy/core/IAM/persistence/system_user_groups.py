@@ -24,11 +24,11 @@ class SystemUserGroups(IAMBase):
 
     # relationships
     system_user_uid: Mapped[str] = mapped_column(ForeignKey("SystemUser.uid"))
-    system_users: Mapped["SystemUser"] = relationship(
+    system_user: Mapped["SystemUser"] = relationship(
         "SystemUser", back_populates="system_user_groups")
 
-    system_group_uid: Mapped[str] = mapped_column(ForeignKey(SystemGroup.uid))
-    system_groups: Mapped["SystemGroup"] = relationship(
+    system_group_uid: Mapped[str] = mapped_column(ForeignKey("SystemGroup.uid"))
+    system_group: Mapped["SystemGroup"] = relationship(
         "SystemGroup", back_populates="system_user_groups")
 
     def __repr__(self) -> str:

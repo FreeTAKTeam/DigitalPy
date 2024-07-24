@@ -1,0 +1,1 @@
+each zipfile contains the setup for a test, these should not be modified. By using zipfiles to setup the environment for testing, it becomes far easier to maintain consistency.

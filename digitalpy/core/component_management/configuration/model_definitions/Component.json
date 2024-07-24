@@ -1,0 +1,96 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"id": "http://iec.ch/TC57/HealthClasses#",
+	"type": "object",
+	"definitions":
+	{
+		"Component":
+		{
+			"type": "object",
+			"properties": {
+				"author":
+				{
+					"type": "string"
+				},
+				"author_email":
+				{
+					"type": "string"
+				},
+				"description":
+				{
+					"type": "string"
+				},
+				"License":
+				{
+					"type": "string"
+				},
+				"repo":
+				{
+					"type": "string"
+				},
+				"requiredAlfaVersion":
+				{
+					"type": "string"
+				},
+				"URL":
+				{
+					"type": "string"
+				},
+				"Version":
+				{
+					"type": "string"
+				},
+				"UUID":
+				{
+					"type": "string"
+				},
+				"isActive":
+				{
+					"type": "string"
+				},
+				"isInstalled":
+				{
+					"type": "string"
+				},
+				"installationPath":
+				{
+					"type": "string"
+				}
+			}
+		}
+		,"ActionKey":
+		{
+			"type": "object",
+			"properties": {
+				"action":
+				{
+					"type": "string"
+				},
+				"context":
+				{
+					"type": "string"
+				},
+				"decorator":
+				{
+					"type": "string"
+				},
+				"config":
+				{
+					"type": "string"
+				},
+				"target":
+				{
+					"type": "string"
+				},
+				"source":
+				{
+					"type": "string"
+				},
+				"referencedBehaviour":
+				{
+					"type": "string"
+				}
+			}
+		}
+	}
+}

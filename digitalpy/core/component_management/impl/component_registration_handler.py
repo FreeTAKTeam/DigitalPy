@@ -84,7 +84,7 @@ class ComponentRegistrationHandler(RegistrationHandler):
                 )
                 
                 facade_instance: DefaultFacade = component_facade(
-                    ObjectFactory.get_instance("SyncActionMapper"), 
+                    ObjectFactory.get_instance("SyncActionMapper"),
                     ObjectFactory.get_new_instance("request"),
                     ObjectFactory.get_new_instance("response"),
                     config

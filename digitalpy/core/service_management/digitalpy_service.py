@@ -134,21 +134,21 @@ class DigitalPyService(Service, ZmqSubscriber, ZMQPusher):
         self.total_request_processing_time = 0
         self.error_threshold = error_threshold
 
-    def handle_connection(self, client: NetworkClient, req: Request):
+    def handle_connection(self, client: NetworkClient) -> Request:
         """register a client with the server. This method should be called when a client connects to the server
         so that it can be registered with the IAM component.
         Args:
             client (NetworkClient): the client to register
             req (Request): the request from the client containing connection data
         """
-
+        request = ObjectFactory.get_new_instance("Request")
         resp = ObjectFactory.get_new_instance("Response")
         client.service_id = self.service_id
         client.protocol = self.protocol
-        self.iam_facade.initialize(req, resp)
-        req.set_value("connection", client)
+        self.iam_facade.initialize(request, resp)
+        request.set_value("connection", client)
         self.iam_facade.execute("connection")
-        return
+        return request
 
     def handle_disconnection(self, client: NetworkClient, req: Request):
         """unregister a client from the server. This method should be called when a client disconnects from the server

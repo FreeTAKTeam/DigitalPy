@@ -1,6 +1,8 @@
+from datetime import datetime
 from typing import List
 from digitalpy.core.IAM.controllers.iam_persistence_controller import IAMPersistenceController
 from digitalpy.core.IAM.persistence.user import User
+from digitalpy.core.IAM.persistence.session import Session
 from digitalpy.core.domain.object_id import ObjectId
 
 from digitalpy.core.main.controller import Controller
@@ -26,15 +28,16 @@ class IAMUsersController(Controller):
         super().initialize(request, response)
 
     def connection(self, connection: NetworkClient, *args, **kargs):
-        """handle the case of a connection connection to any digitalpy service
+        """handle the case of a new anonymous connection to any digitalpy service which may latter be authenticated
 
         Args:
             connection (Node): the Node object associated with the connected connection
         """
         con_oid = str(connection.get_oid())
-        user = User(uid=con_oid, status=connection.status.value,
-                    service_id=connection.service_id, protocol=connection.protocol)
-        self.persistence_controller.save_user(user)
+        user = self.persistence_controller.get_user_by_cn("Anonymous")[0]
+        session = Session(uid=con_oid, SessionStartTime=datetime.now(
+        ), ServiceId=connection.service_id, SessionEndTime=None, protocol=connection.protocol)
+        self.persistence_controller.save_session(session, user)
 
     def disconnection(self, connection_id: str, *args, **kwargs):
         """handle the case of a connection disconnection from any digitalpy service
@@ -51,12 +54,29 @@ class IAMUsersController(Controller):
         Args:
             connection_ids (List[str]): a list of IDs to be queries against the persistency layer
         """
-        queried_connections: List[Node] = [self._convert_user_to_network_client(self.persistence_controller.get_user(connection_id))
+        queried_connections: List[Node] = [self._convert_session_to_network_client(self.persistence_controller.get_session_by_uid(connection_id))
                                            for connection_id in connection_ids]
 
         self.response.set_value("connections", queried_connections)
 
         return queried_connections
+
+    def get_all_sessions(self, *args, **kwargs) -> List[Session]:
+        """get all recorded sessions and save them to the sessions value
+        """
+        sessions = self.persistence_controller.get_all_sessions()
+        self.response.set_value("sessions", sessions)
+        return sessions
+
+    def get_session_by_uid(self, uid: ObjectId, *args, **kwargs) -> Session:
+        """get a session by its object id
+
+        Args:
+            uid (ObjectId): the object id of the session to be queried
+        """
+        session = self.persistence_controller.get_session_by_uid(uid)
+        self.response.set_value("session", session)
+        return session
 
     def authenticate_system_user(self, user_id: 'str', name: 'str' = '', password: 'str' = '', *args, **kwargs) -> bool:
         """authenticate a system user
@@ -89,20 +109,30 @@ class IAMUsersController(Controller):
         """validate the request to ensure that the request is valid
         """
         for group in user.system_user.system_user_groups:
-            for permission in group.system_groups.system_group_permissions:
-                if permission.permissions.PermissionName == action_key:
+            for group_permission in group.system_group.system_group_permissions:
+                if group_permission.permission.PermissionName == action_key:
                     return True
 
     def get_all_connections(self, *args, **kwargs) -> List[Node]:
         """get all recorded connections and save them to the connections value
         """
-        users = self.persistence_controller.get_all_users()
-        connections = [self._convert_user_to_network_client(
+        users = self.persistence_controller.get_all_sessions()
+        connections = [self._convert_session_to_network_client(
             user) for user in users]
 
         self.response.set_value("connections", connections)
 
-    def _convert_user_to_network_client(self, user: User) -> NetworkClient:
+    def get_user_by_cn(self, cn, *args, **kwargs) -> List[User]:
+        """get a user by their common name
+
+        Args:
+            cn (str): the common name of the user to be queried
+        """
+        users = self.persistence_controller.get_user_by_cn(cn)
+        self.response.set_value("users", users)
+        return users
+
+    def _convert_session_to_network_client(self, session: Session) -> NetworkClient:
         """convert a user to a network client
 
         Args:
@@ -111,14 +141,13 @@ class IAMUsersController(Controller):
         Returns:
             NetworkClient: the converted user
         """
-        oid = ObjectId.parse(user.uid)
+        oid = ObjectId.parse(session.uid)
         if oid is None:
             raise ValueError("Invalid user id")
 
         connection = NetworkClient(oid=oid)
 
         connection.id = oid.get_id()[0][2:-1].encode()
-        connection.service_id = user.service_id
-        connection.status = ClientStatus[user.status]
-        connection.protocol = user.protocol
+        connection.service_id = session.ServiceId
+        connection.protocol = session.protocol
         return connection
