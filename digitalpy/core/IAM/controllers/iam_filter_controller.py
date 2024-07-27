@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     from digitalpy.core.IAM.persistence.user import User
     from digitalpy.core.zmanager.request import Request
     from digitalpy.core.zmanager.response import Response
-    from digitalpy.core.digipy_configuration.configuration import Configuration
+    from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
     from digitalpy.core.zmanager.action_mapper import ActionMapper
     from digitalpy.core.IAM.IAM_recipient_filter_strategy import IAMRecipientFilterStrategy
     from digitalpy.core.IAM.IAM_action_filter_strategy import IAMActionFilterStrategy

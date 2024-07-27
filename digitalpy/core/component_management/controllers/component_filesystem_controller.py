@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from digitalpy.core.component_management.domain.model.error import Error
     from digitalpy.core.component_management.impl.default_facade import \
         DefaultFacade
-    from digitalpy.core.digipy_configuration.configuration import Configuration
+    from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
     from digitalpy.core.domain.domain.network_client import NetworkClient
     from digitalpy.core.zmanager.impl.default_action_mapper import \
         DefaultActionMapper

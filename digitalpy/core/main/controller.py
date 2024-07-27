@@ -1,6 +1,6 @@
 from abc import ABC
 from digitalpy.core.zmanager.action_mapper import ActionMapper
-from digitalpy.core.digipy_configuration.configuration import Configuration
+from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
@@ -11,7 +11,9 @@ from digitalpy.core.zmanager.response import Response
 # 4. The initialize method is called with the request and response objects
 # 5. The request and response objects are set
 
+# TODO: the controller class may need to be refactored as it's become a bit bloated
 class Controller(ABC):
+    """Base class for all controllers."""
     request = None
     response = None
     logger = None

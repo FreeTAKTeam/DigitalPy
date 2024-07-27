@@ -1,6 +1,6 @@
 import inspect
 from typing import Any
-from digitalpy.core.digipy_configuration.configuration import Configuration
+from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
 from digitalpy.core.main.factory import Factory
 import json
 import importlib
