@@ -61,3 +61,8 @@ class File(Node):
         if not isinstance(name, str):
             raise TypeError("'name' must be of type str")
         self._name= name
+
+    def __eq__(self, other: 'File') -> bool:
+        if isinstance(other, File):
+            return self.path == other.path or self.oid == other.oid
+        return False

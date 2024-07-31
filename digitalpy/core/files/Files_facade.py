@@ -1,3 +1,5 @@
+from digitalpy.core.files.controllers.files_controller_impl import FilesControllerImpl
+from digitalpy.core.files.domain.model.file import File
 from .controllers.Files_persistence_controller import FilesPersistenceController
 from digitalpy.core.component_management.impl.default_facade import DefaultFacade
 from digitalpy.core.zmanager.impl.async_action_mapper import AsyncActionMapper
@@ -53,7 +55,7 @@ class Files(DefaultFacade):
         )
         self.persistence_controller = FilesPersistenceController(
             request, response, sync_action_mapper, configuration)
-        self.Files_controller = FilesController(
+        self.Files_controller = FilesControllerImpl(
             request, response, sync_action_mapper, configuration)
 
     def initialize(self, request, response):
@@ -76,10 +78,10 @@ class Files(DefaultFacade):
         except Exception as e:
             self.logger.fatal(str(e))
     @DefaultFacade.public
-    def get_or_create_file(self, *args, **kwargs):
+    def get_or_create_file(self, *args, **kwargs) -> File:
         """get a file from the filesystem based on the specified path or create a new file if one does not yet exist.
         """
-        self.Files_controller.get_or_create_file(*args, **kwargs)
+        return self.Files_controller.get_or_create_file(*args, **kwargs)
     @DefaultFacade.public
     def get_or_create_folder(self, *args, **kwargs):
         """get a folder from the filesystem based on the specified path or create a new folder if one does not yet exist.
@@ -101,10 +103,10 @@ class Files(DefaultFacade):
         """
         self.Files_controller.delete_folder(*args, **kwargs)
     @DefaultFacade.public
-    def get_file(self, *args, **kwargs):
+    def get_file(self, *args, **kwargs) -> File:
         """get a file from the file system based on the specified path
         """
-        self.Files_controller.get_file(*args, **kwargs)
+        return self.Files_controller.get_file(*args, **kwargs)
     @DefaultFacade.public
     def create_file(self, *args, **kwargs):
         """create a new file in the filesystem at the specified path.

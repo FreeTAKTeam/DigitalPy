@@ -50,10 +50,6 @@ class FilesController(Controller):
     
     def get_or_create_file(self, path: 'str', client: 'NetworkClient', config_loader, *args, **kwargs) -> 'File' : # pylint: disable=unused-argument
         """get a file from the filesystem based on the specified path or create a new file if one does not yet exist."""
-        Path(path).touch()
-        self.File_builder.build_empty_object(config_loader=config_loader)
-        self.File_builder.add_object_data(path)
-        return self.File_builder.get_result()
 
     def get_or_create_folder(self, path: 'str', client: 'NetworkClient', config_loader, *args, **kwargs) -> 'Folder' : # pylint: disable=unused-argument
         """get a folder from the filesystem based on the specified path or create a new folder if one does not yet exist."""
