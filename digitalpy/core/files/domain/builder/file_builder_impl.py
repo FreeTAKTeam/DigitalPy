@@ -20,3 +20,4 @@ class FileBuilderImpl(FileBuilder):
         self.result.permissions = path.stat().st_mode
         self.result.size = path.stat().st_size
         self.result.name = path.name
+        self.result.contents = path.read_bytes()

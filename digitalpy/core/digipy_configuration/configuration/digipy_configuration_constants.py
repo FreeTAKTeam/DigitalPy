@@ -1,0 +1,1 @@
+ACTION_MAPPING_SECTION = 'actionmapping'

@@ -43,8 +43,8 @@ class FilesControllerImpl(FilesController):
         self.Error_builder.initialize(request, response)
         self.Files_persistence_controller.initialize(request, response)
         return super().initialize(request, response)
-    
-    def get_or_create_file(self, path: 'str', config_loader, *args, **kwargs) -> 'File' : # pylint: disable=unused-argument
+
+    def get_or_create_file(self, path: 'str', config_loader, *args, **kwargs) -> 'File': # pylint: disable=unused-argument
         """get a file from the filesystem based on the specified path or create a new file if one does not yet exist."""
         path_obj = Path(path)
         if not path_obj.exists():
@@ -52,15 +52,15 @@ class FilesControllerImpl(FilesController):
         else:
             return self.get_file(path, config_loader)
 
-    def get_or_create_folder(self, path: 'str', client: 'NetworkClient', config_loader, *args, **kwargs) -> 'Folder' : # pylint: disable=unused-argument
+    def get_or_create_folder(self, path: 'str', client: 'NetworkClient', config_loader, *args, **kwargs) -> 'Folder': # pylint: disable=unused-argument
         """get a folder from the filesystem based on the specified path or create a new folder if one does not yet exist."""
         return None
 
-    def get_folder(self, path: 'str', client: 'NetworkClient', config_loader, *args, **kwargs) -> 'Folder' : # pylint: disable=unused-argument
+    def get_folder(self, path: 'str', client: 'NetworkClient', config_loader, *args, **kwargs) -> 'Folder': # pylint: disable=unused-argument
         """get a folder based on the specified path"""
         return None
 
-    def create_folder(self, path: 'str', client: 'NetworkClient', config_loader, *args, **kwargs) -> 'Folder' : # pylint: disable=unused-argument
+    def create_folder(self, path: 'str', client: 'NetworkClient', config_loader, *args, **kwargs) -> 'Folder': # pylint: disable=unused-argument
         """create a new folder in the file system at the specified path"""
         return None
 
@@ -68,7 +68,7 @@ class FilesControllerImpl(FilesController):
         """delete the given folder instance."""
         return None
 
-    def get_file(self, path: 'str', config_loader, *args, **kwargs) -> 'File' : # pylint: disable=unused-argument
+    def get_file(self, path: 'str', config_loader, *args, **kwargs) -> 'File': # pylint: disable=unused-argument
         """get a file from the file system based on the specified path"""
         path_obj = Path(path)
         if path_obj.exists():
@@ -78,12 +78,12 @@ class FilesControllerImpl(FilesController):
         else:
             raise FileNotFoundError(f"File {path} not found")
 
-    def create_file(self, path: 'str', config_loader, *args, **kwargs) -> 'File' : # pylint: disable=unused-argument
+    def create_file(self, path: 'str', config_loader, *args, **kwargs) -> 'File': # pylint: disable=unused-argument
         """create a new file in the filesystem at the specified path."""
         path_obj = Path(path)
         if path_obj.exists():
             raise FileExistsError(f"File {path} already exists")
-        
+
         path_obj.touch()
         self.File_builder.build_empty_object(config_loader=config_loader)
         self.File_builder.add_object_data(path_obj)
@@ -93,3 +93,8 @@ class FilesControllerImpl(FilesController):
         """delete the file at the specified path"""
         return None
 
+    def update_file(self, file: 'File', config_loader, *args, **kwargs) -> 'File':
+        """update the file at the specified path"""
+        with open(file.path, "wb") as file_obj:
+            file_obj.write(file.contents)
+        return file

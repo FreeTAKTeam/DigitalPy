@@ -13,6 +13,19 @@ class File(Node):
         self._permissions: 'str' = None
         self._size: 'float' = None
         self._name: 'str' = None
+        self._contents: 'bytes' = None
+
+    @property
+    def contents(self) -> 'bytes':
+        """"""
+        return self._contents
+    
+    @contents.setter
+    def contents(self, contents: 'bytes'):
+        contents = bytes(contents)
+        if not isinstance(contents, bytes):
+            raise TypeError("'contents' must be of type bytes")
+        self._contents= contents
 
     @property
     def path(self) -> 'str':

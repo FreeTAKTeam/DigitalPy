@@ -117,3 +117,8 @@ class Files(DefaultFacade):
         """delete the file at the specified path
         """
         self.Files_controller.delete_file(*args, **kwargs)
+    @DefaultFacade.public
+    def update_file(self, *args, **kwargs):
+        """update the file at the specified path
+        """
+        return self.Files_controller.update_file(*args, **kwargs)
