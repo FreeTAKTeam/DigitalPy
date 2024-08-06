@@ -10,11 +10,11 @@ class StatusFactory:
     """StatusFactory class to create and retrieve status objects."""
 
     def __init__(self) -> None:
-        self._metrics: dict[str, Metric]
-        self._service_statuses: dict[str, ServiceStatus]
-        self._system_events: list[SystemEvent]
-        self._system_health: SystemHealth
-        self._system_logs: list[SystemLog]
+        self._metrics: dict[str, Metric] = {}
+        self._service_statuses: dict[str, ServiceStatus] = {}
+        self._system_events: list[SystemEvent] = []
+        self._system_health: SystemHealth = SystemHealth(None, None)
+        self._system_logs: list[SystemLog] = []
 
     def add_metric(self, metric: Metric):
         """Add a metric to the factory.
@@ -75,7 +75,7 @@ class StatusFactory:
         Args:
             service_status: The service status to add.
         """
-        self._service_statuses[service_status.status_name] = service_status
+        self._service_statuses[service_status.service_name] = service_status
 
     def get_new_service_status(self) -> ServiceStatus:
         """Get a new instance of a service status.

@@ -6,10 +6,9 @@ It is designed to handle system log-related data with attributes such as file,
 message, name, severity, and timestamp.
 """
 
-from typing import Optional
-
 from digitalpy.core.domain.node import Node
-
+from typing import Optional
+from datetime import datetime
 
 class SystemLog(Node):
     """
@@ -20,7 +19,7 @@ class SystemLog(Node):
         message (str): The message contained in the log.
         name (Optional[str]): The name of the log.
         severity (str): The severity level of the log.
-        timestamp (str): The timestamp when the log was created.
+        timestamp (datetime): The timestamp when the log was created.
     """
     
     def __init__(self, model_configuration, model, oid=None, node_type="SystemLog") -> None:
@@ -38,7 +37,7 @@ class SystemLog(Node):
         self._message: str = None
         self._name: Optional[str] = None
         self._severity: str = None
-        self._timestamp: str = None
+        self._timestamp: datetime = None
 
     @property
     def file(self) -> Optional[str]:
@@ -85,12 +84,14 @@ class SystemLog(Node):
         self._severity = severity
 
     @property
-    def timestamp(self) -> str:
+    def timestamp(self) -> datetime:
         """The timestamp when the log was created."""
         return self._timestamp
     
     @timestamp.setter
-    def timestamp(self, timestamp: str):
-        if not isinstance(timestamp, str):
-            raise TypeError("'timestamp' must be of type str")
+    def timestamp(self, timestamp: datetime):
+        if isinstance(timestamp, str):
+            timestamp = datetime.fromisoformat(timestamp)
+        if not isinstance(timestamp, datetime):
+            raise TypeError("'timestamp' must be of type datetime")
         self._timestamp = timestamp

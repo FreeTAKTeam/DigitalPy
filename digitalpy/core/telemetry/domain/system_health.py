@@ -13,9 +13,9 @@ class SystemHealth(Node):
     A class to represent System Health.
 
     Attributes:
-        cpu (int): The CPU usage percentage.
-        disk (int): The disk usage percentage.
-        memory (int): The memory usage percentage.
+        cpu (float): The CPU usage percentage.
+        disk (float): The disk usage percentage.
+        memory (float): The memory usage percentage.
     """
     
     def __init__(self, model_configuration, model, oid=None, node_type="SystemHealth") -> None:
@@ -29,39 +29,42 @@ class SystemHealth(Node):
             node_type: The type of the node, default is "SystemHealth".
         """
         super().__init__(node_type, model_configuration=model_configuration, model=model, oid=oid)
-        self._cpu: int = None
-        self._disk: int = None
-        self._memory: int = None
+        self._cpu: float = None
+        self._disk: float = None
+        self._memory: float = None
 
     @property
-    def cpu(self) -> int:
+    def cpu(self) -> float:
         """The CPU usage percentage."""
         return self._cpu
     
     @cpu.setter
-    def cpu(self, cpu: int):
-        if not isinstance(cpu, int):
-            raise TypeError("'cpu' must be of type int")
+    def cpu(self, cpu: float):
+        cpu = float(cpu)
+        if not isinstance(cpu, float):
+            raise TypeError("'cpu' must be of type float")
         self._cpu = cpu
 
     @property
-    def disk(self) -> int:
+    def disk(self) -> float:
         """The disk usage percentage."""
         return self._disk
     
     @disk.setter
-    def disk(self, disk: int):
-        if not isinstance(disk, int):
-            raise TypeError("'disk' must be of type int")
+    def disk(self, disk: float):
+        disk = float(disk)
+        if not isinstance(disk, float):
+            raise TypeError("'disk' must be of type float")
         self._disk = disk
 
     @property
-    def memory(self) -> int:
+    def memory(self) -> float:
         """The memory usage percentage."""
         return self._memory
     
     @memory.setter
-    def memory(self, memory: int):
-        if not isinstance(memory, int):
-            raise TypeError("'memory' must be of type int")
+    def memory(self, memory: float):
+        memory = float(memory)
+        if not isinstance(memory, float):
+            raise TypeError("'memory' must be of type float")
         self._memory = memory
