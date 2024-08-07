@@ -19,7 +19,7 @@ def client_mock():
     return MagicMock(spec=NetworkClient)
 
 
-@pytest.fixture()
+@pytest.fixture
 def component_mgmt_db_mock():
     db_mock = mock.patch(
         "digitalpy.core.component_management.controllers.component_management_persistence_controller.DB_PATH",
