@@ -508,3 +508,17 @@ class InifileConfiguration(Configuration):
 
     def __str__(self) -> str:
         return str(self.config_array)
+
+    def __getstate__(self) -> object:
+        tmp_dict = self.__dict__.copy()
+        if "_lock" in tmp_dict:
+            del tmp_dict["_lock"]
+        if "_condition" in tmp_dict:
+            del tmp_dict["_condition"]
+
+        return tmp_dict
+
+    def __setstate__(self, tmp_dict: dict) -> None:
+        self.__dict__.update(tmp_dict)
+        self._lock = Lock()
+        self._condition = Condition(lock=self._lock)
