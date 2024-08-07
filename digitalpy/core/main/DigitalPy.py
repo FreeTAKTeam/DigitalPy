@@ -14,6 +14,7 @@ import threading
 from time import sleep
 from typing import TYPE_CHECKING
 
+from digitalpy.core.service_management.service_management_core import ServiceManagementCore
 from digitalpy.core.telemetry.singleton_status_factory import SingletonStatusFactory
 from digitalpy.core.telemetry.domain.status_factory import StatusFactory
 from digitalpy.core.main.impl.configuration_factory import ConfigurationFactory
@@ -38,9 +39,7 @@ from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.main.singleton_configuration_factory import (
     SingletonConfigurationFactory,
 )
-from digitalpy.core.service_management.controllers.service_management_main import (
-    ServiceManagementMain,
-)
+
 
 from digitalpy.core.domain.domain_facade import Domain
 from digitalpy.core.IAM.IAM_facade import IAM
@@ -72,7 +71,7 @@ class DigitalPy:
         self.subject: Subject
         self.subject_thread: threading.Thread
 
-        self.service_manager: ServiceManagementMain
+        self.service_manager: ServiceManagementCore
         self.service_manager_thread: threading.Thread
 
         self.integration_manager: IntegrationManager
@@ -304,7 +303,7 @@ class DigitalPy:
         try:
 
             # begin the service_manager
-            self.service_manager: ServiceManagementMain = ObjectFactory.get_instance(
+            self.service_manager: ServiceManagementCore = ObjectFactory.get_instance(
                 "ServiceManager"
             )
 

@@ -2,11 +2,15 @@
 
 from typing import TYPE_CHECKING, Dict
 
-from digitalpy.core.service_management.domain.service_description import ServiceDescription
+from digitalpy.core.service_management.domain.service_description import (
+    ServiceDescription,
+)
 from digitalpy.core.service_management.domain.service_management_configuration import (
     ServiceManagementConfiguration,
 )
-from digitalpy.core.main.singleton_configuration_factory import SingletonConfigurationFactory
+from digitalpy.core.main.singleton_configuration_factory import (
+    SingletonConfigurationFactory,
+)
 from digitalpy.core.zmanager.impl.subject_pusher import SubjectPusher
 from digitalpy.core.zmanager.response import Response
 from digitalpy.core.main.object_factory import ObjectFactory
@@ -48,7 +52,9 @@ class ServiceManagementCore(CoreService):
         )
 
         self.service_management_configuration: ServiceManagementConfiguration = (
-            SingletonConfigurationFactory.get_configuration_object("ServiceManagementConfiguration")
+            SingletonConfigurationFactory.get_configuration_object(
+                "ServiceManagementConfiguration"
+            )
         )
 
         self._service_index: Dict[str, ServiceDescription] = {}

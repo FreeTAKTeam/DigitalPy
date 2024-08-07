@@ -1,6 +1,8 @@
 import logging
 import pickle
 import zmq
+from digitalpy.core.main.singleton_configuration_factory import SingletonConfigurationFactory
+from digitalpy.core.zmanager.domain.model.zmanager_configuration import ZManagerConfiguration
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.zmanager.configuration.zmanager_constants import (
     ZMANAGER_MESSAGE_DELIMITER,
@@ -21,10 +23,9 @@ class SubjectPusher:
         self.pusher_formatter: Formatter = formatter
         self.logger = logging.getLogger(self.__class__.__name__)
         self.service_id = service_id
-        self.subject_address = ObjectFactory.get_instance("Configuration").get(
-            "subject_address", "Subject"
-        )
-
+        zmanager_configuration: ZManagerConfiguration = SingletonConfigurationFactory.get_configuration_object("ZManagerConfiguration")
+        self.subject_address = zmanager_configuration.subject_pull_address
+        
     def setup(self):
         """initiate subject connection
 

@@ -50,14 +50,11 @@ class ConfigurationFactory:
         action_mapping = {}
         for key in section:
             action_mapping[key] = self._deserialize_from_ini(section[key])
+            
         return action_mapping
 
     def _deserialize_from_ini(self, ini_key: str) -> ActionKey:
         """Deserialize the ini key to an ActionKey model.
-        TODO: This method should probably be moved to the ActionKeyController class however
-        in the current implementation this would cause a circular dependecy. I've brought this
-        up in https://github.com/orgs/FreeTAKTeam/projects/7/views/1?pane=issue&itemId=72571977
-        and this is a temporary solution.
 
         Args:
             ini_key (str): The ini key to deserialize
@@ -65,6 +62,10 @@ class ConfigurationFactory:
         Returns:
             ActionKey: The deserialized ActionKey model
         """
+        # TODO: This method should probably be moved to the ActionKeyController class however
+        # in the current implementation this would cause a circular dependecy. I've brought this
+        # up in https://github.com/orgs/FreeTAKTeam/projects/7/views/1?pane=issue&itemId=72571977
+        # and this is a temporary solution.
         action_key = ActionKey(None, None)
         sections = ini_key.split("=")
         if len(sections) > 2:
