@@ -12,6 +12,7 @@ include = ["digitalpy/**/*.json", "digitalpy/**/*.py", "digitalpy/**/*.ini", "di
 python = "^3.10"
 setuptools="*"
 rule-engine="*"
+'ruamel.yaml'="*"
 pyzmq="*"
 opentelemetry-sdk="*"
 lxml="*"
