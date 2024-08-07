@@ -1,7 +1,6 @@
-from typing import Optional
+from digitalpy.core.main.singleton_configuration_factory import SingletonConfigurationFactory
 from digitalpy.core.zmanager.controller_message import ControllerMessage
 from digitalpy.core.digipy_configuration.domain.model.actionkey import ActionKey
-from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
 from digitalpy.core.digipy_configuration.configuration.digipy_configuration_constants import (
     ACTION_MAPPING_SECTION,
 )
@@ -18,8 +17,7 @@ class ActionKeyController:
     this includes primarily, serialization and deserialization of the models.
     """
 
-    def __init__(self, configuration: Configuration, formatter: Formatter) -> None:
-        self.configuration = configuration
+    def __init__(self, formatter: Formatter) -> None:
         self.formatter = formatter
 
     def serialize_to_topic(self, action_key: ActionKey) -> bytes:
@@ -143,7 +141,7 @@ class ActionKeyController:
         Raises:
             ValueError: If no action key is found
         """
-        action_mapping: dict = self.configuration.get_section(ACTION_MAPPING_SECTION)
+        action_mapping: dict = SingletonConfigurationFactory.get_configuration_object(ACTION_MAPPING_SECTION)
         match (action_key.source, action_key.context, action_key.action):
             case (s, c, a) if (s and c and a) and f"{s}?{c}?{a}" in action_mapping:
                 key = f"{s}?{c}?{a}"

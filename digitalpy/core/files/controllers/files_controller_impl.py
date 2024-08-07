@@ -83,7 +83,6 @@ class FilesControllerImpl(FilesController):
         path_obj = Path(path)
         if path_obj.exists():
             raise FileExistsError(f"File {path} already exists")
-
         path_obj.touch()
         self.File_builder.build_empty_object(config_loader=config_loader)
         self.File_builder.add_object_data(path_obj)

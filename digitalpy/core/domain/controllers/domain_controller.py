@@ -3,7 +3,7 @@ import uuid
 from types import ModuleType
 from typing import Any, List, Optional, Type
 from digitalpy.core.zmanager.action_mapper import ActionMapper
-from digitalpy.core.digipy_configuration.configuration import Configuration
+from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
 from digitalpy.core.parsing.load_configuration import ModelConfiguration as LConfiguration
 
 from digitalpy.core.zmanager.request import Request

@@ -19,8 +19,6 @@ LOGGING_CONFIGURATION_PATH = str(
     pathlib.PurePath(CURRENT_COMPONENT_PATH, "configuration/logging.conf")
 )
 
-# TODO this path shouldn't be hardcoded, 
-# find way to change this to a configured value.
 LOG_FILE_PATH = str(
     pathlib.PurePath(CURRENT_COMPONENT_PATH, "logs")
 )

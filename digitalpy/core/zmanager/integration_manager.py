@@ -9,66 +9,74 @@
 
 
 import multiprocessing
-from typing import Optional
 
 import zmq
 
-from digitalpy.core.zmanager.configuration.zmanager_constants import \
-    ZMANAGER_MESSAGE_DELIMITER
+from digitalpy.core.zmanager.domain.model.zmanager_configuration import ZManagerConfiguration
+from digitalpy.core.main.singleton_configuration_factory import SingletonConfigurationFactory
+from digitalpy.core.zmanager.configuration.zmanager_constants import (
+    ZMANAGER_MESSAGE_DELIMITER,
+)
+from digitalpy.core.main.object_factory import ObjectFactory
+from digitalpy.core.digipy_configuration.action_key_controller import (
+    ActionKeyController,
+)
+from digitalpy.core.main.factory import Factory
 
 
 class IntegrationManager:
     def __init__(
         self,
-        integration_manager_puller_protocol: str,
-        integration_manager_puller_address: str,
-        integration_manager_puller_port: int,
-        integration_manager_publisher_protocol: str,
-        integration_manager_publisher_address: str,
-        integration_manager_publisher_port: int,
-        timeout=3000,
+        factory: Factory,
     ) -> None:
-        self.integration_manager_puller_protocol = integration_manager_puller_protocol
-        self.integration_manager_puller_address = integration_manager_puller_address
-        self.integration_manager_puller_port = integration_manager_puller_port
-        self.integration_manager_publisher_protocol = (
-            integration_manager_publisher_protocol
+        self.zmanager_configuration: ZManagerConfiguration = SingletonConfigurationFactory.get_configuration_object(
+            "ZManagerConfiguration"
         )
-        self.integration_manager_publisher_address = (
-            integration_manager_publisher_address
-        )
-        self.integration_manager_publisher_port = integration_manager_publisher_port
-        self.context: Optional[zmq.Context] = None
-        self.pull_socket: Optional[zmq.Socket] = None
-        self.pub_socket: Optional[zmq.Socket] = None
+        self.context: zmq.Context
+        self.pull_socket: zmq.Socket
+        self.pub_socket: zmq.Socket
         self.running = multiprocessing.Event()
         self.running.set()
-        self.timeout = timeout
+        self.action_key_controller: "ActionKeyController" = ObjectFactory.get_instance(
+            "ActionKeyController"
+        )
+        self._factory = factory
 
     def initialize_connections(self):
         """initialize the connections for the integration manager"""
-        self.context = zmq.Context()
+        self.context: zmq.Context = zmq.Context()
 
         # create a pull socket
-        self.pull_socket = self.context.socket(zmq.PULL)
-        # unlimited as trunkating can result in unsent data and broken messages
-        # TODO: determine a sane default
-        self.pull_socket.setsockopt(zmq.RCVHWM, 0)
-        self.pull_socket.bind(
-            f"{self.integration_manager_puller_protocol}://{self.integration_manager_puller_address}:{self.integration_manager_puller_port}"
-        )
-        self.pull_socket.setsockopt(zmq.RCVTIMEO, self.timeout)
+        self._initialize_pull_socket()
 
         # create a pub socket
-        self.pub_socket = self.context.socket(zmq.PUB)
+        self._initialize_pub_socket()
+
+    def _initialize_pub_socket(self):
+        self.pub_socket: zmq.Socket = self.context.socket(zmq.PUB)
         # unlimited as trunkating can result in unsent data and broken messages
         # TODO: determine a sane default
-        self.pub_socket.setsockopt(zmq.SNDHWM, 0)
+        self.pub_socket.setsockopt(zmq.SNDHWM, self.zmanager_configuration.integration_manager_pub_sndhwm)
         self.pub_socket.bind(
-            f"{self.integration_manager_publisher_protocol}://{self.integration_manager_publisher_address}:{self.integration_manager_publisher_port}"
+            self.zmanager_configuration.integration_manager_pub_address
         )
 
-    def cleanup(self):
+    def _initialize_pull_socket(self):
+        self.pull_socket: zmq.Socket = self.context.socket(zmq.PULL)
+        # unlimited as trunkating can result in unsent data and broken messages
+        # TODO: determine a sane default
+        self.pull_socket.setsockopt(zmq.RCVHWM, self.zmanager_configuration.integration_manager_pull_rcvhwm)
+        self.pull_socket.bind(
+            self.zmanager_configuration.integration_manager_pull_address
+        )
+        self.pull_socket.setsockopt(zmq.RCVTIMEO, self.zmanager_configuration.integration_manager_pull_timeout)
+
+    def _setup(self):
+        """setup the integration manager"""
+        ObjectFactory.configure(self._factory)
+        self.initialize_connections()
+
+    def _teardown(self):
         """cleanup the connections for the integration manager"""
         self.pull_socket.close()
         self.pub_socket.close()
@@ -76,26 +84,27 @@ class IntegrationManager:
 
     def start(self):
         """this is the main running function for the integration manager"""
-        self.initialize_connections()
+        self._setup()
 
         while self.running.is_set():
             try:
                 # receive a message from a client
                 request = self.pull_socket.recv_multipart().pop(0)
-                
-                response_protocol, response_object_unserialized = request.split(
-                    ZMANAGER_MESSAGE_DELIMITER, 1
+                actionkey, body = self.action_key_controller.deserialize_from_topic(
+                    request
                 )
-                subject = b"/messages" + response_protocol
+                topic = self.action_key_controller.serialize_to_topic(actionkey)
+
                 try:
                     # send the response back to the client
                     self.pub_socket.send(
-                        subject + b" " + response_object_unserialized, copy=False
+                        topic + ZMANAGER_MESSAGE_DELIMITER + body, copy=False
                     )
                 except Exception as ex:
                     print("Error sending response to client: {}".format(ex))
+
             except zmq.error.Again:
                 pass
             except Exception as ex:
                 print("Error " + str(ex))
-        self.cleanup()
+        self._teardown()

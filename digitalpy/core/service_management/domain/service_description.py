@@ -2,36 +2,32 @@ from datetime import datetime as dt
 from multiprocessing import Process
 from digitalpy.core.domain.node import Node
 from digitalpy.core.parsing.load_configuration import ModelConfiguration
-from digitalpy.core.service_management.domain.service_status import ServiceStatus
+
 
 class ServiceDescription(Node):
-    def __init__(self, model_configuration=ModelConfiguration(), model={}, node_type = "service_description", oid=None) -> None:
-        super().__init__(model_configuration=model_configuration, model=model, node_type=node_type, oid=oid)
+    def __init__(
+        self,
+        model_configuration=ModelConfiguration(),
+        model={},
+        node_type="service_description",
+        oid=None,
+    ) -> None:
+        super().__init__(
+            model_configuration=model_configuration,
+            model=model,
+            node_type=node_type,
+            oid=oid,
+        )
         # the pid of the service, changing depending on the status of the service
         self._pid: int = None  # type: ignore
-        # the id of the service (must be unique), consistent throughout the lifetime of the service, this must be in the form, <component_name>.<service_name>
+        # the id of the service (must be unique), consistent throughout the lifetime of the service
         self._id: str = None  # type: ignore
-        # the protocol of the service
-        self._protocol: str = None  # type: ignore
-        # the status of the service in it's lifecycle
-        self._status: ServiceStatus = None  # type: ignore
-        # the description of the service
-        self._description: str = None  # type: ignore
-        # the human readable name of the service, should be unique but not required.
-        self._name: str = None  # type: ignore
         # when the last message from the service was received
         self._last_message_time: dt = None  # type: ignore
         # when the service was started
         self._start_time: dt = None  # type: ignore
         # the process of the service (if it is running)
         self._process: Process = None  # type: ignore
-        # host address if the process is attached to a network
-        self._host: str = None  # type: ignore
-        # port if the process is attached to a network
-        self._port: int = None  # type: ignore
-        # network interface if the process is attached to a network
-        self._network_interface: str = None  # type: ignore
-
     @property
     def network_interface(self) -> str:
         """get the network interface of the service
@@ -40,7 +36,7 @@ class ServiceDescription(Node):
             str: the network interface of the service
         """
         return self._network_interface
-    
+
     @network_interface.setter
     def network_interface(self, network_interface: str):
         """set the network interface of the service
@@ -53,7 +49,7 @@ class ServiceDescription(Node):
         """
         if not isinstance(network_interface, str):
             raise TypeError("'network_interface' must be a string")
-        
+
         self._network_interface = network_interface
 
     @property
@@ -64,7 +60,7 @@ class ServiceDescription(Node):
             str: the host of the service
         """
         return self._host
-    
+
     @host.setter
     def host(self, host: str):
         """set the host of the service
@@ -87,7 +83,7 @@ class ServiceDescription(Node):
             int: the port of the service
         """
         return self._port
-    
+
     @port.setter
     def port(self, port: int):
         """set the port of the service
@@ -110,7 +106,7 @@ class ServiceDescription(Node):
             Process: the process of the service
         """
         return self._process
-    
+
     @process.setter
     def process(self, process: Process):
         """set the process of the service
@@ -134,7 +130,7 @@ class ServiceDescription(Node):
             dt: the start time of the service
         """
         return self._start_time
-    
+
     @start_time.setter
     def start_time(self, start_time: dt):
         """set the start time of the service
@@ -174,7 +170,7 @@ class ServiceDescription(Node):
             int: the pid of the service
         """
         return self._pid
-    
+
     @pid.setter
     def pid(self, pid: int):
         """set the pid of the service, this should only be done by the service manager
@@ -195,7 +191,7 @@ class ServiceDescription(Node):
             str: the id of the service
         """
         return self._id
-    
+
     @id.setter
     def id(self, id: str):
         """set the id of the service.
@@ -215,7 +211,7 @@ class ServiceDescription(Node):
             str: the protocol of the service
         """
         return self._protocol
-    
+
     @protocol.setter
     def protocol(self, protocol: str):
         """set the protocol of the service
@@ -225,28 +221,28 @@ class ServiceDescription(Node):
         """
         if not isinstance(protocol, str):
             raise TypeError("'protocol' must be a string")
-        
+
         self._protocol = protocol
 
     @property
-    def status(self) -> ServiceStatus:
+    def status(self) -> str:
         """get the status of the service
 
         Returns:
             ServiceStatus: the status of the service
         """
         return self._status
-    
+
     @status.setter
-    def status(self, status: ServiceStatus):
+    def status(self, status: str):
         """set the status of the service
 
         Args:
             status (ServiceStatus): the status of the service
         """
-        if not isinstance(status, ServiceStatus):
+        if not isinstance(status, str):
             raise TypeError("'status' must be an instance of ServiceStatus")
-        
+
         self._status = status
 
     @property
@@ -267,7 +263,7 @@ class ServiceDescription(Node):
         """
         if not isinstance(description, str):
             raise TypeError("'description' must be a string")
-        
+
         self._description = description
 
     @property
@@ -288,5 +284,5 @@ class ServiceDescription(Node):
         """
         if not isinstance(name, str):
             raise TypeError("'name' must be a string")
-        
+
         self._name = name

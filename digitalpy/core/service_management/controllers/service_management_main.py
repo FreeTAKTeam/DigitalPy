@@ -41,7 +41,7 @@ from digitalpy.core.service_management.configuration.message_keys import (
 )
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.main.object_factory import ObjectFactory
-from digitalpy.core.service_management.domain.service_status import ServiceStatus
+from digitalpy.core.service_management.domain.service_status import ServiceStatusEnum
 from digitalpy.core.telemetry.tracing_provider import TracingProvider
 from digitalpy.core.service_management.controllers.service_management_process_controller import (
     ServiceManagementProcessController,
@@ -55,7 +55,7 @@ from digitalpy.core.parsing.formatter import Formatter
 from digitalpy.core.service_management.domain.service_description import (
     ServiceDescription,
 )
-from digitalpy.core.digipy_configuration.configuration import Configuration
+from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
 from digitalpy.core.zmanager.response import Response
 from digitalpy.core.domain.domain.service_health import ServiceHealth
 from digitalpy.core.health.domain.service_health_category import ServiceHealthCategory
@@ -154,7 +154,7 @@ class ServiceManagementMain(DigitalPyService):
         self.initialize_controllers()
         self.initialize_connections(self.protocol)
 
-        self.status = ServiceStatus.RUNNING
+        self.status = ServiceStatusEnum.RUNNING
         # member exists in parent class
         self.execute_main_loop()  # pylint: disable=no-member
 
@@ -205,7 +205,7 @@ class ServiceManagementMain(DigitalPyService):
         """This method is used to get the health of all services"""
         service_health = {}
         for service_id, service_desc in self._service_index.items():
-            if service_desc.status == ServiceStatus.RUNNING:
+            if service_desc.status == ServiceStatusEnum.RUNNING:
                 service_health[service_id] = self.get_service_health(service_id)
 
         return service_health
@@ -260,7 +260,7 @@ class ServiceManagementMain(DigitalPyService):
         new_service_instance.network_interface = str(
             service_configuration.get("network")
         )
-        new_service_instance.status = ServiceStatus.STOPPED
+        new_service_instance.status = ServiceStatusEnum.STOPPED
         new_service_instance.description = str(service_configuration.get("description"))
         new_service_instance.port = int(
             service_configuration.get("port")
@@ -300,7 +300,7 @@ class ServiceManagementMain(DigitalPyService):
         self.process_controller.start_process(service_description, service_class)
 
         # update the status of the service
-        service_description.status = ServiceStatus.RUNNING
+        service_description.status = ServiceStatusEnum.RUNNING
 
     def is_service_running(self, service_id: str) -> bool:
         """This method is used to check if a service is running"""
@@ -310,7 +310,7 @@ class ServiceManagementMain(DigitalPyService):
             return False
         # if the service is in the service index and the status is running
         # then the service is running, otherwise it is not running.
-        return self._service_index[service_id].status == ServiceStatus.RUNNING
+        return self._service_index[service_id].status == ServiceStatusEnum.RUNNING
 
     def initialize_service_class(
         self,
@@ -370,7 +370,7 @@ class ServiceManagementMain(DigitalPyService):
 
         self.process_controller.stop_process(service_description)
 
-        service_description.status = ServiceStatus.STOPPED
+        service_description.status = ServiceStatusEnum.STOPPED
 
     def _send_service_stop_request(self, service_id: str):
         """

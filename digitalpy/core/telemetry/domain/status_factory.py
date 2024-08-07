@@ -1,10 +1,14 @@
+from importlib import import_module
 from typing import Optional
+from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
 from digitalpy.core.telemetry.domain.system_log import SystemLog
 from digitalpy.core.telemetry.domain.system_health import SystemHealth
 from digitalpy.core.telemetry.domain.system_event import SystemEvent
 from digitalpy.core.telemetry.domain.service_status import ServiceStatus
 from digitalpy.core.telemetry.domain.metric import Metric
+from digitalpy.core.domain.node import Node
 
+ServiceStatusClass = ServiceStatus
 
 class StatusFactory:
     """StatusFactory class to create and retrieve status objects."""
@@ -15,6 +19,63 @@ class StatusFactory:
         self._system_events: list[SystemEvent] = []
         self._system_health: SystemHealth = SystemHealth(None, None)
         self._system_logs: list[SystemLog] = []
+
+    def add_configuration(self, configuration: Configuration):
+        """Add a configuration to the factory.
+        
+        Args:
+            configuration: The configuration to add.
+        """
+        for section in configuration.get_sections():
+            self._add_status_object(configuration.get_section(section))
+                
+    def _add_status_object(self, section: dict):
+        """Get a new instance of a status object based on it's dictionary repr.
+        This assumes that the dict repr contains all required fields to create the object.
+        
+        Args:
+            section: The dictionary representation of the status object.
+        """
+        if section.get("__class", None) is None:
+            return None
+
+        status_class = self._import_class(section["__class"])
+        status_object = status_class(None, None)
+        propeties = status_object.get_properties()
+        for key in section:
+            if key in propeties:
+                setattr(status_object, key, section[key])
+
+        # TODO: This is a temporary solution. This should be refactored to using a proper pattern
+        # not a switch statement.
+        if isinstance(status_object, Metric):
+            self.add_metric(status_object)
+        elif isinstance(status_object, ServiceStatus):
+            self.add_service_status(status_object)
+        elif isinstance(status_object, SystemEvent):
+            self.add_system_event(status_object)
+        elif isinstance(status_object, SystemHealth):
+            self.set_system_health(status_object)
+        elif isinstance(status_object, SystemLog):
+            self.add_system_log(status_object)
+        
+    def _import_class(self, class_name: str) -> type[Node]:
+        """Import a class."""
+        parts = class_name.split(".")
+        module = import_module(".".join(parts[:-1]))
+        return getattr(module, parts[-1])
+        
+    def _build_metric(self, section: dict) -> Metric:
+        """Build a metric object from a dictionary representation.
+        
+        Args:
+            section: The dictionary representation of the metric object.
+        
+        Returns:
+            Metric: The built metric object.
+        
+        """
+        return Metric(section["metric_name"], section["value"])
 
     def add_metric(self, metric: Metric):
         """Add a metric to the factory.

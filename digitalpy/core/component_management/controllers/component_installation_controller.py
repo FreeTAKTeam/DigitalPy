@@ -7,6 +7,11 @@ import importlib
 import os
 from typing import TYPE_CHECKING
 
+from digitalpy.core.digipy_configuration.impl.inifile_configuration import InifileConfiguration
+from digitalpy.core.component_management.domain.model.component_management_configuration import (
+    ComponentManagementConfiguration,
+)
+from digitalpy.core.main.singleton_configuration_factory import SingletonConfigurationFactory
 from digitalpy.core.component_management.configuration.component_management_constants import (
     RELATIVE_MANIFEST_PATH,
 )
@@ -35,7 +40,9 @@ from .component_management_persistence_controller_impl import (
 if TYPE_CHECKING:
     from digitalpy.core.component_management.domain.model.error import Error
     from digitalpy.core.component_management.impl.default_facade import DefaultFacade
-    from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
+    from digitalpy.core.digipy_configuration.domain.model.configuration import (
+        Configuration,
+    )
     from digitalpy.core.domain.domain.network_client import NetworkClient
     from digitalpy.core.zmanager.impl.default_action_mapper import DefaultActionMapper
     from digitalpy.core.zmanager.request import Request
@@ -75,10 +82,9 @@ class ComponentInstallationController(Controller):
             request, response, sync_action_mapper, configuration
         )
 
-        if configuration:
-            self.component_import_root: str = configuration.get_section(
-                "ComponentManagement"
-            ).get("component_import_root", None)
+        self.component_management_configuration: ComponentManagementConfiguration = (
+            SingletonConfigurationFactory.get_configuration_object("ComponentManagementConfiguration")
+        )
 
     def initialize(self, request: "Request", response: "Response"):
         """This function is used to initialize the controller.
@@ -175,14 +181,15 @@ class ComponentInstallationController(Controller):
 
         facade: DefaultFacade = self.retrieve_facade(component)
 
-        config: Configuration = ObjectFactory.get_instance("Configuration")
-
         ObjectFactory.register_instance(
             f"{component.name.lower()}actionmapper",
             facade.get_action_mapper(),
         )
 
-        config.add_configuration(facade.get_action_mapping_path())
+        component_configuration = InifileConfiguration(facade.get_configuration_path())
+        component_configuration.add_configuration()
+
+        SingletonConfigurationFactory.add_configuration(component_configuration)
 
         facade.setup()
 
@@ -210,7 +217,7 @@ class ComponentInstallationController(Controller):
 
         component_facade = getattr(
             importlib.import_module(
-                f"{self.component_import_root}.{component.name}.{component.name}_facade"
+                f"{self.component_management_configuration.component_import_root}.{component.name}.{component.name}_facade"
             ),
             f"{''.join([name.capitalize() if name[0].isupper() is False else name for name in component.name.split('_')])}",
         )
@@ -242,7 +249,7 @@ class ComponentInstallationController(Controller):
                 f"External action mapping not found at {external_action_mapping}"
             )
 
-        self.configuration.remove_configuration(str(external_action_mapping))
+        SingletonConfigurationFactory.remove_configuration(str(external_action_mapping))
 
         self.component_filesystem_controller.delete_component(component)
 

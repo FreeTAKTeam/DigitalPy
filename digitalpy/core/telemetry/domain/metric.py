@@ -112,6 +112,7 @@ class Metric(Node):
 
     @value.setter
     def value(self, value: float):
+        value = float(value)
         if not isinstance(value, float):
             raise TypeError("'value' must be of type float")
         self._value = value

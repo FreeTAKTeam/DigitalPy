@@ -14,7 +14,7 @@ from digitalpy.core.zmanager.response import Response
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.main.log_manager import LogManager
 from digitalpy.core.main.impl.default_file_logger import DefaultFileLogger
-from digitalpy.core.digipy_configuration.configuration import Configuration
+from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
 
 from digitalpy.core.telemetry.tracer import Tracer
 
@@ -156,12 +156,14 @@ class DefaultFacade(Controller):
         """get all the log files available"""
         return self.log_manager.get_logs()
 
-    def discover(self, **kwargs):
+    def get_action_mapping(self, **kwargs):
         """discover the action mappings from the component"""
-        config = InifileConfiguration(config_path=self.action_mapping_path)
+        config = InifileConfiguration(config_path="")
+        self.action_mapping_path = self.get_configuration_path()
+        config.add_configuration(self.action_mapping_path)
         return config.config_array
 
-    def get_action_mapping_path(self) -> str:
+    def get_configuration_path(self) -> str:
         """get the action mapping path for the component"""
         return self.action_mapping_path
 
@@ -169,10 +171,12 @@ class DefaultFacade(Controller):
         """get the action mapper for the component"""
         internal_config = InifileConfiguration("")
         internal_config.add_configuration(self.internal_action_mapping_path)
-        return self.base.ActionMapper(  # type: ignore
+        return (
+            self.base.ActionMapper(  # type: ignore
                 ObjectFactory.get_instance("event_manager"),
                 internal_config,
             ),
+        )
 
     def setup(self, **kwargs):
         """setup the component"""

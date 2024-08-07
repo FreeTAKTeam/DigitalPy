@@ -1,80 +1,100 @@
-from abc import ABC, abstractmethod
-from typing import Any
-from digitalpy.core.domain.object_id import ObjectId
+from abc import ABC
+from uuid import uuid4
+from digitalpy.core.digipy_configuration.domain.model.actionkey import ActionKey
+
 
 class ControllerMessage(ABC):
+    """A message that is sent to a controller"""
 
-    @abstractmethod
-    def get_id(self) -> ObjectId:
+    def __init__(self):
+        self.sender: str = ""
+        self.context: str = ""
+        self.action: str = ""
+        self.decorator: str = ""
+        self.values = {}
+        self.id = str(uuid4())
+        self.properties: dict
+        self.errors = None
+        self.format = ""
+
+    def get_id(self):
         return self.id
 
-    @abstractmethod
     def set_id(self, id):
         self.id = id
 
-    @abstractmethod
     def set_sender(self, sender):
         self.sender = sender
 
-    @abstractmethod
     def get_sender(self):
         return self.sender
 
-    @abstractmethod
     def set_context(self, context):
         self.context = context
 
-    @abstractmethod
     def get_context(self):
         return self.context
 
-    @abstractmethod
     def get_action(self):
         return self.action
 
-    @abstractmethod
     def set_action(self, action):
         self.action = action
 
-    @abstractmethod
     def set_value(self, name, value):
         """Set a value
         @param name The name of the variable
         @param value The value of the variable
         """
+        self.values[name] = value
 
-    @abstractmethod
     def set_values(self, values: dict):
-        """set all key value pairs at once"""
+        self.values = values
 
-    @abstractmethod
-    def get_values(self) -> dict[Any, Any]:
-        """get all key value pairs at once"""
+    def get_values(self):
+        return self.values
 
-    @abstractmethod
-    def get_value(self, name, default=None) -> Any:
-        """Get a value"""
+    def get_value(self, name, default=None):
+        return self.values.get(name, default)
 
-    @abstractmethod
     def get_boolean_value(self, name, default=False):
-        """Get a value as boolean"""
+        """Get a boolean value"""
+        return bool(self.values.get(name, default))
 
-    @abstractmethod
     def clear_value(self, name):
-        """Remove a value"""
+        del self.values[name]
 
-    @abstractmethod
     def clear_values(self):
-        """Remove all values"""
+        self.values = {}
 
-    @abstractmethod
     def has_value(self, name):
-        """Check for existence of a value"""
+        """Check if a value exists"""
+        return name in self.values
 
-    @abstractmethod
     def set_property(self, name, value):
         """Set a property"""
+        self.properties[name] = value
 
-    @abstractmethod
     def get_property(self, name):
         """Get a property"""
+        return self.properties.get(name)
+
+    def set_format(self, format):
+        self.format = format
+
+    def get_format(self):
+        return self.format
+
+    def set_decorator(self, decorator: str):
+        """Set the decorator"""
+        self.decorator = decorator
+
+    def get_decorator(self):
+        """Get the decorator"""
+        return self.decorator
+    
+    def set_action_key(self, action_key: ActionKey):
+        self.set_action(action_key.action)
+        self.set_context(action_key.context)
+        self.set_sender(action_key.source)
+        self.set_decorator(action_key.decorator)

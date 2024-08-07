@@ -10,6 +10,8 @@ from pathlib import PurePath
 from tempfile import TemporaryFile
 from typing import TYPE_CHECKING, Generator
 
+from digitalpy.core.component_management.domain.model.component_management_configuration import ComponentManagementConfiguration
+from digitalpy.core.main.singleton_configuration_factory import SingletonConfigurationFactory
 from digitalpy.core.component_management.configuration.component_management_constants import (
     COMPONENT_DOWNLOAD_PATH, ID, RELATIVE_MANIFEST_PATH)
 from digitalpy.core.component_management.controllers.component_manifest_controller import \
@@ -64,14 +66,9 @@ class ComponentFilesystemController(Controller):
             request, response, sync_action_mapper, configuration
         )
 
-        if configuration:
-            self.component_installation_path: str = configuration.get_section(
-                "ComponentManagement"
-            ).get("component_installation_path", None)
-
-            self.component_blueprint_path: str = configuration.get_section(
-                "ComponentManagement"
-            ).get("component_blueprint_path", None)
+        self.component_management_configuration: ComponentManagementConfiguration = (
+            SingletonConfigurationFactory.get_configuration_object("ComponentManagementConfiguration")
+        )
 
     def initialize(self, request: "Request", response: "Response"):
         """This function is used to initialize the controller.
@@ -111,7 +108,7 @@ class ComponentFilesystemController(Controller):
         # move the blueprint to the blueprint directory
         os.rename(
             PurePath(
-                self.component_installation_path,
+                self.component_management_configuration.component_installation_path,
                 component.name,
                 component.name + "_blueprint.py",
             ),
@@ -131,7 +128,7 @@ class ComponentFilesystemController(Controller):
         Returns:
             list: a list of tuples containing the potential component oath and its facade path
         """
-        potential_components = os.scandir(self.component_installation_path)
+        potential_components = os.scandir(self.component_management_configuration.component_installation_path)
         for potential_component in potential_components:
             facade_path = PurePath(
                 potential_component.path, potential_component.name + "_facade.py"
@@ -208,7 +205,7 @@ class ComponentFilesystemController(Controller):
         Returns:
             PurePath: the blueprint path
         """
-        return PurePath(self.component_blueprint_path, component.name + "_blueprint.py")
+        return PurePath(self.component_management_configuration.component_blueprint_path, component.name + "_blueprint.py")
 
     def _get_component_path(self, component: Component) -> "PurePath":
         """this method is used to get the component path of a component
@@ -222,7 +219,7 @@ class ComponentFilesystemController(Controller):
         if component.installationPath is not None and component.installationPath != "None":
             return PurePath(component.installationPath)
         else:
-            return PurePath(self.component_installation_path, component.name)
+            return PurePath(self.component_management_configuration.component_installation_path, component.name)
 
     def get_external_action_mapping_path(self, component: Component) -> "PurePath":
         """this method is used to get the external action mapping path of a component

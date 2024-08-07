@@ -1,9 +1,10 @@
 import logging
 from typing import TYPE_CHECKING
+from digitalpy.core.digipy_configuration.configuration.digipy_configuration_constants import ACTION_MAPPING_SECTION
 from digitalpy.core.digipy_configuration.action_key import ActionKey
 from digitalpy.core.persistence.application_event import ApplicationEvent
 from digitalpy.core.digipy_configuration.impl.config_action_key_provider import ConfigActionKeyProvider
-from digitalpy.core.digipy_configuration.configuration import Configuration
+from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
 from digitalpy.core.main.event_manager import EventManager
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
@@ -73,7 +74,7 @@ class DefaultActionMapper(ActionMapper):
             ApplicationEvent.NAME,
             ApplicationEvent(ApplicationEvent.BEFORE_ROUTE_ACTION, request),
         )
-        actionKeyProvider = ConfigActionKeyProvider(self.configuration, "actionmapping")
+        actionKeyProvider = ConfigActionKeyProvider(self.configuration, ACTION_MAPPING_SECTION)
 
         referrer: str = request.get_sender()
         context: str = request.get_context()
@@ -99,7 +100,7 @@ class DefaultActionMapper(ActionMapper):
 
         # get next controller
         controllerClass = None
-        controllerDef = self.configuration.get_value(actionKey, "actionmapping")
+        controllerDef = self.configuration.get_value(actionKey, ACTION_MAPPING_SECTION)
         if len(controllerDef) == 0:
             self.logger.error(
                 "No controller found for best action key "

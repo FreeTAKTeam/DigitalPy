@@ -21,32 +21,38 @@ import traceback
 from typing import List
 import os
 
+from digitalpy.core.service_management.domain.service import Service
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.parsing.formatter import Formatter
-from digitalpy.core.service_management.digitalpy_service import DigitalPyService, COMMAND_ACTION
-from digitalpy.core.service_management.domain.service_status import ServiceStatus
+from digitalpy.core.service_management.digitalpy_service import (
+    DigitalPyService,
+    COMMAND_ACTION,
+)
+from digitalpy.core.service_management.domain.service_status import ServiceStatusEnum
 from digitalpy.core.network.network_sync_interface import NetworkSyncInterface
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.main.impl.default_factory import DefaultFactory
 from digitalpy.core.telemetry.tracing_provider import TracingProvider
 from digitalpy.core.zmanager.response import Response
-from digitalpy.core.service_management.domain.service_description import ServiceDescription
+from digitalpy.core.service_management.domain.service_description import (
+    ServiceDescription,
+)
 
 CONFIGURATION_SECTION = "digitalpy.core_api"
 
 
 class ApiService(DigitalPyService):
     """
-    The ApiService class is a subclass of the DigitalPyService class and is designed to manage 
+    The ApiService class is a subclass of the DigitalPyService class and is designed to manage
     API services in a digitalpy environment.
 
-    This class initializes with several parameters including service_id, subject_address, 
-    subject_port, subject_protocol, integration_manager_address, integration_manager_port, 
-    integration_manager_protocol, formatter, network, protocol, service_desc, blueprint_path, 
-    and blueprint_import_base. These parameters are used to configure the service and establish 
+    This class initializes with several parameters including service_id, subject_address,
+    subject_port, subject_protocol, integration_manager_address, integration_manager_port,
+    integration_manager_protocol, formatter, network, protocol, service_desc, blueprint_path,
+    and blueprint_import_base. These parameters are used to configure the service and establish
     network communication.
 
-    The `event_loop` method is the main event loop for the ApiService. It is initiated by the 
+    The `event_loop` method is the main event loop for the ApiService. It is initiated by the
     service manager.
 
     The `blueprint_path` and `blueprint_import_base` attributes are used to manage the blueprint
@@ -57,20 +63,19 @@ class ApiService(DigitalPyService):
     # The path to the blueprints directory in this module
     base_blueprints = pathlib.Path(pathlib.Path(__file__).parent, "blueprints")
 
-    def __init__(self, service_id: str, subject_address: str, subject_port: int,  # pylint: disable=useless-super-delegation
-                 subject_protocol: str, integration_manager_address: str,
-                 integration_manager_port: int, integration_manager_protocol: str,
-                 formatter: Formatter, network: NetworkSyncInterface, protocol: str,
-                 service_desc: ServiceDescription, blueprint_path, blueprint_import_base: str):
-        super().__init__(
-            service_id, subject_address, subject_port, subject_protocol,
-            integration_manager_address, integration_manager_port, integration_manager_protocol,
-            formatter, network, protocol, service_desc)
+    def __init__(
+        self,
+        formatter: Formatter,
+        service: Service,
+        blueprint_path,
+        blueprint_import_base: str,
+    ):
+        super().__init__(service_id="digitalpy.api", formatter=formatter, service=service)
         self.blueprint_path = blueprint_path
         self.blueprint_import_base = blueprint_import_base
 
     def handle_inbound_message(self, message: Request):
-        """This function is used to handle inbound messages from other services. 
+        """This function is used to handle inbound messages from other services.
         It is intiated by the event loop.
 
         Args:
@@ -108,17 +113,17 @@ class ApiService(DigitalPyService):
         self.subject_send_request(message, self.protocol)
 
     def handle_response(self, response: Response):
-        self.network.send_response(response)
+        self.protocol.send_response(response)
 
     def handle_exception(self, exception: Exception):
-        """This function is used to handle exceptions that occur in the service. 
+        """This function is used to handle exceptions that occur in the service.
         It is intiated by the event loop.
 
         Args:
             exception (Exception): the exception that occurred
         """
         if isinstance(exception, SystemExit):
-            self.status = ServiceStatus.STOPPED
+            self.status = ServiceStatusEnum.STOPPED
         else:
             traceback.print_exc()
             print("An exception occurred: " + str(exception))
@@ -134,7 +139,8 @@ class ApiService(DigitalPyService):
 
                 # import the file
                 blueprint_module = importlib.import_module(
-                    self.blueprint_import_base+"."+filename.strip(".py"))
+                    self.blueprint_import_base + "." + filename.strip(".py")
+                )
 
                 # get the blueprint from the file
                 blueprints.append(blueprint_module.page)
@@ -142,12 +148,18 @@ class ApiService(DigitalPyService):
         for filename in os.listdir(ApiService.base_blueprints):
             if filename.endswith(".py") and filename != "__init__.py":
                 blueprint_module = importlib.import_module(
-                    "digitalpy.core.api.blueprints."+filename.strip(".py"))
+                    "digitalpy.core.api.blueprints." + filename.strip(".py")
+                )
                 blueprints.append(blueprint_module.page)
         return blueprints
 
-    def start(self, object_factory: DefaultFactory, tracing_provider: TracingProvider,  # pylint: disable=useless-super-delegation
-              host: str = "", port: int = 0,) -> None:
+    def start(
+        self,
+        object_factory: DefaultFactory,
+        tracing_provider: TracingProvider,  # pylint: disable=useless-super-delegation
+        host: str = "",
+        port: int = 0,
+    ) -> None:
         """We override the start method to allow for the injection of the endpoints and handlers
         to the network interface.
         """
@@ -159,7 +171,8 @@ class ApiService(DigitalPyService):
         # get all blueprints from the configured blueprint path
         blueprints = self._get_blueprints()
 
-        self.network.intialize_network(
-            host, port, blueprints=blueprints, service_desc=self.service_desc)
-        self.status = ServiceStatus.RUNNING
+        self.protocol.intialize_network(
+            host, port, blueprints=blueprints, service_desc=self._service_conf
+        )
+        self.status = ServiceStatusEnum.RUNNING
         self.execute_main_loop()

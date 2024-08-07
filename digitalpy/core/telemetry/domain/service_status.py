@@ -3,7 +3,7 @@ Module for managing ServiceStatus configurations and their properties.
 
 This module defines the ServiceStatus class, which is a subclass of Node.
 It is designed to handle service status-related data with attributes such as port,
-address, service_name, service_status, and service_status_actual.
+service_name, service_status, and service_status_actual.
 """
 
 from digitalpy.core.domain.node import Node
@@ -14,7 +14,6 @@ class ServiceStatus(Node):
 
     Attributes:
         port (int): The port number on which the service is running.
-        address (str): The address of the service.
         service_name (str): The name of the service.
         service_status (str): The current status of the service.
         service_status_actual (str): The actual status of the service.
@@ -32,7 +31,6 @@ class ServiceStatus(Node):
         """
         super().__init__(node_type, model_configuration=model_configuration, model=model, oid=oid)
         self._port: int = None
-        self._address: str = None
         self._service_name: str = None
         self._service_status: str = None
         self._service_status_actual: str = None
@@ -44,20 +42,10 @@ class ServiceStatus(Node):
     
     @port.setter
     def port(self, port: int):
+        port = int(port)
         if not isinstance(port, int):
             raise TypeError("'port' must be of type int")
         self._port = port
-
-    @property
-    def address(self) -> str:
-        """The address of the service."""
-        return self._address
-    
-    @address.setter
-    def address(self, address: str):
-        if not isinstance(address, str):
-            raise TypeError("'address' must be of type str")
-        self._address = address
 
     @property
     def service_name(self) -> str:

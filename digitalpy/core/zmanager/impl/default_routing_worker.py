@@ -6,7 +6,10 @@ from typing import List, Tuple
 
 import zmq
 
-from digitalpy.core.digipy_configuration.configuration import Configuration
+from digitalpy.core.zmanager.domain.model.zmanager_configuration import ZManagerConfiguration
+from digitalpy.core.main.singleton_configuration_factory import SingletonConfigurationFactory
+from digitalpy.core.zmanager.domain.builder.topic_builder import TopicBuilder
+from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
 from digitalpy.core.main.factory import Factory
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.parsing.formatter import Formatter
@@ -27,13 +30,9 @@ class DefaultRoutingWorker:
     def __init__(
         self,
         factory: Factory,
-        configuration: Configuration,
         sync_action_mapper: ActionMapper,
         formatter: Formatter,
         subject_address: str,
-        integration_manager_address: str,
-        integration_manager_pub_address: int,
-        timeout: int = 2000,
     ):
         """this is the default constructor for the DefaultRoutingWorker class
 
@@ -51,23 +50,22 @@ class DefaultRoutingWorker:
             integration_manager_pub_address (int): the integration_manager pub address to subscribe to
             timeout (int, optional): the timeout for the sockets. Defaults to 2000.
         """
-        self.configuration = configuration
         self.factory = factory
         self.action_mapper = sync_action_mapper
         self.subject_address = subject_address
-        self.integration_manager_address = integration_manager_address
-        self.integration_manager_pub_address = integration_manager_pub_address
         self.formatter = formatter
         self.worker_id = str(uuid.uuid4())
         self.logger = logging.getLogger("DP-Default_Routing_Worker_DEBUG")
         self.logger.setLevel(logging.DEBUG)
+        
+        self.zmanager_configuration: ZManagerConfiguration = SingletonConfigurationFactory.get_configuration_object(
+            "ZManagerConfiguration"
+        )
 
         self.context: zmq.Context = None
         self.sub_sock: zmq.Socket = None
         self.integration_manager_sock: zmq.Socket = None
         self.subject_sock: zmq.Socket = None
-
-        self.timeout: int = timeout
 
         self.running = multiprocessing.Event()
         self.running.set()
@@ -89,26 +87,28 @@ class DefaultRoutingWorker:
 
     def _create_integration_manager_sub_sock(self):
         self.sub_sock = self.context.socket(zmq.SUB)
-        self.sub_sock.setsockopt(zmq.RCVTIMEO, self.timeout)
-        self.sub_sock.setsockopt_string(zmq.SUBSCRIBE, "/messagesrouting_worker")
-        self.sub_sock.connect(self.integration_manager_pub_address)
+        self.sub_sock.setsockopt(zmq.RCVTIMEO, self.zmanager_configuration.worker_timeout)
+        self.sub_sock.setsockopt_string(zmq.SUBSCRIBE, "ROUTING_WORKER")
+        self.sub_sock.connect(self.zmanager_configuration.integration_manager_pub_address)
+
+        # do not wait for messages to be sent to the socket before terminating the context,
         self.sub_sock.setsockopt(zmq.LINGER, 0)
 
     def _create_integration_manager_pusher_sock(self):
         self.integration_manager_sock = self.context.socket(zmq.PUSH)
-        self.integration_manager_sock.connect(self.integration_manager_address)
+        self.integration_manager_sock.connect(self.zmanager_configuration.integration_manager_pull_address)
 
         # unlimited as trunkating can result in unsent data and broken messages
         # TODO: determine a sane default
-        self.integration_manager_sock.setsockopt(zmq.SNDHWM, 0)
+        self.integration_manager_sock.setsockopt(zmq.SNDHWM, self.zmanager_configuration.integration_manager_pull_rcvhwm)
         self.integration_manager_sock.setsockopt(zmq.LINGER, 0)
-        self.integration_manager_sock.setsockopt(zmq.SNDTIMEO, self.timeout)
+        self.integration_manager_sock.setsockopt(zmq.SNDTIMEO, self.zmanager_configuration.worker_timeout)
 
     def _create_subject_listener_sock(self):
         self.subject_sock = self.context.socket(zmq.PULL)
         self.subject_sock.connect(self.subject_address)
         self.subject_sock.setsockopt(zmq.RCVHWM, 0)
-        self.subject_sock.setsockopt(zmq.RCVTIMEO, self.timeout)
+        self.subject_sock.setsockopt(zmq.RCVTIMEO, self.zmanager_configuration.worker_timeout)
         self.subject_sock.setsockopt(zmq.LINGER, 0)
 
     def teardown(self):
@@ -229,7 +229,7 @@ class DefaultRoutingWorker:
             try:
                 message = self.sub_sock.recv_multipart().pop()
                 self.logger.debug("received message %s", str(message))
-                self.process_integration_manager_message(message.split(b" ")[1:])
+                self.process_integration_manager_message(message)
             except zmq.error.Again:
                 pass
             except Exception as ex:
@@ -316,37 +316,33 @@ class DefaultRoutingWorker:
         Returns:
             A tuple containing the topic sections as a list, the response topic as a string, and the request object.
         """
-        try:
-            # Receive message from client
-            message = self.subject_sock.recv_multipart().pop(0)
-            sender, context, action, format, protocol, id, values = message.split(
-                ZMANAGER_MESSAGE_DELIMITER, 6
-            )
+        # Receive message from client
+        message = self.subject_sock.recv_multipart().pop(0)
+        sender, context, action, format, protocol, id, values = message.split(
+            ZMANAGER_MESSAGE_DELIMITER, 6
+        )
 
-            # Create a new request object
-            request = ObjectFactory.get_new_instance("request")
-            request.values = values
-            request.set_sender(sender.decode("utf-8"))
-            request.set_context(context.decode("utf-8"))
-            request.set_action(action.decode("utf-8"))
-            request.set_format(format.decode("utf-8"))
-            request.set_id(id.decode("utf-8"))
+        # Create a new request object
+        request = ObjectFactory.get_new_instance("request")
+        request.values = values
+        request.set_sender(sender.decode("utf-8"))
+        request.set_context(context.decode("utf-8"))
+        request.set_action(action.decode("utf-8"))
+        request.set_format(format.decode("utf-8"))
+        request.set_id(id.decode("utf-8"))
 
-            # Deserialize the request
-            self.formatter.deserialize(request)
+        # Deserialize the request
+        self.formatter.deserialize(request)
 
-            self.logger.debug(
-                "received request \n sender: %s \n context: %s \n action: %s \n format: %s \n protocol: %s \n id: %s \n values: %s",
-                str(sender),
-                str(context),
-                str(action),
-                format,
-                protocol,
-                id,
-                request.get_values(),
-            )
-            # Return the topic sections, response topic, and request
-            return protocol.decode(), request
-
-        except Exception as ex:
-            self.send_error(ex)
+        self.logger.debug(
+            "received request \n sender: %s \n context: %s \n action: %s \n format: %s \n protocol: %s \n id: %s \n values: %s",
+            str(sender),
+            str(context),
+            str(action),
+            format,
+            protocol,
+            id,
+            request.get_values(),
+        )
+        # Return the topic sections, response topic, and request
+        return protocol.decode(), request
