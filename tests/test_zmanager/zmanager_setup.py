@@ -5,21 +5,24 @@ from typing import Optional
 
 import zmq
 
+from digitalpy.core.main.singleton_configuration_factory import SingletonConfigurationFactory
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.zmanager.integration_manager import IntegrationManager
 from digitalpy.core.zmanager.subject import Subject
+from digitalpy.core.zmanager.domain.model.zmanager_configuration import ZManagerConfiguration
 from tests.testing_utilities.facade_utilities import \
     initialize_test_environment
 
 class ZManagerSetup:
 
     def __init__(self, workers: int, worker_class: str):
-        self.workers = workers
-        self.worker_class = worker_class
-
         _, _, configuration = initialize_test_environment()
 
-        configuration.set_value("worker_count", workers, "Subject")
+        self.workers = workers
+        self.worker_class = worker_class
+        self.zmanager_configuration: ZManagerConfiguration = SingletonConfigurationFactory.get_configuration_object("ZManagerConfiguration")
+
+        self.zmanager_configuration.worker_count = workers
 
         configuration.set_value(
             "__class",
@@ -44,22 +47,14 @@ class ZManagerSetup:
         """get the subject"""
         return ObjectFactory.get_instance("Subject")
 
-    def get_integration_manager_address(self) -> str:
-        """get the address of the integration manager"""
-        return f"{self.integration_manager.integration_manager_publisher_protocol}://{self.integration_manager.integration_manager_publisher_address}:{self.integration_manager.integration_manager_publisher_port}"
-
-    def get_integration_manager_pull_address(self) -> str:
-        """get the pull address of the integration manager"""
-        return f"{self.integration_manager.integration_manager_puller_protocol}://{self.integration_manager.integration_manager_puller_address}:{self.integration_manager.integration_manager_puller_port}"
-
     def get_subject_address(self) -> str:
         """get the subject address"""
-        return self.subject.frontend_pull_address
+        return self.subject.subject_address
     
     def _connect_to_integration_manager(self):
         """connect to the integration manager"""
         socket = self.context.socket(zmq.PUSH)
-        socket.connect(self.get_integration_manager_pull_address())
+        socket.connect(self.zmanager_configuration.integration_manager_pull_address)
         return socket
 
     def send_integration_manager_message(self, message: str):
