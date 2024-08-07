@@ -9,7 +9,7 @@ from unittest import mock
 from unittest.mock import MagicMock, patch
 import csv
 
-from test_zmanager.testing_objects import PerformanceTestResults
+from tests.test_zmanager.testing_objects import PerformanceTestResults
 from tests.test_zmanager.zmanager_connection import ServiceSimulatorMultiProc
 from tests.test_zmanager.zmanager_setup import ZManagerSetup, ZmanagerMultiProcSetup, ZmanagerSingleThreadSetup
 
