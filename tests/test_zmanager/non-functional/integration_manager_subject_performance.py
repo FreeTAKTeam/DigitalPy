@@ -13,8 +13,11 @@ from test_zmanager.testing_objects import PerformanceTestResults
 from tests.test_zmanager.zmanager_connection import ServiceSimulatorMultiProc
 from tests.test_zmanager.zmanager_setup import ZManagerSetup, ZmanagerMultiProcSetup, ZmanagerSingleThreadSetup
 
+from digitalpy.core.main.singleton_configuration_factory import SingletonConfigurationFactory
+
 def single_thread_zmanager_test_worker(zmanager_setup: ZManagerSetup, message_count: int, worker_count: int, service_count: int):
 
+    zmanager_conf = SingletonConfigurationFactory.get_configuration_object("ZManagerConfiguration")
     zmanager_setup.start()
     time.sleep(4)
 
@@ -27,7 +30,7 @@ def single_thread_zmanager_test_worker(zmanager_setup: ZManagerSetup, message_co
     # start services that will send messages to the subject
     for n in range(service_count):
         messages = [f"{n}~context~action~format~protocol~{i}".encode() for i in range(int(message_count/service_count))]
-        service_simulator = ServiceSimulatorMultiProc(zmanager_setup.get_subject_address(),zmanager_setup.get_integration_manager_address(), [f"/messages{n}"])
+        service_simulator = ServiceSimulatorMultiProc(zmanager_setup.get_subject_address(), zmanager_conf, [f"/messages{n}"])
         proc = multiprocessing.Process(target=service_simulator.start, args=(messages,))
         procs.append(proc)
         proc.start()
