@@ -94,9 +94,11 @@ class ConfigurationFactory:
         configuration_class = self._import_class(section["__class"])
         configuration_object = configuration_class(None, None)
         propeties = configuration_object.get_properties()
+
         for key in section:
             if key in propeties:
                 setattr(configuration_object, key, section[key])
+
         return configuration_object
 
     def _import_class(self, class_name: str) -> type[Node]:

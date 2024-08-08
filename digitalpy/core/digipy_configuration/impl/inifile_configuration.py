@@ -214,16 +214,144 @@ class InifileConfiguration(Configuration):
     def has_value(self, key, section):
         return self._lookup(section, key) is not None
 
-    def get_value(self, key, section):
+    def get_value(self, key: str, section: str) -> Union[str, list[str], list[float], float, bool]:
+        """Get the value of a key in a section.
+        
+        Args:
+            key (str): the name of the key to be retrieved
+            section (str): the name of the section to be retrieved
+        
+        Raises:
+            KeyError: raised if the key is not found
+        
+        Returns:
+            Union[str, list[str], list[float], float, bool]: the value of the key in a type determined by the value
+        """
         lookup_entry = self._lookup(section, key)
         if lookup_entry is None or len(lookup_entry) == 1:
             raise KeyError(f"No key {key} found in section {section}")
         else:
-            return self.config_array[lookup_entry[0]][lookup_entry[1]]
+            raw_value = self.config_array[lookup_entry[0]][lookup_entry[1]]
+            return self._convert_value(raw_value)
+
+    def _convert_value(self, value: str) -> Union[str, list[str], list[float], float, bool]:
+        """Convert the value to its appropriate type.
+        
+        Args:
+            value (str): the value to be converted
+        
+        Returns:
+            Union[str, list[str], list[float], float, bool]: the converted value
+        """
+        converters = [
+            (self._is_boolean, self._convert_to_boolean),
+            (self._is_list, self._convert_to_list),
+            (self._is_float, self._convert_to_float),
+        ]
+
+        for check_func, convert_func in converters:
+            if check_func(value):
+                return convert_func(value)
+        return value
+
+    def _is_boolean(self, value: str) -> bool:
+        """Check if the value is a boolean.
+        
+        Args:
+            value (str): the value to be checked
+        
+        Returns:
+            bool: True if the value is a boolean, False otherwise
+        """
+        return value.lower() in ["true", "false"]
+
+    def _convert_to_boolean(self, value: str) -> bool:
+        """Convert the value to a boolean.
+        
+        Args:
+            value (str): the value to be converted
+        
+        Returns:
+            bool: the converted value
+        """
+        return value.lower() == "true"
+
+    def _is_list(self, value: str) -> bool:
+        """Check if the value is a list.
+        
+        Args:
+            value (str): the value to be checked
+        
+        Returns:
+            bool: True if the value is a list, False otherwise
+        """
+        return value.startswith("[") and value.endswith("]")
+
+    def _convert_to_list(self, value: str) -> list[Union[str, float]]:
+        """Convert the value to a list.
+        
+        Args:
+            value (str): the value to be converted
+        
+        Returns:
+            list[Union[str, float]]: the converted value
+        """
+        value = value[1:-1]  # Remove the square brackets
+        items = value.split(",")
+        if all(self._is_float(item) for item in items):
+            return [self._convert_to_float(item) for item in items]
+        return [item.strip() for item in items]
+
+    def _is_float(self, value: str) -> bool:
+        """Check if the value is a float.
+        
+        Args:
+            value (str): the value to be checked
+        
+        Returns:
+            bool: True if the value is a float, False otherwise
+        """
+        try:
+            float(value)
+            return True
+        except ValueError:
+            return False
+
+    def _convert_to_float(self, value: str) -> float:
+        """Convert the value to a float.
+        
+        Args:
+            value (str): the value to be converted
+        
+        Returns:
+            float: the converted value
+        """
+        return float(value)
+
+    def _is_boolean_value(self, key, section):
+        """Check if a value is a boolean."""
+        value = self.get_value(key, section)
+        return value.lower() in ["true", "false"]
 
     def get_boolean_value(self, key, section):
         value = self.get_value(key, section)
         return bool(value)
+
+    def get_list_value(self, key: str, section: str) -> list[str]:
+        """ Get the value of a key in a section as a list.
+        
+        Args:
+            key (str): the name of the key to be retrieved
+            section (str): the name of the section to be retrieved
+        
+        Raises:
+            KeyError: raised if the key is not found
+        
+        Returns:
+            list[str]: the value of the key as a list
+        """
+        value = self.get_value(key, section)
+        return value.replace(" ", "").replace("[", "").replace("]", "").split(",")
 
     def get_key(self, value, section):
         section_dict = self.get_section(section)
@@ -485,26 +613,6 @@ class InifileConfiguration(Configuration):
 
     def get_directory_value(self, key: str, section: str):
         raise NotImplementedError("this method has not yet been implemented")
-
-    # files added to the configuration
-    __addedFiles = []
-    __cachePath = None
-    __comments = []
-    # an assoziate array that holds sections with keys with values
-    __configArray = []
-    __configExtension = "ini"
-    __configPath = None
-    # all included files (also by config include)
-    __containedFiles = []
-    __fileUtil = None
-    # an assoziate array that has lowercased section or section:key keys and [section,
-    # key] values for fast lookup
-    __isModified = False
-    __logger = None
-    # an assoziate array that holds the comments/blank lines in the file (each
-    # comment is attached to the following section/key) the key ';' holds the
-    # comments at the end of the file
-    __lookupTable = []
 
     def __str__(self) -> str:
         return str(self.config_array)

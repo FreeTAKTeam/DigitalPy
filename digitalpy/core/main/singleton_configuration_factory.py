@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 from digitalpy.core.main.impl.configuration_factory import ConfigurationFactory
 from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
 
@@ -6,7 +6,7 @@ from digitalpy.core.digipy_configuration.domain.model.configuration import Confi
 class SingletonConfigurationFactory:
     """ConfigurationFactory class to create and retrieve configuration objects."""
 
-    __factory: ConfigurationFactory = None
+    __factory: Optional[ConfigurationFactory] = None
 
     @staticmethod
     def configure(factory):
@@ -17,13 +17,13 @@ class SingletonConfigurationFactory:
     def add_configuration(configuration: Configuration):
         """Get an instance from the configuration."""
         SingletonConfigurationFactory.__check_config()
-        return SingletonConfigurationFactory.__factory.add_configuration(configuration)
+        return SingletonConfigurationFactory.__factory.add_configuration(configuration)  # type: ignore
 
     @staticmethod
     def remove_configuration(configuration: Configuration):
         """Remove a configuration object."""
         SingletonConfigurationFactory.__check_config()
-        return SingletonConfigurationFactory.__factory.remove_configuration(
+        return SingletonConfigurationFactory.__factory.remove_configuration(  # type: ignore
             configuration
         )
 
@@ -31,7 +31,7 @@ class SingletonConfigurationFactory:
     def get_configuration_object(name: str) -> Any:
         """Get a new instance from the configuration."""
         SingletonConfigurationFactory.__check_config()
-        return SingletonConfigurationFactory.__factory.get_configuration_object(name)
+        return SingletonConfigurationFactory.__factory.get_configuration_object(name)  # type: ignore
 
     @staticmethod
     def __check_config():
