@@ -5,6 +5,7 @@ controllers with these methods should you need them. This controller is called d
 fulfil any requests made to the component by default.
 """
 
+import os
 from typing import TYPE_CHECKING
 from pathlib import Path
 
@@ -88,9 +89,9 @@ class FilesControllerImpl(FilesController):
         self.File_builder.add_object_data(path_obj)
         return self.File_builder.get_result()
 
-    def delete_file(self, client: 'NetworkClient', config_loader, *args, **kwargs): # pylint: disable=unused-argument
+    def delete_file(self, file: 'File', client: 'NetworkClient', config_loader, *args, **kwargs): # pylint: disable=unused-argument
         """delete the file at the specified path"""
-        return None
+        os.remove(file.path)
 
     def update_file(self, file: 'File', config_loader, *args, **kwargs) -> 'File':
         """update the file at the specified path"""

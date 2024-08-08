@@ -1,22 +1,23 @@
-from digitalpy.core.files.controllers.files_controller_impl import FilesControllerImpl
+from digitalpy.core.component_management.impl.default_facade import \
+    DefaultFacade
+from digitalpy.core.files.controllers.files_controller_impl import \
+    FilesControllerImpl
 from digitalpy.core.files.domain.model.file import File
-from .controllers.Files_persistence_controller import FilesPersistenceController
-from digitalpy.core.component_management.impl.default_facade import DefaultFacade
 from digitalpy.core.zmanager.impl.async_action_mapper import AsyncActionMapper
-from digitalpy.core.zmanager.impl.default_action_mapper import DefaultActionMapper
+from digitalpy.core.zmanager.impl.default_action_mapper import \
+    DefaultActionMapper
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
-from .controllers.files_controller import FilesController
-from .configuration.Files_constants import (
-    ACTION_MAPPING_PATH,
-    LOGGING_CONFIGURATION_PATH,
-    INTERNAL_ACTION_MAPPING_PATH,
-    MANIFEST_PATH,
-    CONFIGURATION_PATH_TEMPLATE,
-    LOG_FILE_PATH
-)
 
 from . import base
+from .configuration.Files_constants import (ACTION_MAPPING_PATH,
+                                            CONFIGURATION_PATH_TEMPLATE,
+                                            INTERNAL_ACTION_MAPPING_PATH,
+                                            LOG_FILE_PATH,
+                                            LOGGING_CONFIGURATION_PATH,
+                                            MANIFEST_PATH)
+from .controllers.Files_persistence_controller import \
+    FilesPersistenceController
 
 
 class Files(DefaultFacade):
@@ -111,7 +112,7 @@ class Files(DefaultFacade):
     def create_file(self, *args, **kwargs):
         """create a new file in the filesystem at the specified path.
         """
-        self.Files_controller.create_file(*args, **kwargs)
+        return self.Files_controller.create_file(*args, **kwargs)
     @DefaultFacade.public
     def delete_file(self, *args, **kwargs):
         """delete the file at the specified path
