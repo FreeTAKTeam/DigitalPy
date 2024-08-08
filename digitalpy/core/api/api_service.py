@@ -21,22 +21,22 @@ import traceback
 from typing import List
 import os
 
+from digitalpy.core.zmanager.impl.integration_manager_subscriber import (
+    IntegrationManagerSubscriber,
+)
+from digitalpy.core.zmanager.impl.subject_pusher import SubjectPusher
 from digitalpy.core.service_management.domain.service import Service
 from digitalpy.core.main.object_factory import ObjectFactory
-from digitalpy.core.parsing.formatter import Formatter
 from digitalpy.core.service_management.digitalpy_service import (
     DigitalPyService,
     COMMAND_ACTION,
 )
-from digitalpy.core.service_management.domain.service_status import ServiceStatusEnum
-from digitalpy.core.network.network_sync_interface import NetworkSyncInterface
+from digitalpy.core.service_management.domain import service_status
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.main.impl.default_factory import DefaultFactory
 from digitalpy.core.telemetry.tracing_provider import TracingProvider
 from digitalpy.core.zmanager.response import Response
-from digitalpy.core.service_management.domain.service_description import (
-    ServiceDescription,
-)
+
 
 CONFIGURATION_SECTION = "digitalpy.core_api"
 
@@ -65,12 +65,18 @@ class ApiService(DigitalPyService):
 
     def __init__(
         self,
-        formatter: Formatter,
         service: Service,
+        integration_manager_subscriber: IntegrationManagerSubscriber,
+        subject_pusher: SubjectPusher,
         blueprint_path,
         blueprint_import_base: str,
     ):
-        super().__init__(service_id="digitalpy.api", formatter=formatter, service=service)
+        super().__init__(
+            service_id="digitalpy.api",
+            service=service,
+            subject_pusher=subject_pusher,
+            integration_manager_subscriber=integration_manager_subscriber,
+        )
         self.blueprint_path = blueprint_path
         self.blueprint_import_base = blueprint_import_base
 
@@ -109,8 +115,7 @@ class ApiService(DigitalPyService):
             message (request): the request message
         """
         message.set_format("pickled")
-        message.set_value("source_format", self.protocol)
-        self.subject_send_request(message, self.protocol)
+        self._subject_pusher.subject_send_request(message)
 
     def handle_response(self, response: Response):
         self.protocol.send_response(response)
@@ -123,7 +128,7 @@ class ApiService(DigitalPyService):
             exception (Exception): the exception that occurred
         """
         if isinstance(exception, SystemExit):
-            self.status = ServiceStatusEnum.STOPPED
+            self.status = service_status.STOPPED
         else:
             traceback.print_exc()
             print("An exception occurred: " + str(exception))
@@ -157,22 +162,23 @@ class ApiService(DigitalPyService):
         self,
         object_factory: DefaultFactory,
         tracing_provider: TracingProvider,  # pylint: disable=useless-super-delegation
-        host: str = "",
-        port: int = 0,
-    ) -> None:
+    ):
         """We override the start method to allow for the injection of the endpoints and handlers
         to the network interface.
         """
         ObjectFactory.configure(object_factory)
         self.tracer = tracing_provider.create_tracer(self.service_id)
         self.initialize_controllers()
-        self.initialize_connections(self.protocol)
+        self.initialize_connections()
 
         # get all blueprints from the configured blueprint path
         blueprints = self._get_blueprints()
 
         self.protocol.intialize_network(
-            host, port, blueprints=blueprints, service_desc=self._service_conf
+            self.configuration.host,
+            self.configuration.port,
+            blueprints=blueprints,
+            service_desc=self._service_conf,
         )
-        self.status = ServiceStatusEnum.RUNNING
+        self.status = service_status.RUNNING
         self.execute_main_loop()

@@ -1,7 +1,5 @@
 """
-This file defines a class `DigitalPyService` that inherits from `ZmqSubscriber`, 
-and `ZMQPusher`. This class is used to create a service that can subscribe to messages, push messages, 
-and perform service-related operations.
+This file defines a class `DigitalPyService`
 
 The class constructor takes several parameters including service id, addresses, ports, protocols, 
 a formatter, and a network interface. It initializes the parent classes and sets up various 
@@ -36,7 +34,13 @@ from multiprocessing import Process
 import traceback
 from typing import List
 
-from digitalpy.core.main.singleton_configuration_factory import SingletonConfigurationFactory
+from digitalpy.core.zmanager.impl.subject_pusher import SubjectPusher
+from digitalpy.core.zmanager.impl.integration_manager_subscriber import (
+    IntegrationManagerSubscriber,
+)
+from digitalpy.core.main.singleton_configuration_factory import (
+    SingletonConfigurationFactory,
+)
 from digitalpy.core.telemetry.domain.service_status import ServiceStatus
 from digitalpy.core.service_management.domain.service import Service
 from digitalpy.core.zmanager.domain.model.zmanager_configuration import (
@@ -49,16 +53,12 @@ from digitalpy.core.service_management.domain.service_operations import (
     ServiceOperations,
 )
 from digitalpy.core.service_management.domain.service_status import (
-    UNKNOWN,
     STOPPING,
     STOPPED,
     RUNNING,
 )
 from digitalpy.core.telemetry.tracing_provider import TracingProvider
 from digitalpy.core.telemetry.tracer import Tracer
-from digitalpy.core.zmanager.impl.zmq_subscriber import ZmqSubscriber
-from digitalpy.core.zmanager.impl.zmq_pusher import ZMQPusher
-from digitalpy.core.parsing.formatter import Formatter
 from digitalpy.core.network.network_interface import NetworkInterface
 from digitalpy.core.zmanager.response import Response
 from digitalpy.core.IAM.IAM_facade import IAM
@@ -71,12 +71,12 @@ COMMAND_PROTOCOL = "command"
 COMMAND_ACTION = "ServiceCommand"
 
 
-class DigitalPyService(ZmqSubscriber, ZMQPusher):
+class DigitalPyService:
     """
     Represents a DigitalPy service.
 
     This class is responsible for managing the lifecycle and behavior of a DigitalPy service.
-    It inherits from the Service, ZmqSubscriber, and ZMQPusher classes.
+    It inherits from the Service.
 
     Args:
         service_id (str): The unique ID of the service inheriting from DigitalPyService.
@@ -93,8 +93,9 @@ class DigitalPyService(ZmqSubscriber, ZMQPusher):
     def __init__(
         self,
         service_id: str,
-        formatter: Formatter,
         service: Service,
+        integration_manager_subscriber: IntegrationManagerSubscriber,
+        subject_pusher: SubjectPusher,
         error_threshold: float = 0.1,
     ):
         """the constructor for the digitalpy service class
@@ -104,12 +105,13 @@ class DigitalPyService(ZmqSubscriber, ZMQPusher):
             formatter (Formatter): the formatter used by the service to serialize the request values to and from messages, (should be injected by object factory)
             protocol (NetworkInterface): the network interface used by the service to send and receive messages, (should be injected by object factory through the services' constructor)
         """
+        self._integration_manager_subscriber = integration_manager_subscriber
+        self._subject_pusher = subject_pusher
         self._service_conf = service
-
-        ZmqSubscriber.__init__(self, formatter)
-        ZMQPusher.__init__(self, formatter)
         self._zmanager_configuration: ZManagerConfiguration = (
-            SingletonConfigurationFactory.get_configuration_object("ZManagerConfiguration")
+            SingletonConfigurationFactory.get_configuration_object(
+                "ZManagerConfiguration"
+            )
         )
         self.subject_address = self._zmanager_configuration.subject_pull_address
         self.integration_manager_address = (
@@ -117,15 +119,22 @@ class DigitalPyService(ZmqSubscriber, ZMQPusher):
         )
         self.service_id = service_id
         self._tracer = None
-        self.status = UNKNOWN
-        self.protocol: NetworkInterface = ObjectFactory.get_instance(self.configuration.protocol)
+        self.protocol: NetworkInterface = ObjectFactory.get_instance(
+            self.configuration.protocol
+        )
         self.response_queue: List[Response] = []
         self.iam_facade: IAM = ObjectFactory.get_instance("IAM")
         self.total_requests = 0
         self.total_errors = 0
         self.total_request_processing_time = 0
         self.error_threshold = error_threshold
-        self._process = Process(target=self.start)
+        self._process = Process(
+            target=self.start,
+            args=(
+                ObjectFactory.get_instance("factory"),
+                ObjectFactory.get_instance("TracingProvider"),
+            ),
+        )
 
         self._initialize_service_status()
 
@@ -146,7 +155,6 @@ class DigitalPyService(ZmqSubscriber, ZMQPusher):
         request = ObjectFactory.get_new_instance("Request")
         resp = ObjectFactory.get_new_instance("Response")
         client.service_id = self.service_id
-        client.protocol = self.protocol
         self.iam_facade.initialize(request, resp)
         request.set_value("connection", client)
         self.iam_facade.execute("connection")
@@ -164,7 +172,7 @@ class DigitalPyService(ZmqSubscriber, ZMQPusher):
         self.iam_facade.initialize(req, resp)
         self.iam_facade.execute("disconnection")
         return
-    
+
     @property
     def process(self) -> Process:
         """get the process of the service
@@ -182,7 +190,7 @@ class DigitalPyService(ZmqSubscriber, ZMQPusher):
             Configuration: the configuration of the service
         """
         return self._service_conf
-    
+
     @configuration.setter
     def configuration(self, value: Service):
         """set the configuration of the service
@@ -191,24 +199,6 @@ class DigitalPyService(ZmqSubscriber, ZMQPusher):
             value (Service): the configuration of the service
         """
         self._service_conf = value
-
-    @property
-    def protocol(self) -> NetworkInterface:
-        """get the protocol of the service
-
-        Returns:
-            NetworkInterface: the protocol of the service
-        """
-        return self._service_conf.protocol
-
-    @protocol.setter
-    def protocol(self, protocol: NetworkInterface):
-        """set the protocol of the service
-
-        Args:
-            protocol (NetworkInterface): the protocol of the service
-        """
-        self._service_conf.protocol = protocol
 
     @property
     def status(self) -> str:
@@ -271,7 +261,7 @@ class DigitalPyService(ZmqSubscriber, ZMQPusher):
         by inheriting classes
         """
 
-    def initialize_connections(self, application_protocol: str):
+    def initialize_connections(self):
         """initialize connections to the subject and the integration manager within the
         zmanager architecture. The topic subscribed to by the subject is as follows:
         /messages/<service_id>
@@ -280,18 +270,15 @@ class DigitalPyService(ZmqSubscriber, ZMQPusher):
         Args:
             application_protocol (str): the application protocol of the service
         """
-        ZMQPusher.initiate_connections(self, self.subject_address, self.service_id)
-        self.broker_connect(
-            self.integration_manager_address, self.service_id, application_protocol
-        )
+        self._integration_manager_subscriber.setup()
+        self._subject_pusher.setup()
 
-    def response_handler(self, responses: List[Response]):
+    def response_handler(self, response: Response):
         """used to handle a response. Should be overriden by inheriting classes"""
-        for response in responses:
-            if response.get_action() == COMMAND_ACTION:
-                self.handle_command(response)
-            else:
-                self.handle_response(response)
+        if response.get_action() == COMMAND_ACTION:
+            self.handle_command(response)
+        else:
+            self.handle_response(response)
 
     def handle_response(self, response: Response):
         """used to handle a response. Should be overriden by inheriting classes"""
@@ -304,8 +291,11 @@ class DigitalPyService(ZmqSubscriber, ZMQPusher):
         if self.protocol:
             self.handle_network()
 
-        responses = self.broker_receive()
-        self.response_handler(responses)
+        response = (
+            self._integration_manager_subscriber.fetch_integration_manager_response()
+        )
+        if response:
+            self.response_handler(response)
 
     def handle_network(self):
         """used to handle the network."""
@@ -326,8 +316,8 @@ class DigitalPyService(ZmqSubscriber, ZMQPusher):
         if self.protocol:
             self.protocol.teardown_network()
 
-        self.broker_disconnect()
-        self.teardown_connections()
+        self._integration_manager_subscriber.teardown()
+        self._subject_pusher.teardown()
 
         self.status = STOPPED
 
@@ -367,7 +357,7 @@ class DigitalPyService(ZmqSubscriber, ZMQPusher):
             resp.set_action("publish")
             resp.set_format("pickled")
             resp.set_id(command.get_id())
-            self.subject_send_request(
+            self._subject_pusher.subject_send_request(
                 resp, COMMAND_PROTOCOL, conf.get_value("service_id", "ServiceManager")
             )
 
@@ -410,30 +400,25 @@ class DigitalPyService(ZmqSubscriber, ZMQPusher):
         self,
         object_factory: DefaultFactory,
         tracing_provider: TracingProvider,
-        host: str = "",
-        port: int = 0,
     ):
         """used to start the service and initialize the network if provided
 
         Args:
             object_factory (DefaultFactory): the object factory used to create instances of objects
             tracing_provider (TracingProvider): the tracing provider used to create a tracer
-            host (str, optional): the host of the network. Defaults to "".
-            port (int, optional): the port of the network. Defaults to 0.
         """
 
         ObjectFactory.configure(object_factory)
         self.tracer = tracing_provider.create_tracer(self.service_id)
         self.initialize_controllers()
-        self.initialize_connections(self.protocol)
+        self.initialize_connections()
 
-        if self.protocol and host and port:
-            self.protocol.intialize_network(host, port, service_desc=self._service_conf)
+        self.protocol.intialize_network(
+            self.configuration.host,
+            self.configuration.port,
+            service_desc=self._service_conf,
+        )
 
-        elif self.protocol:
-            raise ValueError(
-                "network has been injected but host and port have not been provided"
-            )
         self.status = RUNNING
         self.execute_main_loop()
 
@@ -446,12 +431,3 @@ class DigitalPyService(ZmqSubscriber, ZMQPusher):
                 self.handle_exception(ex)
         if self.status == STOPPED:
             exit(0)
-
-    def __getstate__(self):
-        ZmqSubscriber.__getstate__(self)
-        ZMQPusher.__getstate__(self)
-        return self.__dict__
-
-    def __setstate__(self, state):
-        ZmqSubscriber.__setstate__(self, state)
-        ZMQPusher.__setstate__(self, self.__dict__)

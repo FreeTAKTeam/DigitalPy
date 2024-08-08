@@ -1,7 +1,8 @@
-import time
 import zmq
 from typing import Optional
 import logging
+from digitalpy.core.zmanager.controller_message import ControllerMessage
+from digitalpy.core.zmanager.response import Response
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.configuration.zmanager_constants import (
     ZMANAGER_MESSAGE_DELIMITER,
@@ -117,21 +118,27 @@ class IntegrationManagerSubscriber:
         except zmq.error.Again:
             return None
 
+    def fetch_integration_manager_response(self) -> Optional[Response]:
+        try:
+            message = self._receive_message()
+
+            return self._deserialize_response(message)
+        except zmq.error.Again:
+            return None
+
     def _receive_message(self) -> list[bytes]:
         message = self.subscriber_socket.recv_multipart()[0].split(b" ", 1)
 
         return message
 
-    def _deserialize_request(self, message: list[bytes]) -> Request:
-        request: Request = ObjectFactory.get_new_instance("Request")
-
+    def _deserialize_controller_message(self, message: list[bytes], controller_message: ControllerMessage) -> ControllerMessage:
         # TODO: this is assuming that the message from the integration manager is pickled
-        request.set_format("pickled")
+        controller_message.set_format("pickled")
 
         # get the values returned from the routing proxy and serialize them to
         values: bytes = message[1].strip(ZMANAGER_MESSAGE_DELIMITER)
-        request.set_values(values)
-        self.subscriber_formatter.deserialize(request)
+        controller_message.set_values(values)
+        self.subscriber_formatter.deserialize(controller_message)
 
         topic = message[0]
         decoded_topic = topic.decode("utf-8")
@@ -139,10 +146,20 @@ class IntegrationManagerSubscriber:
         _, _, service_id, protocol, sender, context, action, id, recipients = (
             topic_sections
         )
-        request.set_sender(sender)
-        request.set_context(context)
-        request.set_action(action)
-        request.set_id(id)
+        controller_message.set_sender(sender)
+        controller_message.set_context(context)
+        controller_message.set_action(action)
+        controller_message.set_id(id)
+        return controller_message
+
+    def _deserialize_response(self, message: list[bytes]) -> Response:
+        response: Response = ObjectFactory.get_new_instance("Response")
+        response = self._deserialize_controller_message(message, response)
+        return response
+    
+    def _deserialize_request(self, message: list[bytes]) -> Request:
+        request: Request = ObjectFactory.get_new_instance("Request")
+        request = self._deserialize_controller_message(message, request)
         return request
 
     def set_blocking(self, blocking: bool):

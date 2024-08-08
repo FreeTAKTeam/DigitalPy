@@ -16,12 +16,11 @@ The file also imports several other modules and classes that are used in the
 ServiceManagementProcessController class, including Request, Response, ActionMapper, Configuration, 
 DigitalPyService, and SERVICE_WAIT_TIME.
 """
+
 from digitalpy.core.service_management.domain import service_status
 from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
 from digitalpy.core.main.controller import Controller
-from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.service_management.digitalpy_service import DigitalPyService
-from digitalpy.core.service_management.domain.service_description import ServiceDescription
 from digitalpy.core.zmanager.action_mapper import ActionMapper
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
@@ -30,12 +29,17 @@ from ..configuration.service_management_constants import SERVICE_WAIT_TIME
 
 
 class ServiceManagementProcessController(Controller):
-    """ Service Management Process Controller class. Responsible for handling all operations on
+    """Service Management Process Controller class. Responsible for handling all operations on
     a service's underlying process.
     """
 
-    def __init__(self, request: Request, response: Response, sync_action_mapper: ActionMapper,
-                 configuration: Configuration):
+    def __init__(
+        self,
+        request: Request,
+        response: Response,
+        sync_action_mapper: ActionMapper,
+        configuration: Configuration,
+    ):
         super().__init__(request, response, sync_action_mapper, configuration)
 
     def start_process(self, service: DigitalPyService):
@@ -60,8 +64,7 @@ class ServiceManagementProcessController(Controller):
         except Exception as e:
             service.process.terminate()
             service.status = service_status.ERROR
-            raise ChildProcessError(
-                "Service post-processing failed " + str(e)) from e
+            raise ChildProcessError("Service post-processing failed " + str(e)) from e
 
     def stop_process(self, service: DigitalPyService):
         """
@@ -77,7 +80,6 @@ class ServiceManagementProcessController(Controller):
             if service.process.is_alive():
                 service.process.terminate()
                 service.process.join()
-
             else:
                 return
         except Exception as e:

@@ -64,12 +64,11 @@ class ZMQPusher(Pusher):
         """
         self.pusher_socket.connect(f"tcp://{address}:{port}")
 
-    def subject_send_request(self, request: Request, protocol: str, service_id: str = None):  # type: ignore
+    def subject_send_request(self, request: Request, service_id: str = None):  # type: ignore
         """send the message to a Puller
 
         Args:
             request (Request): the request to be sent to the subject
-            protocol (str): the protocol of the request to be sent
             service_id (str, optional): the service_id of the request to be sent. Defaults to the id of the current service.
         """
         if service_id is None:
@@ -85,7 +84,6 @@ class ZMQPusher(Pusher):
             [
                 topic,
                 request.get_format().encode(),
-                protocol.encode(),
                 request.get_id().encode(),
                 request.get_values(),
             ]
