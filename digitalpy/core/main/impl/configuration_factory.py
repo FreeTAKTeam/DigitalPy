@@ -1,5 +1,5 @@
 from importlib import import_module
-from typing import Any
+from typing import Any, Optional
 
 from digitalpy.core.digipy_configuration.domain.model.actionkey import ActionKey
 from digitalpy.core.digipy_configuration.configuration.digipy_configuration_constants import (
@@ -17,40 +17,64 @@ class ConfigurationFactory:
         self.action_mapping: dict[str, ActionKey] = {}
 
     def add_configuration(self, configuration: Configuration):
-        """Register a new configuration in the factory by initializing all of it's referenced configuration objects."""
+        """Register a new configuration in the factory by initializing all of it's referenced
+        configuration objects.
+
+        Args:
+            configuration (Configuration): The configuration object to add.
+        """
         for section_name in configuration.get_sections():
-            section = configuration.get_section(section_name)
-            self._initialize_configuration_object(section, section_name)
+            self._initialize_configuration_section(configuration, section_name)
         self._publish_updates()
 
     def _publish_updates(self):
         """Publish updates to the configuration objects via the integration manager."""
 
     def get_configuration_object(self, name: str) -> Any:
-        """Get a configuration object."""
+        """Get a configuration object.
+
+        Args:
+            name (str): The name of the configuration object to retrieve.
+
+        Returns:
+            Any: The configuration object.
+        """
         if name == ACTION_MAPPING_SECTION:
             return self.action_mapping
         else:
             return self.configuration_objects.get(name, None)
 
-    def _initialize_configuration_object(
-        self, section: dict[str, str], section_name: str
-    ) -> Node:
-        """Initialize a configuration object. The section name is used to determine the type of configuration object and
-        to call the correct initializer accordingly."""
+    def _initialize_configuration_section(
+        self, configuration: Configuration, section_name: str
+    ):
+        """Initialize a configuration object. The section name is used to determine the
+        type of configuration object and to call the correct initializer accordingly.
+
+        Args:
+            section (Configuration): The configuration section to initialize.
+            section_name (str): The name of the configuration section.
+        """
         if section_name == ACTION_MAPPING_SECTION:
-            return self._initialize_action_mapping_configuration_object(section)
+            self._initialize_action_mapping_configuration_object(
+                configuration, section_name
+            )
         else:
-            self.configuration_objects[section_name] = self._initialize_generic_configuration_object(section)
+            self.configuration_objects[section_name] = (
+                self._initialize_generic_configuration_object(
+                    configuration, section_name
+                )
+            )
 
     def _initialize_action_mapping_configuration_object(
-        self, section: dict[str, str]
+        self, configuration: Configuration, section_name: str
     ) -> Node:
         """Initialize an action mapping configuration object."""
         action_mapping = {}
-        for key in section:
-            action_mapping[key] = self._deserialize_from_ini(section[key])
-            
+        for key in configuration.get_section(section_name).keys():
+            action_mapping[key] = self._deserialize_from_ini(
+                configuration.get_value(key, section_name)
+            )
+
         return action_mapping
 
     def _deserialize_from_ini(self, ini_key: str) -> ActionKey:
@@ -86,18 +110,34 @@ class ConfigurationFactory:
         action_key.source = key_sections[3]
         return action_key
 
-    def _initialize_generic_configuration_object(self, section: dict[str, str]) -> Node:
-        """Initialize a generic configuration object."""
-        if section.get("__class", None) is None:
+    def _initialize_generic_configuration_object(
+        self, configuration: Configuration, section_name: str
+    ) -> Optional[Node]:
+        """Initialize a generic configuration object.
+
+        Args:
+            configuration (Configuration): The configuration object to initialize.
+            section_name (str): The name of the configuration section.
+
+        Returns:
+            Optional[Node]: The initialized configuration object.
+        """
+        try:
+            class_path = configuration.get_value("__class", section_name)
+        except KeyError:
             return None
 
-        configuration_class = self._import_class(section["__class"])
+        configuration_class = self._import_class(class_path)
         configuration_object = configuration_class(None, None)
         propeties = configuration_object.get_properties()
 
-        for key in section:
+        for key in configuration.get_section(section_name).keys():
             if key in propeties:
-                setattr(configuration_object, key, section[key])
+                setattr(
+                    configuration_object,
+                    key,
+                    configuration.get_value(key, section_name),
+                )
 
         return configuration_object
 
