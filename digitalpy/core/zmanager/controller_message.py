@@ -11,6 +11,7 @@ class ControllerMessage(ABC):
         self.context: str = ""
         self.action: str = ""
         self.decorator: str = ""
+        self.flow_id: str
         self.values = {}
         self.id = str(uuid4())
         self.properties: dict
@@ -92,6 +93,12 @@ class ControllerMessage(ABC):
     def get_decorator(self):
         """Get the decorator"""
         return self.decorator
+    
+    def set_flow_id(self, flow_id: str):
+        self.flow_id = flow_id
+    
+    def get_flow_id(self):
+        return self.flow_id
     
     def set_action_key(self, action_key: ActionKey):
         self.set_action(action_key.action)

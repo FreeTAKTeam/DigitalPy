@@ -1,4 +1,5 @@
 from typing import Any, Optional
+from digitalpy.core.digipy_configuration.domain.model.actionflow import ActionFlow
 from digitalpy.core.main.impl.configuration_factory import ConfigurationFactory
 from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
 
@@ -18,6 +19,18 @@ class SingletonConfigurationFactory:
         """Get an instance from the configuration."""
         SingletonConfigurationFactory.__check_config()
         return SingletonConfigurationFactory.__factory.add_configuration(configuration)  # type: ignore
+
+    @staticmethod
+    def add_action_flow(action_flow: ActionFlow):
+        """Add an action flow to the factory."""
+        SingletonConfigurationFactory.__check_config()
+        return SingletonConfigurationFactory.__factory.add_action_flow(action_flow)
+    
+    @staticmethod
+    def get_action_flow(config_id: str):
+        """Get an action flow from the factory."""
+        SingletonConfigurationFactory.__check_config()
+        return SingletonConfigurationFactory.__factory.get_action_flow(config_id)
 
     @staticmethod
     def remove_configuration(configuration: Configuration):

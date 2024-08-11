@@ -121,5 +121,17 @@ class ActionKey(Node):
             raise TypeError("'name' must be of type str")
         self._name = name
 
+    def __eq__(self, value: object) -> bool:
+        if isinstance(value, ActionKey):
+            return (
+                value.action == self.action
+                and value.context == self.context
+                and value.decorator == self.decorator
+                and value.source == self.source
+            )
+        else:
+            return super().__eq__(value)
+
+
     def __str__(self) -> str:
         return f"ActionKey(name={self._name}, action={self._action}, context={self._context}, decorator={self._decorator}, config={self._config}, target={self._target}, source={self._source}, referencedBehaviour={self._referencedBehaviour})"

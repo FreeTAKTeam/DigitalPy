@@ -1,3 +1,4 @@
+import re
 from digitalpy.core.main.singleton_configuration_factory import SingletonConfigurationFactory
 from digitalpy.core.zmanager.controller_message import ControllerMessage
 from digitalpy.core.digipy_configuration.domain.model.actionkey import ActionKey
@@ -9,16 +10,10 @@ from digitalpy.core.zmanager.configuration.zmanager_constants import (
     DEFAULT_ENCODING,
 )
 
-from digitalpy.core.parsing.formatter import Formatter
-
-
 class ActionKeyController:
     """This class is responsible controlling the action key models,
     this includes primarily, serialization and deserialization of the models.
     """
-
-    def __init__(self, formatter: Formatter) -> None:
-        self.formatter = formatter
 
     def serialize_to_topic(self, action_key: ActionKey) -> bytes:
         """Serialize the model to a topic in the form
@@ -101,7 +96,8 @@ class ActionKeyController:
         return action_key, DEL.join(parts[4:])
 
     def deserialize_from_ini(self, ini_key: str) -> ActionKey:
-        """Deserialize the ini key to an ActionKey model.
+        """Deserialize the ini key to an ActionKey model from the format
+        [Sender]?[context]@[Optional[decorator]]?[actopm][Optional=[target]]
 
         Args:
             ini_key (str): The ini key to deserialize
@@ -110,23 +106,18 @@ class ActionKeyController:
             ActionKey: The deserialized ActionKey model
         """
         action_key = self.new_action_key()
-        sections = ini_key.split("=")
-        if len(sections) > 2:
+        
+        pattern = r'(?P<sender>[^\?]+)\??(?P<context>[^\@]*)\@(?P<decorator>[^\?]*)\??(?P<action>[^\[]+)(?:\[(?P<target>[^\]]+)\])?'
+
+        match = re.match(pattern, ini_key)
+        if not match:
             raise ValueError("Invalid ini key format for action key " + ini_key)
-        elif len(sections) == 2:
-            action_key.target = sections[1]
-
-        key_sections = sections[0].split("?")
-        if 3 > len(key_sections) or len(key_sections) > 4:
-            raise ValueError("Invalid ini key format for action key " + ini_key)
-
-        if len(key_sections) < 4:
-            key_sections.insert(0, "")
-
-        action_key.decorator = key_sections[0]
-        action_key.action = key_sections[1]
-        action_key.context = key_sections[2]
-        action_key.source = key_sections[3]
+        
+        action_key.source = match.group("sender")
+        action_key.context = match.group("context")
+        action_key.decorator = match.group("decorator")
+        action_key.action = match.group("action")
+        action_key.target = match.group("target")
         return action_key
 
     def resolve_action_key(self, action_key: ActionKey) -> ActionKey:
@@ -141,7 +132,7 @@ class ActionKeyController:
         Raises:
             ValueError: If no action key is found
         """
-        action_mapping: dict = SingletonConfigurationFactory.get_configuration_object(ACTION_MAPPING_SECTION)
+        action_mapping: dict[str, ActionKey] = SingletonConfigurationFactory.get_configuration_object(ACTION_MAPPING_SECTION)
         match (action_key.source, action_key.context, action_key.action):
             case (s, c, a) if (s and c and a) and f"{s}?{c}?{a}" in action_mapping:
                 key = f"{s}?{c}?{a}"
@@ -160,10 +151,7 @@ class ActionKeyController:
             case (_, _, _):
                 raise ValueError("No action key found for " + str(action_key))
 
-        ak = self.deserialize_from_ini(key)
-        ak.target = action_mapping[key]
-        ak.decorator = action_key.decorator
-        return ak
+        return action_mapping[key]
 
     def build_from_controller_message(
         self, controller_message: ControllerMessage
@@ -181,8 +169,7 @@ class ActionKeyController:
         action_key.context = controller_message.get_context()
         action_key.source = controller_message.get_sender()
         action_key.decorator = controller_message.get_decorator()
-        ak = self.resolve_action_key(action_key)
-        return ak
+        return action_key
 
     def build_from_dictionary_entry(self, entry: tuple[str, str]) -> ActionKey:
         """Build an action key from a tuple.

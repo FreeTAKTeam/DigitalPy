@@ -1,6 +1,7 @@
 from importlib import import_module
 from typing import Any, Optional
 
+from digitalpy.core.digipy_configuration.domain.model.actionflow import ActionFlow
 from digitalpy.core.digipy_configuration.domain.model.actionkey import ActionKey
 from digitalpy.core.digipy_configuration.configuration.digipy_configuration_constants import (
     ACTION_MAPPING_SECTION,
@@ -15,6 +16,7 @@ class ConfigurationFactory:
     def __init__(self):
         self.configuration_objects: dict[str, Node] = {}
         self.action_mapping: dict[str, ActionKey] = {}
+        self.action_flows: dict[str, ActionFlow] = {}
 
     def add_configuration(self, configuration: Configuration):
         """Register a new configuration in the factory by initializing all of it's referenced
@@ -26,6 +28,25 @@ class ConfigurationFactory:
         for section_name in configuration.get_sections():
             self._initialize_configuration_section(configuration, section_name)
         self._publish_updates()
+
+    def add_action_flow(self, action_flow: ActionFlow):
+        """Add an action flow to the factory.
+
+        Args:
+            action_flow (ActionFlow): The action flow to add.
+        """
+        self.action_flows[action_flow.config_id] = action_flow
+
+    def get_action_flow(self, config_id: str) -> Optional[ActionFlow]:
+        """Get an action flow from the factory.
+
+        Args:
+            config_id (str): The id of the action flow to retrieve.
+
+        Returns:
+            Optional[ActionFlow]: The action flow.
+        """
+        return self.action_flows.get(config_id, None)
 
     def _publish_updates(self):
         """Publish updates to the configuration objects via the integration manager."""
