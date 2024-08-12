@@ -51,7 +51,7 @@ class ActionFlowController:
         """This method will get the next action of the sequence referenced by the controller message.
         If the current Action is the final one, a None value will be returned
         """
-        flow = SingletonConfigurationFactory.get_action_flow(controller_message.get_flow_id())
+        flow = SingletonConfigurationFactory.get_action_flow(controller_message.get_flow_name())
         current_action = self.action_key_controller.build_from_controller_message(controller_message)
         i = 0
         for action in flow.actions:

@@ -12,6 +12,7 @@ class TopicCategory(Enum):
 
 
 ZMANAGER_MESSAGE_DELIMITER = b"~"
+ZMANAGER_MESSAGE_FORMAT = "pickled"
 TOPIC = "Topic"
 DEFAULT_ENCODING = "utf-8"
 

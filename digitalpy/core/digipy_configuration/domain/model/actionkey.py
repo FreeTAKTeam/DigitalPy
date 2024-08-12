@@ -5,7 +5,8 @@ from digitalpy.core.domain.node import Node
 
 
 class ActionKey(Node):
-    """An ActionKey is a key that is used to trigger an action. It is a part of the system that can be"""
+    """An ActionKey is a key that is used to trigger an action. It is a part of the 
+    system that can be"""
 
     def __init__(
         self, model_configuration, model, oid=None, node_type="ActionKey"

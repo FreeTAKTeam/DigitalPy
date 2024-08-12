@@ -1,3 +1,4 @@
+"""This module is responsible for controlling the action key models"""
 import re
 from digitalpy.core.main.singleton_configuration_factory import SingletonConfigurationFactory
 from digitalpy.core.zmanager.controller_message import ControllerMessage
@@ -14,86 +15,6 @@ class ActionKeyController:
     """This class is responsible controlling the action key models,
     this includes primarily, serialization and deserialization of the models.
     """
-
-    def serialize_to_topic(self, action_key: ActionKey) -> bytes:
-        """Serialize the model to a topic in the form
-        of a string.
-
-        Args:
-            model (ActionKey): The model to serialize
-
-        Returns:
-            str: The action key serialized to a topic
-        """
-        ak = self.resolve_action_key(action_key)
-        return (
-            ak.decorator.encode(DEFAULT_ENCODING)
-            + DEL
-            + ak.source.encode(DEFAULT_ENCODING)
-            + DEL
-            + ak.context.encode(DEFAULT_ENCODING)
-            + DEL
-            + ak.action.encode(DEFAULT_ENCODING)
-        )
-
-    def serialize_to_generic_topic(self, action_key: ActionKey) -> bytes:
-        """Serialize the model to a topic in the form
-        of a string. This will be the most generic form of the topic. That means
-        the returned topic will maintain the lowest level of specificity. This is
-        useful when describing subscriptions.
-
-        Args:
-            model (ActionKey): The model to serialize
-
-        Returns:
-            str: The action key serialized to a topic
-        """
-
-        match (
-            action_key.decorator,
-            action_key.action,
-            action_key.context,
-            action_key.source,
-        ):
-            case (d, a, c, s) if d and a and c and s:
-                return (
-                    d.encode() + DEL + s.encode() + DEL + c.encode() + DEL + a.encode()
-                )
-            case (d, a, c, s) if d and s and c:
-                return d.encode() + DEL + s.encode() + DEL + c.encode() + DEL
-            case (d, a, c, s) if d and s:
-                return d.encode() + DEL + s.encode() + DEL
-            case (d, a, c, s) if d:
-                return d.encode() + DEL
-            case (_, _, _, _):
-                return DEL + DEL + DEL + DEL
-
-    def deserialize_from_topic(
-        self, topic: bytes, encoding=DEFAULT_ENCODING
-    ) -> tuple[ActionKey, bytes]:
-        """Deserialize the topic to an ActionKey model.
-
-        Args:
-            topic (str): The topic to deserialize
-            encoding (str, optional): The encoding to use. Defaults to DEFAULT_ENCODING.
-
-        Returns:
-            tuple[ActionKey, str]: The deserialized ActionKey model and the remaining topic if any
-        """
-        parts = topic.split(DEL, 4)
-        action_key = self.new_action_key()
-        if len(parts) < 3:
-            raise ValueError(
-                "Invalid topic format for action key " + topic.decode(encoding)
-            )
-        if len(parts) < 4:
-            parts.insert(0, b"")
-        action_key.decorator = parts[0].decode(encoding)
-        action_key.action = parts[1].decode(encoding)
-        action_key.context = parts[2].decode(encoding)
-        action_key.source = parts[3].decode(encoding)
-
-        return action_key, DEL.join(parts[4:])
 
     def deserialize_from_ini(self, ini_key: str) -> ActionKey:
         """Deserialize the ini key to an ActionKey model from the format
