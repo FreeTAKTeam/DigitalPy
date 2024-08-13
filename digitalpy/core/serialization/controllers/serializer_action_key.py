@@ -53,14 +53,16 @@ class SerializerActionKey:
                 return_val = s.encode()
             case (_, _, _):
                 return_val = b''
+        if return_val:
+            return_val = DEL + return_val
         match (
             action_key.decorator,
             action_key.config,
         ):
             case (d, c) if d and c:
-                return_val = c.encode() + DEL + d.encode() + DEL + return_val
+                return_val = c.encode() + DEL + d.encode() + return_val
             case (d, c) if d:
-                return_val = DEL + d.encode() + DEL + return_val
+                return_val = DEL + d.encode() + return_val
             case (d, c) if c:
                 return_val = c.encode() + DEL + return_val
             case (_, _):
