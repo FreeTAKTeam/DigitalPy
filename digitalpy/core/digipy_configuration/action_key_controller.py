@@ -18,7 +18,7 @@ class ActionKeyController:
 
     def deserialize_from_ini(self, ini_key: str) -> ActionKey:
         """Deserialize the ini key to an ActionKey model from the format
-        [Sender]?[context]@[Optional[decorator]]?[actopm][Optional=[target]]
+        [Sender]?[context]@[Optional[decorator]]?[action][Optional[=target]]
 
         Args:
             ini_key (str): The ini key to deserialize
@@ -28,7 +28,7 @@ class ActionKeyController:
         """
         action_key = self.new_action_key()
         
-        pattern = r'(?P<sender>[^\?]+)\??(?P<context>[^\@]*)\@(?P<decorator>[^\?]*)\??(?P<action>[^\[]+)(?:\[(?P<target>[^\]]+)\])?'
+        pattern = r'^(?P<sender>[\w]*)\?(?P<context>[\w]*)(@?(?P<decorator>[\w]*))\?(?P<action>[\w]*)\s*(=\s*(?P<target>[\w\.]*))?'
 
         match = re.match(pattern, ini_key)
         if not match:
