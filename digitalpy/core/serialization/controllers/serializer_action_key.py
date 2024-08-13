@@ -41,43 +41,30 @@ class SerializerActionKey:
         useful when describing subscriptions."""
         return_val: bytes
         match (
-            action_key.config,
-            action_key.decorator,
             action_key.action,
             action_key.context,
             action_key.source,
         ):
-            case (co, d, a, c, s) if co and d and a and c and s:
-                return_val = (
-                    co.encode()
-                    + DEL
-                    + d.encode()
-                    + DEL
-                    + s.encode()
-                    + DEL
-                    + c.encode()
-                    + DEL
-                    + a.encode()
-                )
-            case (co, d, a, c, s) if co and d and s and c:
-                return_val = (
-                    co.encode()
-                    + DEL
-                    + d.encode()
-                    + DEL
-                    + s.encode()
-                    + DEL
-                    + c.encode()
-                    + DEL
-                )
-            case (co, d, a, c, s) if co and d and s:
-                return_val = co.encode() + DEL + d.encode() + DEL + s.encode() + DEL
-            case (co, d, a, c, s) if co and d:
-                return_val = co.encode() + DEL + d.encode() + DEL
-            case (co, d, a, c, s) if co:
-                return_val = co.encode() + DEL
-            case (_, _, _, _):
-                return_val = DEL + DEL + DEL + DEL
+            case (a, c, s) if a and c and s:
+                return_val = s.encode() + DEL + c.encode() + DEL + a.encode() + DEL
+            case (a, c, s) if s and c:
+                return_val = s.encode() + DEL + c.encode() + DEL + DEL
+            case (a, c, s) if s:
+                return_val = s.encode() + DEL + DEL + DEL
+            case (_, _, _):
+                return_val = DEL + DEL + DEL
+        match (
+            action_key.decorator,
+            action_key.config,
+        ):
+            case (d, c) if d and c:
+                return_val = c.encode() + DEL + d.encode() + DEL + return_val
+            case (d, c) if d:
+                return_val = DEL + d.encode() + DEL + return_val
+            case (d, c) if c:
+                return_val = c.encode() + DEL + DEL + return_val
+            case (_, _):
+                return_val = DEL + DEL + return_val
         return return_val
 
     def deserialize_from_topic(self, topic: bytes) -> tuple[ActionKey, bytes]:
