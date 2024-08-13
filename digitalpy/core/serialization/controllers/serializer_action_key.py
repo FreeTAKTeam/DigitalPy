@@ -46,13 +46,13 @@ class SerializerActionKey:
             action_key.source,
         ):
             case (a, c, s) if a and c and s:
-                return_val = s.encode() + DEL + c.encode() + DEL + a.encode() + DEL
+                return_val = s.encode() + DEL + c.encode() + DEL + a.encode()
             case (a, c, s) if s and c:
-                return_val = s.encode() + DEL + c.encode() + DEL + DEL
+                return_val = s.encode() + DEL + c.encode()
             case (a, c, s) if s:
-                return_val = s.encode() + DEL + DEL + DEL
+                return_val = s.encode()
             case (_, _, _):
-                return_val = DEL + DEL + DEL
+                return_val = b''
         match (
             action_key.decorator,
             action_key.config,
@@ -62,9 +62,9 @@ class SerializerActionKey:
             case (d, c) if d:
                 return_val = DEL + d.encode() + DEL + return_val
             case (d, c) if c:
-                return_val = c.encode() + DEL + DEL + return_val
+                return_val = c.encode() + DEL + return_val
             case (_, _):
-                return_val = DEL + DEL + return_val
+                return_val = return_val
         return return_val
 
     def deserialize_from_topic(self, topic: bytes) -> tuple[ActionKey, bytes]:
