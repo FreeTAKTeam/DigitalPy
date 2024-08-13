@@ -12,10 +12,18 @@ import multiprocessing
 
 import zmq
 
-from digitalpy.core.zmanager.domain.model.zmanager_configuration import ZManagerConfiguration
-from digitalpy.core.main.singleton_configuration_factory import SingletonConfigurationFactory
-from digitalpy.core.zmanager.configuration.zmanager_constants import (
-    ZMANAGER_MESSAGE_DELIMITER,
+from digitalpy.core.zmanager.configuration.zmanager_constants import RESPONSE
+from digitalpy.core.digipy_configuration.controllers.action_flow_controller import (
+    ActionFlowController,
+)
+from digitalpy.core.serialization.controllers.serializer_container import (
+    SerializerContainer,
+)
+from digitalpy.core.zmanager.domain.model.zmanager_configuration import (
+    ZManagerConfiguration,
+)
+from digitalpy.core.main.singleton_configuration_factory import (
+    SingletonConfigurationFactory,
 )
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.digipy_configuration.action_key_controller import (
@@ -25,12 +33,16 @@ from digitalpy.core.main.factory import Factory
 
 
 class IntegrationManager:
+    """The Integration Manager is responsible for receiving messages from the workers and sending messages to the workers"""
+
     def __init__(
         self,
         factory: Factory,
     ) -> None:
-        self.zmanager_configuration: ZManagerConfiguration = SingletonConfigurationFactory.get_configuration_object(
-            "ZManagerConfiguration"
+        self.zmanager_configuration: ZManagerConfiguration = (
+            SingletonConfigurationFactory.get_configuration_object(
+                "ZManagerConfiguration"
+            )
         )
         self.context: zmq.Context
         self.pull_socket: zmq.Socket
@@ -40,7 +52,18 @@ class IntegrationManager:
         self.action_key_controller: "ActionKeyController" = ObjectFactory.get_instance(
             "ActionKeyController"
         )
+
+        self.serializer_container: "SerializerContainer" = ObjectFactory.get_instance(
+            "SerializerContainer"
+        )
+
+        self.action_flow_controller: "ActionFlowController" = (
+            ObjectFactory.get_instance("ActionFlowController")
+        )
         self._factory = factory
+
+        self.response_action = self.action_key_controller.new_action_key()
+        self.response_action.config = RESPONSE
 
     def initialize_connections(self):
         """initialize the connections for the integration manager"""
@@ -56,7 +79,9 @@ class IntegrationManager:
         self.pub_socket: zmq.Socket = self.context.socket(zmq.PUB)
         # unlimited as trunkating can result in unsent data and broken messages
         # TODO: determine a sane default
-        self.pub_socket.setsockopt(zmq.SNDHWM, self.zmanager_configuration.integration_manager_pub_sndhwm)
+        self.pub_socket.setsockopt(
+            zmq.SNDHWM, self.zmanager_configuration.integration_manager_pub_sndhwm
+        )
         self.pub_socket.bind(
             self.zmanager_configuration.integration_manager_pub_address
         )
@@ -65,11 +90,15 @@ class IntegrationManager:
         self.pull_socket: zmq.Socket = self.context.socket(zmq.PULL)
         # unlimited as trunkating can result in unsent data and broken messages
         # TODO: determine a sane default
-        self.pull_socket.setsockopt(zmq.RCVHWM, self.zmanager_configuration.integration_manager_pull_rcvhwm)
+        self.pull_socket.setsockopt(
+            zmq.RCVHWM, self.zmanager_configuration.integration_manager_pull_rcvhwm
+        )
         self.pull_socket.bind(
             self.zmanager_configuration.integration_manager_pull_address
         )
-        self.pull_socket.setsockopt(zmq.RCVTIMEO, self.zmanager_configuration.integration_manager_pull_timeout)
+        self.pull_socket.setsockopt(
+            zmq.RCVTIMEO, self.zmanager_configuration.integration_manager_pull_timeout
+        )
 
     def _setup(self):
         """setup the integration manager"""
@@ -89,22 +118,26 @@ class IntegrationManager:
         while self.running.is_set():
             try:
                 # receive a message from a client
-                request = self.pull_socket.recv_multipart().pop(0)
-                actionkey, body = self.action_key_controller.deserialize_from_topic(
-                    request
-                )
-                topic = self.action_key_controller.serialize_to_topic(actionkey)
-
-                try:
-                    # send the response back to the client
-                    self.pub_socket.send(
-                        topic + ZMANAGER_MESSAGE_DELIMITER + body, copy=False
-                    )
-                except Exception as ex:
-                    print("Error sending response to client: {}".format(ex))
-
+                message = self.pull_socket.recv_multipart().pop(0)
+                self._forward_message(message)
             except zmq.error.Again:
                 pass
             except Exception as ex:
                 print("Error " + str(ex))
         self._teardown()
+
+    def _forward_message(self, message):
+        c_message = self.serializer_container.from_zmanager_message(message)
+        next_action = None
+        if c_message.action_key.config:
+            next_action = self.action_flow_controller.get_next_action(c_message)
+        if next_action is not None or not c_message.action_key.config:
+            try:
+                        # send the response back to the client
+                self.pub_socket.send(message, copy=False)
+            except Exception as ex:
+                print("Error sending response to client: {}".format(ex))
+        else:
+            c_message.action_key = self.response_action
+            message = self.serializer_container.to_zmanager_message(c_message)
+            self.pub_socket.send(message, copy=False)

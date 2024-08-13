@@ -1,5 +1,6 @@
 """Serialize Container Controller Module."""
 
+from digitalpy.core.zmanager.response import Response
 from digitalpy.core.serialization.controllers.serializer_action_key import (
     SerializerActionKey,
 )
@@ -7,6 +8,7 @@ from digitalpy.core.zmanager.request import Request
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.parsing.formatter import Formatter
 from digitalpy.core.zmanager.configuration.zmanager_constants import (
+    RESPONSE,
     ZMANAGER_MESSAGE_DELIMITER,
     ZMANAGER_MESSAGE_FORMAT,
 )
@@ -40,3 +42,15 @@ class SerializerContainer:
         self.formatter.deserialize(request)
         request.action_key = action_key
         return request
+
+    def from_zmanager_response(self, message: bytes) -> Response:
+        """Deserialize the container from a ZManager response."""
+        action_key, message_body = self.serializer_action_key.deserialize_from_topic(message)
+        if action_key.config != RESPONSE:
+            raise ValueError("The action key is not a response")
+        response: Response = ObjectFactory.get_new_instance("Response")
+        response.format = ZMANAGER_MESSAGE_FORMAT
+        response.values = message_body
+        self.formatter.deserialize(response)
+        response.action_key = action_key
+        return response
