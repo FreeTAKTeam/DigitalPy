@@ -14,6 +14,7 @@ import threading
 from time import sleep
 from typing import TYPE_CHECKING
 
+from digitalpy.core.digipy_configuration.controllers.action_flow_controller import ActionFlowController
 from digitalpy.core.service_management.service_management_core import ServiceManagementCore
 from digitalpy.core.telemetry.singleton_status_factory import SingletonStatusFactory
 from digitalpy.core.telemetry.domain.status_factory import StatusFactory
@@ -157,6 +158,16 @@ class DigitalPy:
 
         self.tracer: Tracer = self._tracing_provider.create_tracer("DigitalPy.Main")
 
+    def register_flows(self):
+        action_flow_controller = ActionFlowController()
+        action_flow_file = str(
+            pathlib.PurePath(__file__).parent.parent / "core_flows.ini"
+        )
+        file_facades: Files = ObjectFactory.get_instance("Files")
+        file = file_facades.get_or_create_file(path=action_flow_file)
+
+        action_flow_controller.create_action_flow(file)
+
     def register_components(self):
         """register digitalpy core components, these must be registered before any other components
         furthermore, these are registered without the use of component management to avoid circular
@@ -212,7 +223,9 @@ class DigitalPy:
         by any inheriting classes"""
 
         self.register_components()
+        self.register_flows()
         self.configure()
+
         self.start_zmanager()
         self.start_core_services()
         while True:
