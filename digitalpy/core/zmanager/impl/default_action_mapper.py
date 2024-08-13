@@ -1,5 +1,6 @@
 import logging
 from typing import TYPE_CHECKING
+from digitalpy.core.main.controller import Controller
 from digitalpy.core.digipy_configuration.configuration.digipy_configuration_constants import ACTION_MAPPING_SECTION
 from digitalpy.core.digipy_configuration.action_key import ActionKey
 from digitalpy.core.persistence.application_event import ApplicationEvent
@@ -99,68 +100,14 @@ class DefaultActionMapper(ActionMapper):
             raise PermissionError("User not authorized to perform this operation")
 
         # get next controller
-        controllerClass = None
-        controllerDef = self.configuration.get_value(actionKey, ACTION_MAPPING_SECTION)
-        if len(controllerDef) == 0:
-            self.logger.error(
-                "No controller found for best action key "
-                + actionKey
-                + ". Request was referrer?context?action"
-            )
-            raise Exception("No controller found for best action key "+ actionKey)
-
-        # check if the controller definition contains a method besides the class name
-        controllerMethod = None
-        if "." in controllerDef:
-            controller_def_list = controllerDef.split(".")
-            controllerClass = ".".join(controller_def_list[:-1])
-            controllerMethod = controller_def_list[-1]
-        else:
-            controllerClass = controllerDef
-
-        # instantiate controller
-        controllerObj = ObjectFactory.get_instance_of(controllerClass, dynamic_configuration={"request": request, "response": response})
+        controllerClass, controllerMethod, controller_obj = self._get_controller(request, response, actionKey)
 
         # everything is right in place, start processing
 
         # self.formatter.deserialize(request)
 
         # initialize controller
-        self.eventManager.dispatch(
-            ApplicationEvent.NAME,
-            ApplicationEvent(
-                ApplicationEvent.BEFORE_INITIALIZE_CONTROLLER,
-                request,
-                response,
-                controllerObj,
-            ),
-        )
-        controllerObj.initialize(request, response)
-
-        # execute controller
-        self.eventManager.dispatch(
-            ApplicationEvent.NAME,
-            ApplicationEvent(
-                ApplicationEvent.BEFORE_EXECUTE_CONTROLLER,
-                request,
-                response,
-                controllerObj,
-            ),
-        )
-        try:
-            self.logger.debug("executing method %s on controller %s", str(controllerMethod), str(type(controllerObj)))
-            controllerObj.execute(controllerMethod)
-        except Exception as e:
-            raise e
-        self.eventManager.dispatch(
-            ApplicationEvent.NAME,
-            ApplicationEvent(
-                ApplicationEvent.AFTER_EXECUTE_CONTROLLER,
-                request,
-                response,
-                controllerObj,
-            ),
-        )
+        self._execute_operation(request, response, controllerMethod, controller_obj)
 
         # return if we are finished
         if self.is_finished:
@@ -168,6 +115,9 @@ class DefaultActionMapper(ActionMapper):
             return None
 
         # check if an action key exists for the return action
+        return self._get_next_action(response, actionKeyProvider, actionKey, controllerClass)
+
+    def _get_next_action(self, response, actionKeyProvider, actionKey, controllerClass):
         nextActionKey = ActionKey.get_best_match(
             actionKeyProvider,
             controllerClass,
@@ -195,6 +145,67 @@ class DefaultActionMapper(ActionMapper):
         # nextRequest.set_errors(response.get_errors())
         # nextRequest.set_response_format(request.get_response_format())
         self.process_action(nextRequest, response)
+
+    def _execute_operation(self, request, response, controllerMethod, controller_obj):
+        self.eventManager.dispatch(
+            ApplicationEvent.NAME,
+            ApplicationEvent(
+                ApplicationEvent.BEFORE_INITIALIZE_CONTROLLER,
+                request,
+                response,
+                controller_obj,
+            ),
+        )
+        controller_obj.initialize(request, response)
+
+        # execute controller
+        self.eventManager.dispatch(
+            ApplicationEvent.NAME,
+            ApplicationEvent(
+                ApplicationEvent.BEFORE_EXECUTE_CONTROLLER,
+                request,
+                response,
+                controller_obj,
+            ),
+        )
+        try:
+            self.logger.debug("executing method %s on controller %s", str(controllerMethod), str(type(controller_obj)))
+            controller_obj.execute(controllerMethod)
+        except Exception as e:
+            raise e
+        self.eventManager.dispatch(
+            ApplicationEvent.NAME,
+            ApplicationEvent(
+                ApplicationEvent.AFTER_EXECUTE_CONTROLLER,
+                request,
+                response,
+                controller_obj,
+            ),
+        )
+
+    def _get_controller(self, request, response, actionKey):
+        controllerClass = None
+        controllerDef = self.configuration.get_value(actionKey, ACTION_MAPPING_SECTION)
+        if len(controllerDef) == 0:
+            self.logger.error(
+                "No controller found for best action key "
+                + actionKey
+                + ". Request was referrer?context?action"
+            )
+            raise Exception("No controller found for best action key "+ actionKey)
+
+        # check if the controller definition contains a method besides the class name
+        controllerMethod = None
+        if "." in controllerDef:
+            controller_def_list = controllerDef.split(".")
+            controllerClass = ".".join(controller_def_list[:-1])
+            controllerMethod = controller_def_list[-1]
+        else:
+            controllerClass = controllerDef
+
+        # instantiate controller
+        controller_obj: Controller = ObjectFactory.get_instance_of(controllerClass, dynamic_configuration={"request": request, "response": response})
+        return controllerClass,controllerMethod,controller_obj
 
     def authorize_operation(self, request: Request, action_key: str) -> bool:
         """this method is responsible for authorizing the operation with the IAM component"""

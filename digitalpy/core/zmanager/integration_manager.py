@@ -131,9 +131,9 @@ class IntegrationManager:
         next_action = None
         if c_message.action_key.config:
             next_action = self.action_flow_controller.get_next_action(c_message)
-        if next_action is not None or not c_message.action_key.config:
+        if next_action is not None:
             try:
-                        # send the response back to the client
+                # send the response back to the client
                 self.pub_socket.send(message, copy=False)
             except Exception as ex:
                 print("Error sending response to client: {}".format(ex))

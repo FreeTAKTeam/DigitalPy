@@ -2,14 +2,16 @@ import logging
 import multiprocessing
 import threading
 import uuid
-from typing import List, Tuple
+from typing import List
 
 import zmq
 
+from digitalpy.core.digipy_configuration.controllers.action_flow_controller import ActionFlowController
+from digitalpy.core.serialization.controllers.serializer_container import SerializerContainer
+from digitalpy.core.digipy_configuration.action_key_controller import ActionKeyController
+from digitalpy.core.serialization.controllers.serializer_action_key import SerializerActionKey
 from digitalpy.core.zmanager.domain.model.zmanager_configuration import ZManagerConfiguration
 from digitalpy.core.main.singleton_configuration_factory import SingletonConfigurationFactory
-from digitalpy.core.zmanager.domain.builder.topic_builder import TopicBuilder
-from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
 from digitalpy.core.main.factory import Factory
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.parsing.formatter import Formatter
@@ -32,7 +34,6 @@ class DefaultRoutingWorker:
         factory: Factory,
         sync_action_mapper: ActionMapper,
         formatter: Formatter,
-        subject_address: str,
     ):
         """this is the default constructor for the DefaultRoutingWorker class
 
@@ -52,7 +53,7 @@ class DefaultRoutingWorker:
         """
         self.factory = factory
         self.action_mapper = sync_action_mapper
-        self.subject_address = subject_address
+        self.subject_address = SingletonConfigurationFactory.get_configuration_object("ZManagerConfiguration").subject_push_address
         self.formatter = formatter
         self.worker_id = str(uuid.uuid4())
         self.logger = logging.getLogger("DP-Default_Routing_Worker_DEBUG")
@@ -61,6 +62,11 @@ class DefaultRoutingWorker:
         self.zmanager_configuration: ZManagerConfiguration = SingletonConfigurationFactory.get_configuration_object(
             "ZManagerConfiguration"
         )
+
+        self.serializer_action_key: SerializerActionKey = ObjectFactory.get_instance("SerializerActionKey")
+        self.serializer_container: SerializerContainer = ObjectFactory.get_instance("SerializerContainer")
+        self.action_key_controller: ActionKeyController = ObjectFactory.get_instance("ActionKeyController")
+        self.action_flow_controller: ActionFlowController = ObjectFactory.get_instance("ActionFlowController")
 
         self.context: zmq.Context = None
         self.sub_sock: zmq.Socket = None
@@ -88,7 +94,12 @@ class DefaultRoutingWorker:
     def _create_integration_manager_sub_sock(self):
         self.sub_sock = self.context.socket(zmq.SUB)
         self.sub_sock.setsockopt(zmq.RCVTIMEO, self.zmanager_configuration.worker_timeout)
-        self.sub_sock.setsockopt_string(zmq.SUBSCRIBE, "ROUTING_WORKER")
+        ak = self.action_key_controller.new_action_key()
+        # TODO: determine the correct decorator and config to subscribe to
+        ak.decorator = "ROUTING_WORKER"
+        ak.config = "UPDATE_ROUTING_WORKERS"
+        topic = self.serializer_action_key.to_generic_topic(ak)
+        self.sub_sock.setsockopt(zmq.SUBSCRIBE, topic)
         self.sub_sock.connect(self.zmanager_configuration.integration_manager_pub_address)
 
         # do not wait for messages to be sent to the socket before terminating the context,
@@ -147,22 +158,14 @@ class DefaultRoutingWorker:
         except Exception as ex:
             raise ex
 
-    def send_response(self, response: Response, protocol: str, service_id: str) -> None:
+    def send_response(self, response: Response) -> None:
         """send a response to the integration_manager
 
         Args:
             response (Response): the response to be sent to integration_manager
             protocol (str): the protocol of the message
         """
-        response_topics = self.get_response_topic(response, protocol, service_id)
-        self.logger.debug(
-            "sending response \n id: %s \n values: %s \n topics: %s",
-            str(response.get_id()),
-            str(response.get_values()),
-            str(response_topics),
-        )
-        # self.formatter.serialize(response)
-        # response_value = response.get_values()
+        response_topics = self.get_response_topics(response)
         for response_topic in response_topics:
             self.integration_manager_sock.send(response_topic)
 
@@ -172,10 +175,11 @@ class DefaultRoutingWorker:
         Args:
             exception (Exception): the exception to be sent to the integration_manager
         """
-        self.integration_manager_sock.send(b"error," + str(exception).encode("utf-8"))
+        self.integration_manager_sock.send(b"new error," + str(exception).encode("utf-8"))
 
-    def start(self):
+    def start(self, factory: Factory):
         """start the routing worker"""
+        ObjectFactory.configure(factory)
         self.initiate_sockets()
         self.initialize_metrics()
         self.initialize_tracing()
@@ -197,23 +201,15 @@ class DefaultRoutingWorker:
         return
 
     def _subject_listener(self):
-        """listen for requests from the subject, process them, and send responses back to the integration_manager"""
+        """listen for requests from the subject, process them, and send responses 
+        back to the integration_manager"""
         while self.running.is_set():
             try:
-                protocol, request = self.receive_request()
-                service_id = request.get_value("service_id")
-                # if the protocol is COMMAND_PROTOCOL, then the request is a command to a service and should
-                # be sent directly to integration_manager so that it can be processed by the service
-                if protocol == COMMAND_PROTOCOL:
-                    self.send_response(
-                        request, protocol, request.get_value("service_id")
-                    )
-
-                else:
-                    response = self.process_request(protocol, request)
-                    self.send_response(
-                        response, protocol=protocol, service_id=service_id
-                    )
+                request = self.receive_request()
+                response = self.process_request(request)
+                self.send_response(
+                    response
+                )
             except zmq.error.Again:
                 pass
             except Exception as ex:
@@ -245,7 +241,7 @@ class DefaultRoutingWorker:
         # TODO: add business logic to process the message
         print(message)
 
-    def process_request(self, protocol: str, request: Request):
+    def process_request(self, request: Request):
         """process a request made by the subject
 
         Args:
@@ -253,22 +249,15 @@ class DefaultRoutingWorker:
             request (Request): the request object to be processed
         """
         response: Response = ObjectFactory.get_new_instance("response")
-        referrer = request.get_sender()
-        context = request.get_context()
-        action = request.get_action()
-        format = request.get_format()
-        response.set_sender(referrer)
-        response.set_context(context)
-        response.set_action(action)
-        response.set_format(format)
+        response.action_key = request.action_key
         response.set_id(request.get_id())
 
         self.action_mapper.process_action(request, response)
         self.logger.debug("returned values: %s", str(response.get_values()))
         return response
 
-    def get_response_topic(
-        self, response: Response, protocol: str, service_id: str
+    def get_response_topics(
+        self, response: Response
     ) -> List[bytes]:
         """get the topic to which the response is to be sent
 
@@ -287,10 +276,9 @@ class DefaultRoutingWorker:
         if isinstance(response.get_value("topics"), list):
             return response.get_value("topics")
         else:
-            message = f"/{service_id}/{protocol}/{response.get_sender()}/{response.get_context()}/{response.get_action()}/{response.get_id()}/".encode()
-            self.formatter.serialize(response)
-            response_value = response.get_values()
-            return [message + ZMANAGER_MESSAGE_DELIMITER + response_value]
+            next_action = self.action_flow_controller.get_next_action(response)
+            response.action_key = next_action
+            return [self.serializer_container.to_zmanager_message(response)]
 
     def process_next_request(self, controller_class: str, response: Response):
         """process the next request based on the response from the previous request
@@ -300,49 +288,24 @@ class DefaultRoutingWorker:
             response (Response): the response to be processed as the next request
         """
         # set the request based on the result
-        next_request = ObjectFactory.get_new_instance("request")
+        next_action = self.action_flow_controller.get_next_action(response)
+
+        response.action_key = next_action
+
+        next_request: Request = ObjectFactory.get_new_instance("request")
+        next_request.action_key = next_action
         next_request.set_sender(controller_class)
-        next_request.set_context(response.get_context())
-        next_request.set_action(response.get_action())
         next_request.set_format(response.get_format())
         next_request.set_values(response.get_values())
-        # nextRequest.set_errors(response.get_errors())
-        # nextRequest.set_response_format(request.get_response_format())
+
         self.action_mapper.process_action(next_request, response)
 
-    def receive_request(self) -> Tuple[str, Request]:
+    def receive_request(self) -> Request:
         """Receive and process a request from the ZMQ socket.
 
         Returns:
-            A tuple containing the topic sections as a list, the response topic as a string, and the request object.
+            Request: the request object to be processed
         """
         # Receive message from client
         message = self.subject_sock.recv_multipart().pop(0)
-        sender, context, action, format, protocol, id, values = message.split(
-            ZMANAGER_MESSAGE_DELIMITER, 6
-        )
-
-        # Create a new request object
-        request = ObjectFactory.get_new_instance("request")
-        request.values = values
-        request.set_sender(sender.decode("utf-8"))
-        request.set_context(context.decode("utf-8"))
-        request.set_action(action.decode("utf-8"))
-        request.set_format(format.decode("utf-8"))
-        request.set_id(id.decode("utf-8"))
-
-        # Deserialize the request
-        self.formatter.deserialize(request)
-
-        self.logger.debug(
-            "received request \n sender: %s \n context: %s \n action: %s \n format: %s \n protocol: %s \n id: %s \n values: %s",
-            str(sender),
-            str(context),
-            str(action),
-            format,
-            protocol,
-            id,
-            request.get_values(),
-        )
-        # Return the topic sections, response topic, and request
-        return protocol.decode(), request
+        return self.serializer_container.from_zmanager_message(message)

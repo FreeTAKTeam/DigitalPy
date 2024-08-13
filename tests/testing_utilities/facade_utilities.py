@@ -1,5 +1,9 @@
 from typing import Union
 
+import pathlib
+
+from digitalpy.core.digipy_configuration.controllers.action_flow_controller import ActionFlowController
+from digitalpy.core.files.files_facade import Files
 from digitalpy.core.telemetry.singleton_status_factory import SingletonStatusFactory
 from digitalpy.core.telemetry.domain.status_factory import StatusFactory
 from digitalpy.core.main.impl.configuration_factory import ConfigurationFactory
@@ -43,6 +47,9 @@ def initialize_test_environment() -> tuple[Request, Response, Configuration]:
 
     # register all components
     register_components()
+
+    # register flows
+    register_flows()
 
     # initialize the request and response objects
     request = ObjectFactory.get_new_instance("request")
@@ -93,6 +100,18 @@ def register_components():
     register_component(Serialization(None, None, None, None))
 
     register_component(ServiceManagement(None, None, None, None))
+
+    register_component(Files(None, None, None, None))
+
+def register_flows():
+    action_flow_controller = ActionFlowController()
+    action_flow_file = str(
+        pathlib.PurePath(__file__).parent.parent.parent / pathlib.PurePath("digitalpy", "core", "core_flows.ini")
+    )
+    file_facades: Files = ObjectFactory.get_instance("Files")
+    file = file_facades.get_or_create_file(path=action_flow_file)
+
+    action_flow_controller.create_action_flow(file)
 
 def register_component(facade: DefaultFacade):
     """register the given component facade"""

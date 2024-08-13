@@ -121,6 +121,5 @@ def test_integration_manager_publish_noflow(zmanager: ZmanagerSingleThreadSetup)
     time.sleep(2)
     response_bytes = zmanager.receive_integration_manager_messages()[0]
 
-    resp = serializer_container.from_zmanager_message(response_bytes)
+    resp = serializer_container.from_zmanager_response(response_bytes)
     assert resp.get_value("test") == "test"
-    assert resp.action == "someAction"
