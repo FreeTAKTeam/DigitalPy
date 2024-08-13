@@ -1,12 +1,9 @@
 import logging
-import pickle
 import zmq
+from digitalpy.core.serialization.controllers.serializer_container import SerializerContainer
 from digitalpy.core.main.singleton_configuration_factory import SingletonConfigurationFactory
 from digitalpy.core.zmanager.domain.model.zmanager_configuration import ZManagerConfiguration
 from digitalpy.core.main.object_factory import ObjectFactory
-from digitalpy.core.zmanager.configuration.zmanager_constants import (
-    ZMANAGER_MESSAGE_DELIMITER,
-)
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.parsing.formatter import Formatter
 
@@ -25,6 +22,7 @@ class SubjectPusher:
         self.service_id = service_id
         zmanager_configuration: ZManagerConfiguration = SingletonConfigurationFactory.get_configuration_object("ZManagerConfiguration")
         self.subject_address = zmanager_configuration.subject_pull_address
+        self.serializer_container: SerializerContainer = ObjectFactory.get_instance("SerializerContainer")
         
     def setup(self):
         """initiate subject connection
@@ -53,7 +51,7 @@ class SubjectPusher:
         self.pusher_socket = None  # type: ignore
         self.pusher_context = None  # type: ignore
 
-    def subject_send_request(self, request: Request, protocol: str, service_id: str = None):  # type: ignore
+    def subject_send_request(self, request: Request, service_id: str = None):  # type: ignore
         """send the message to the subject
 
         Args:
@@ -65,12 +63,10 @@ class SubjectPusher:
             service_id = self.service_id
 
         # set the service_id so it can be used to create the publish topic by the default routing worker
-        request.set_value("service_id", service_id)
-        request_msg = f"{protocol}{ZMANAGER_MESSAGE_DELIMITER}".encode() + pickle.dumps(
-            request
-        )
-        self.logger.debug("request message: %s", request_msg)
-        self.pusher_socket.send(request_msg)
+        request.sender = service_id
+        message = self.serializer_container.to_zmanager_message(request)
+        self.logger.debug("request message: %s", message)
+        self.pusher_socket.send(message)
 
     def __getstate__(self):
         state = self.__dict__

@@ -358,7 +358,7 @@ class DigitalPyService:
             resp.set_format("pickled")
             resp.set_id(command.get_id())
             self._subject_pusher.subject_send_request(
-                resp, COMMAND_PROTOCOL, conf.get_value("service_id", "ServiceManager")
+                resp, conf.get_value("service_id", "ServiceManager")
             )
 
     def get_health(self):

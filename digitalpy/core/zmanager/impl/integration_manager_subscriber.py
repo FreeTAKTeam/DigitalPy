@@ -1,19 +1,27 @@
-import zmq
-from typing import Optional
 import logging
-from digitalpy.core.zmanager.controller_message import ControllerMessage
-from digitalpy.core.zmanager.response import Response
-from digitalpy.core.zmanager.request import Request
-from digitalpy.core.zmanager.configuration.zmanager_constants import (
-    ZMANAGER_MESSAGE_DELIMITER,
-)
-from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
+from typing import Optional
+
+import zmq
+
+from digitalpy.core.digipy_configuration.action_key_controller import \
+    ActionKeyController
+from digitalpy.core.digipy_configuration.domain.model.actionkey import \
+    ActionKey
 from digitalpy.core.main.object_factory import ObjectFactory
+from digitalpy.core.main.singleton_configuration_factory import \
+    SingletonConfigurationFactory
 from digitalpy.core.parsing.formatter import Formatter
-from digitalpy.core.digipy_configuration.domain.model.actionkey import ActionKey
-from digitalpy.core.digipy_configuration.action_key_controller import (
-    ActionKeyController,
-)
+from digitalpy.core.serialization.controllers.serializer_action_key import \
+    SerializerActionKey
+from digitalpy.core.serialization.controllers.serializer_container import \
+    SerializerContainer
+from digitalpy.core.zmanager.configuration.zmanager_constants import \
+    ZMANAGER_MESSAGE_DELIMITER
+from digitalpy.core.zmanager.controller_message import ControllerMessage
+from digitalpy.core.zmanager.domain.model.zmanager_configuration import \
+    ZManagerConfiguration
+from digitalpy.core.zmanager.request import Request
+from digitalpy.core.zmanager.response import Response
 
 RECIPIENT_DELIMITER = ";"
 
@@ -39,23 +47,15 @@ class IntegrationManagerSubscriber:
 
         self.service_id = service_id
         self.application_protocol = application_protocol
-        conf: Configuration = ObjectFactory.get_instance("Configuration")
-
-        self.integration_manager_address = conf.get_value(
-            "integration_manager_publisher_address", "IntegrationManager"
-        )
-        self.integration_manager_port = conf.get_value(
-            "integration_manager_publisher_port", "IntegrationManager"
-        )
-        self.integration_manager_protocol = conf.get_value(
-            "integration_manager_publisher_protocol", "IntegrationManager"
-        )
+        self.zmanager_conf: ZManagerConfiguration = SingletonConfigurationFactory.get_configuration_object("ZManagerConfiguration")
+        self.serializer_container: SerializerContainer = ObjectFactory.get_instance("SerializerContainer")
 
         self.timeout = timeout
 
         self.action_key_controller: ActionKeyController = ObjectFactory.get_instance(
             "ActionKeyController"
         )
+        self.serializer_action_key: SerializerActionKey = ObjectFactory.get_instance("SerializerActionKey")
 
     def setup(self):
         """Connect or reconnect to integration manager"""
@@ -66,12 +66,12 @@ class IntegrationManagerSubscriber:
         self.subscriber_socket = self.subscriber_context.socket(zmq.SUB)
 
         self.__subscriber_socket_connections.append(
-            f"{self.integration_manager_protocol}://{self.integration_manager_address}:{self.integration_manager_port}"
+            self.zmanager_conf.integration_manager_pub_address
         )
 
         # add the connection to the connections list so it can be reconnected upon serialization
         self.subscriber_socket.connect(
-            f"{self.integration_manager_protocol}://{self.integration_manager_address}:{self.integration_manager_port}"
+            self.zmanager_conf.integration_manager_pub_address
         )
 
         self._subscribe_to_topics()
@@ -80,6 +80,7 @@ class IntegrationManagerSubscriber:
         # TODO: determine a sane default
         self.subscriber_socket.setsockopt(zmq.RCVHWM, 0)
         self.subscriber_socket.setsockopt(zmq.SNDHWM, 0)
+        self.subscriber_socket.setsockopt(zmq.LINGER, 0)
 
         self.set_blocking(True)
         self.set_timeout(self.timeout)
@@ -98,7 +99,7 @@ class IntegrationManagerSubscriber:
         Args:
             action_key (ActionKey): the action key to subscribe to
         """
-        topic = self.action_key_controller.serialize_to_generic_topic(action_key)
+        topic = self.serializer_action_key.to_generic_topic(action_key)
         self.subscriber_socket.setsockopt(zmq.SUBSCRIBE, topic)
 
     def teardown(self):
@@ -131,35 +132,14 @@ class IntegrationManagerSubscriber:
 
         return message
 
-    def _deserialize_controller_message(self, message: list[bytes], controller_message: ControllerMessage) -> ControllerMessage:
-        # TODO: this is assuming that the message from the integration manager is pickled
-        controller_message.set_format("pickled")
-
-        # get the values returned from the routing proxy and serialize them to
-        values: bytes = message[1].strip(ZMANAGER_MESSAGE_DELIMITER)
-        controller_message.set_values(values)
-        self.subscriber_formatter.deserialize(controller_message)
-
-        topic = message[0]
-        decoded_topic = topic.decode("utf-8")
-        topic_sections = decoded_topic.split("/", 9)
-        _, _, service_id, protocol, sender, context, action, id, recipients = (
-            topic_sections
-        )
-        controller_message.set_sender(sender)
-        controller_message.set_context(context)
-        controller_message.set_action(action)
-        controller_message.set_id(id)
-        return controller_message
-
     def _deserialize_response(self, message: list[bytes]) -> Response:
         response: Response = ObjectFactory.get_new_instance("Response")
-        response = self._deserialize_controller_message(message, response)
+        response = self.serializer_container.from_zmanager_message(message)
         return response
     
     def _deserialize_request(self, message: list[bytes]) -> Request:
         request: Request = ObjectFactory.get_new_instance("Request")
-        request = self._deserialize_controller_message(message, request)
+        request = self.serializer_container.from_zmanager_message(message)
         return request
 
     def set_blocking(self, blocking: bool):
