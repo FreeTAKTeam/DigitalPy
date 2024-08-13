@@ -52,11 +52,11 @@ def test_integration_manager_subscription(mock_process_integration_manager_messa
         message = serializer_container.to_zmanager_message(request)
 
         # wait for the worker to process the message
-        time.sleep(2)
+        time.sleep(1.5)
 
         zmanager.send_integration_manager_message(message)
 
-        time.sleep(1)
+        time.sleep(0.75)
 
         # check that the worker received processed the message correctly
         assert mock_process_integration_manager_message.called

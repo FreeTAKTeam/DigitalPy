@@ -1,7 +1,6 @@
 """Test the subject functionality of the zmanager"""
 
 import time
-from unittest.mock import patch
 
 import pytest
 from digitalpy.core.serialization.controllers.serializer_container import (
@@ -83,7 +82,7 @@ def test_subject_send_to_integration_manager_action(
 
     zmanager.send_subject_message(message)
 
-    time.sleep(4)
+    time.sleep(1.5)
 
     messages = zmanager.receive_integration_manager_messages()
 
@@ -115,7 +114,7 @@ def test_subject_send_to_worker_action(
 
     zmanager.send_subject_message(message)
 
-    time.sleep(4)
+    time.sleep(1.5)
 
     messages = zmanager.receive_integration_manager_messages()
 
