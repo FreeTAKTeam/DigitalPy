@@ -40,26 +40,32 @@ class ActionFlowController:
                 SingletonConfigurationFactory.add_action_flow(new_flow)
 
             elif re.match(r"^\w+\?\w+@\w+\?\w+", line_str):
-                new_flow.actions.append(
-                    self.action_key_controller.deserialize_from_ini(line_str)
-                )
+                new_action = self.action_key_controller.deserialize_from_ini(line_str)
+                new_action.config = new_flow.config_id
+                new_flow.actions.append(new_action)
 
             else:
                 pass
 
-    def get_next_action(self, controller_message: ControllerMessage) -> Optional[ActionKey]:
+    def get_next_action(
+        self, controller_message: ControllerMessage
+    ) -> Optional[ActionKey]:
         """This method will get the next action of the sequence referenced by the controller message.
         If the current Action is the final one, a None value will be returned
         """
-        flow = SingletonConfigurationFactory.get_action_flow(controller_message.get_flow_name())
-        current_action = self.action_key_controller.build_from_controller_message(controller_message)
+        flow = SingletonConfigurationFactory.get_action_flow(
+            controller_message.get_flow_name()
+        )
+        current_action = self.action_key_controller.build_from_controller_message(
+            controller_message
+        )
         i = 0
         for action in flow.actions:
             if action == current_action:
                 current_action = action
                 break
-            i+=1
-        if len(flow.actions)>i+1:
-            return flow.actions[i+1]
+            i += 1
+        if len(flow.actions) > i + 1:
+            return flow.actions[i + 1]
         else:
             return None
