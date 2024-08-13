@@ -7,7 +7,7 @@ from digitalpy.core.digipy_configuration.domain.model.configuration import Confi
 class SingletonConfigurationFactory:
     """ConfigurationFactory class to create and retrieve configuration objects."""
 
-    __factory: Optional[ConfigurationFactory] = None
+    __factory: Optional[ConfigurationFactory]
 
     @staticmethod
     def configure(factory):

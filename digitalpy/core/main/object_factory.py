@@ -3,7 +3,9 @@ from typing import Any
 
 
 class ObjectFactory:
-    __factory = None
+    """ObjectFactory class to create and retrieve instances."""
+    
+    __factory: Factory
 
     @staticmethod
     def configure(factory: Factory):

@@ -69,12 +69,14 @@ class ZMQPusher(Pusher):
 
         Args:
             request (Request): the request to be sent to the subject
-            service_id (str, optional): the service_id of the request to be sent. Defaults to the id of the current service.
+            service_id (str, optional): the service_id of the request to be sent. Defaults to 
+                the id of the current service.
         """
         if service_id is None:
             service_id = self.service_id
 
-        # set the service_id so it can be used to create the publish topic by the default routing worker
+        # set the service_id so it can be used to create the publish topic by the default
+        # routing worker
         request.set_value("service_id", service_id)
         self.pusher_formatter.serialize(request)
         ak = self.action_key_controller.build_from_controller_message(request)

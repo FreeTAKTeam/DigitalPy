@@ -117,7 +117,7 @@ class ControllerMessage(ABC):
         """
         self.action_key.action = action
 
-    def set_value(self, name, value):
+    def set_value(self, name: str, value: any):
         """Set a value in the message.
 
         Args:
