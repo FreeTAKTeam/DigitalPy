@@ -1,8 +1,14 @@
 import logging
 import zmq
-from digitalpy.core.serialization.controllers.serializer_container import SerializerContainer
-from digitalpy.core.main.singleton_configuration_factory import SingletonConfigurationFactory
-from digitalpy.core.zmanager.domain.model.zmanager_configuration import ZManagerConfiguration
+from digitalpy.core.serialization.controllers.serializer_container import (
+    SerializerContainer,
+)
+from digitalpy.core.main.singleton_configuration_factory import (
+    SingletonConfigurationFactory,
+)
+from digitalpy.core.zmanager.domain.model.zmanager_configuration import (
+    ZManagerConfiguration,
+)
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.parsing.formatter import Formatter
@@ -20,10 +26,16 @@ class SubjectPusher:
         self.pusher_formatter: Formatter = formatter
         self.logger = logging.getLogger(self.__class__.__name__)
         self.service_id = service_id
-        zmanager_configuration: ZManagerConfiguration = SingletonConfigurationFactory.get_configuration_object("ZManagerConfiguration")
+        zmanager_configuration: ZManagerConfiguration = (
+            SingletonConfigurationFactory.get_configuration_object(
+                "ZManagerConfiguration"
+            )
+        )
         self.subject_address = zmanager_configuration.subject_pull_address
-        self.serializer_container: SerializerContainer = ObjectFactory.get_instance("SerializerContainer")
-        
+        self.serializer_container: SerializerContainer = ObjectFactory.get_instance(
+            "SerializerContainer"
+        )
+
     def setup(self):
         """initiate subject connection
 
@@ -51,7 +63,7 @@ class SubjectPusher:
         self.pusher_socket = None  # type: ignore
         self.pusher_context = None  # type: ignore
 
-    def subject_send_request(self, request: Request, service_id: str = None):  # type: ignore
+    def subject_send_request(self, request: Request, service_id: str = ""):  # type: ignore
         """send the message to the subject
 
         Args:

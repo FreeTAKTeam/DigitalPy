@@ -1,5 +1,5 @@
 # pylint: disable=invalid-name
-from digitalpy.core.digipy_configuration.action_key import ActionKey
+from digitalpy.core.digipy_configuration.domain.model.actionkey import ActionKey
 from digitalpy.core.domain.node import Node
 
 # iterating associations
@@ -7,11 +7,11 @@ from digitalpy.core.domain.node import Node
 
 class ActionFlow(Node):
     """An ActionFlow is a sequence of actions that are executed in a specific order.
-    
+
     An action flow is distinguished by a section with the following structure:
     [ConfigIni]
     Sender?Ctx@Decorator?Action
-    
+
     """
 
     def __init__(
@@ -27,7 +27,7 @@ class ActionFlow(Node):
     def actions(self) -> list[ActionKey]:
         """The actions that are executed in a specific order."""
         return self._actions
-    
+
     @actions.setter
     def actions(self, actions: list[ActionKey]):
         actions = list(actions)
@@ -39,7 +39,7 @@ class ActionFlow(Node):
     def config_id(self) -> str:
         """The configuration id of the action flow."""
         return self._config_id
-    
+
     @config_id.setter
     def config_id(self, config_id: str):
         if not isinstance(config_id, str):

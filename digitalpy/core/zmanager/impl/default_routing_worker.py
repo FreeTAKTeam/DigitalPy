@@ -6,12 +6,25 @@ from typing import List
 
 import zmq
 
-from digitalpy.core.digipy_configuration.controllers.action_flow_controller import ActionFlowController
-from digitalpy.core.serialization.controllers.serializer_container import SerializerContainer
-from digitalpy.core.digipy_configuration.action_key_controller import ActionKeyController
-from digitalpy.core.serialization.controllers.serializer_action_key import SerializerActionKey
-from digitalpy.core.zmanager.domain.model.zmanager_configuration import ZManagerConfiguration
-from digitalpy.core.main.singleton_configuration_factory import SingletonConfigurationFactory
+from digitalpy.core.main.impl.configuration_factory import ConfigurationFactory
+from digitalpy.core.digipy_configuration.controllers.action_flow_controller import (
+    ActionFlowController,
+)
+from digitalpy.core.serialization.controllers.serializer_container import (
+    SerializerContainer,
+)
+from digitalpy.core.digipy_configuration.action_key_controller import (
+    ActionKeyController,
+)
+from digitalpy.core.serialization.controllers.serializer_action_key import (
+    SerializerActionKey,
+)
+from digitalpy.core.zmanager.domain.model.zmanager_configuration import (
+    ZManagerConfiguration,
+)
+from digitalpy.core.main.singleton_configuration_factory import (
+    SingletonConfigurationFactory,
+)
 from digitalpy.core.main.factory import Factory
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.parsing.formatter import Formatter
@@ -20,6 +33,7 @@ from digitalpy.core.zmanager.action_mapper import ActionMapper
 from digitalpy.core.zmanager.configuration.zmanager_constants import (
     ZMANAGER_MESSAGE_DELIMITER,
 )
+
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
 
@@ -53,20 +67,32 @@ class DefaultRoutingWorker:
         """
         self.factory = factory
         self.action_mapper = sync_action_mapper
-        self.subject_address = SingletonConfigurationFactory.get_configuration_object("ZManagerConfiguration").subject_push_address
+        self.subject_address = SingletonConfigurationFactory.get_configuration_object(
+            "ZManagerConfiguration"
+        ).subject_push_address
         self.formatter = formatter
         self.worker_id = str(uuid.uuid4())
         self.logger = logging.getLogger("DP-Default_Routing_Worker_DEBUG")
         self.logger.setLevel(logging.DEBUG)
-        
-        self.zmanager_configuration: ZManagerConfiguration = SingletonConfigurationFactory.get_configuration_object(
-            "ZManagerConfiguration"
+
+        self.zmanager_configuration: ZManagerConfiguration = (
+            SingletonConfigurationFactory.get_configuration_object(
+                "ZManagerConfiguration"
+            )
         )
 
-        self.serializer_action_key: SerializerActionKey = ObjectFactory.get_instance("SerializerActionKey")
-        self.serializer_container: SerializerContainer = ObjectFactory.get_instance("SerializerContainer")
-        self.action_key_controller: ActionKeyController = ObjectFactory.get_instance("ActionKeyController")
-        self.action_flow_controller: ActionFlowController = ObjectFactory.get_instance("ActionFlowController")
+        self.serializer_action_key: SerializerActionKey = ObjectFactory.get_instance(
+            "SerializerActionKey"
+        )
+        self.serializer_container: SerializerContainer = ObjectFactory.get_instance(
+            "SerializerContainer"
+        )
+        self.action_key_controller: ActionKeyController = ObjectFactory.get_instance(
+            "ActionKeyController"
+        )
+        self.action_flow_controller: ActionFlowController = ObjectFactory.get_instance(
+            "ActionFlowController"
+        )
 
         self.context: zmq.Context = None
         self.sub_sock: zmq.Socket = None
@@ -93,33 +119,45 @@ class DefaultRoutingWorker:
 
     def _create_integration_manager_sub_sock(self):
         self.sub_sock = self.context.socket(zmq.SUB)
-        self.sub_sock.setsockopt(zmq.RCVTIMEO, self.zmanager_configuration.worker_timeout)
+        self.sub_sock.setsockopt(
+            zmq.RCVTIMEO, self.zmanager_configuration.worker_timeout
+        )
         ak = self.action_key_controller.new_action_key()
         # TODO: determine the correct decorator and config to subscribe to
         ak.decorator = "ROUTING_WORKER"
         ak.config = "UPDATE_ROUTING_WORKERS"
         topic = self.serializer_action_key.to_generic_topic(ak)
         self.sub_sock.setsockopt(zmq.SUBSCRIBE, topic)
-        self.sub_sock.connect(self.zmanager_configuration.integration_manager_pub_address)
+        self.sub_sock.connect(
+            self.zmanager_configuration.integration_manager_pub_address
+        )
 
         # do not wait for messages to be sent to the socket before terminating the context,
         self.sub_sock.setsockopt(zmq.LINGER, 0)
 
     def _create_integration_manager_pusher_sock(self):
         self.integration_manager_sock = self.context.socket(zmq.PUSH)
-        self.integration_manager_sock.connect(self.zmanager_configuration.integration_manager_pull_address)
+        self.integration_manager_sock.connect(
+            self.zmanager_configuration.integration_manager_pull_address
+        )
 
         # unlimited as trunkating can result in unsent data and broken messages
         # TODO: determine a sane default
-        self.integration_manager_sock.setsockopt(zmq.SNDHWM, self.zmanager_configuration.integration_manager_pull_rcvhwm)
+        self.integration_manager_sock.setsockopt(
+            zmq.SNDHWM, self.zmanager_configuration.integration_manager_pull_rcvhwm
+        )
         self.integration_manager_sock.setsockopt(zmq.LINGER, 0)
-        self.integration_manager_sock.setsockopt(zmq.SNDTIMEO, self.zmanager_configuration.worker_timeout)
+        self.integration_manager_sock.setsockopt(
+            zmq.SNDTIMEO, self.zmanager_configuration.worker_timeout
+        )
 
     def _create_subject_listener_sock(self):
         self.subject_sock = self.context.socket(zmq.PULL)
         self.subject_sock.connect(self.subject_address)
         self.subject_sock.setsockopt(zmq.RCVHWM, 0)
-        self.subject_sock.setsockopt(zmq.RCVTIMEO, self.zmanager_configuration.worker_timeout)
+        self.subject_sock.setsockopt(
+            zmq.RCVTIMEO, self.zmanager_configuration.worker_timeout
+        )
         self.subject_sock.setsockopt(zmq.LINGER, 0)
 
     def teardown(self):
@@ -175,11 +213,14 @@ class DefaultRoutingWorker:
         Args:
             exception (Exception): the exception to be sent to the integration_manager
         """
-        self.integration_manager_sock.send(b"new error," + str(exception).encode("utf-8"))
+        self.integration_manager_sock.send(
+            b"new error," + str(exception).encode("utf-8")
+        )
 
-    def start(self, factory: Factory):
+    def start(self, factory: Factory, configuration_factory: ConfigurationFactory):
         """start the routing worker"""
         ObjectFactory.configure(factory)
+        SingletonConfigurationFactory.configure(configuration_factory)
         self.initiate_sockets()
         self.initialize_metrics()
         self.initialize_tracing()
@@ -201,15 +242,13 @@ class DefaultRoutingWorker:
         return
 
     def _subject_listener(self):
-        """listen for requests from the subject, process them, and send responses 
+        """listen for requests from the subject, process them, and send responses
         back to the integration_manager"""
         while self.running.is_set():
             try:
                 request = self.receive_request()
                 response = self.process_request(request)
-                self.send_response(
-                    response
-                )
+                self.send_response(response)
             except zmq.error.Again:
                 pass
             except Exception as ex:
@@ -256,9 +295,7 @@ class DefaultRoutingWorker:
         self.logger.debug("returned values: %s", str(response.get_values()))
         return response
 
-    def get_response_topics(
-        self, response: Response
-    ) -> List[bytes]:
+    def get_response_topics(self, response: Response) -> List[bytes]:
         """get the topic to which the response is to be sent
 
         Args:
@@ -275,9 +312,10 @@ class DefaultRoutingWorker:
         """
         if isinstance(response.get_value("topics"), list):
             return response.get_value("topics")
-        else:
-            next_action = self.action_flow_controller.get_next_action(response)
+        elif next_action := self.action_flow_controller.get_next_action(response):
             response.action_key = next_action
+            return [self.serializer_container.to_zmanager_message(response)]
+        else:
             return [self.serializer_container.to_zmanager_message(response)]
 
     def process_next_request(self, controller_class: str, response: Response):

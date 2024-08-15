@@ -66,7 +66,12 @@ class Subject:
     def _start_workers(self):
         for _ in range(self.zmanager_configuration.worker_count):
             worker_process = multiprocessing.Process(
-                target=self.worker.start, daemon=True, args=(ObjectFactory.get_instance("factory"),)
+                target=self.worker.start,
+                daemon=True,
+                args=(
+                    ObjectFactory.get_instance("factory"),
+                    SingletonConfigurationFactory.get_instance(),
+                ),
             )
             worker_process.start()
             self.workers.append(worker_process)
@@ -80,7 +85,7 @@ class Subject:
     def _initialize_frontend_puller(self):
         self.frontend_pull = self.context.socket(zmq.PULL)
         self.frontend_pull.bind(self.zmanager_configuration.subject_pull_address)
-        # set the timeout for the frontend pull socket so that the subject can 
+        # set the timeout for the frontend pull socket so that the subject can
         # check if it should stop periodically
         self.frontend_pull.setsockopt(
             zmq.RCVTIMEO, self.zmanager_configuration.subject_pull_timeout
@@ -135,18 +140,24 @@ class Subject:
 
     def _forward_message(self, message: list[bytes]):
         """Forward the message to the appropriate destination. This involves determining
-        the action key and the flow of the message. Based on this, the next action is 
-        determined and the message is sent to either the integration manager or the worker."""
-        ak = self._determine_next_action(message)
-        if ak.decorator == PUBLISH_DECORATOR:
-            self.integration_manager_push.send_multipart(message, copy=False)
+        the action key and the flow of the message. Based on this, the next action is
+        determined and the message is sent to either the integration manager or the worker.
+        """
+        request = self._determine_next_action(message)
+        if request.decorator == PUBLISH_DECORATOR:
+            self.integration_manager_push.send_multipart(
+                [self.serializer_container.to_zmanager_message(request)], copy=False
+            )
         else:
-            self.worker_push.send_multipart(message, copy=False)
+            self.worker_push.send_multipart(
+                [self.serializer_container.to_zmanager_message(request)], copy=False
+            )
 
     def _determine_next_action(self, message: list[bytes]) -> Request:
         request = self.serializer_container.from_zmanager_message(message[0])
-        next_action = self.action_flow_controller.get_next_action(request)
-        request.action = next_action
+        if request.action == "Push":
+            next_action = self.action_flow_controller.get_next_action(request)
+            request.action_key = next_action
         return request
 
     def __getstate__(self):

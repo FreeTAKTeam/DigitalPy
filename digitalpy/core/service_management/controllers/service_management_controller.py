@@ -39,7 +39,7 @@ if TYPE_CHECKING:
     from digitalpy.core.zmanager.response import Response
     from digitalpy.core.domain.domain.network_client import NetworkClient
     from digitalpy.core.component_management.domain.model.component import Component
-    from digitalpy.core.component_management.domain.model.actionkey import ActionKey
+    from digitalpy.core.digipy_configuration.domain.model.actionkey import ActionKey
     from digitalpy.core.component_management.domain.model.error import Error
 
 

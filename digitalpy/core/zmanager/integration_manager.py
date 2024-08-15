@@ -12,6 +12,7 @@ import multiprocessing
 
 import zmq
 
+from digitalpy.core.main.impl.configuration_factory import ConfigurationFactory
 from digitalpy.core.zmanager.configuration.zmanager_constants import RESPONSE
 from digitalpy.core.digipy_configuration.controllers.action_flow_controller import (
     ActionFlowController,
@@ -36,8 +37,7 @@ class IntegrationManager:
     """The Integration Manager is responsible for receiving messages from the workers and sending messages to the workers"""
 
     def __init__(
-        self,
-        factory: Factory,
+        self, factory: Factory, configuration_factory: ConfigurationFactory
     ) -> None:
         self.zmanager_configuration: ZManagerConfiguration = (
             SingletonConfigurationFactory.get_configuration_object(
@@ -61,7 +61,7 @@ class IntegrationManager:
             ObjectFactory.get_instance("ActionFlowController")
         )
         self._factory = factory
-
+        self._configuration_factory = configuration_factory
         self.response_action = self.action_key_controller.new_action_key()
         self.response_action.config = RESPONSE
 
@@ -103,6 +103,7 @@ class IntegrationManager:
     def _setup(self):
         """setup the integration manager"""
         ObjectFactory.configure(self._factory)
+        SingletonConfigurationFactory.configure(self._configuration_factory)
         self.initialize_connections()
 
     def _teardown(self):
@@ -131,13 +132,12 @@ class IntegrationManager:
         next_action = None
         if c_message.action_key.config:
             next_action = self.action_flow_controller.get_next_action(c_message)
-        if next_action is not None:
-            try:
-                # send the response back to the client
-                self.pub_socket.send(message, copy=False)
-            except Exception as ex:
-                print("Error sending response to client: {}".format(ex))
-        else:
+        if next_action:
             c_message.action_key = self.response_action
-            message = self.serializer_container.to_zmanager_message(c_message)
+            new_message = self.serializer_container.to_zmanager_message(c_message)
             self.pub_socket.send(message, copy=False)
+        try:
+            # send the response back to the client
+            self.pub_socket.send(new_message, copy=False)
+        except Exception as ex:
+            print("Error sending response to client: {}".format(ex))
