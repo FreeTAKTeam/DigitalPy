@@ -1,6 +1,7 @@
 from digitalpy.core.component_management.impl.default_facade import DefaultFacade
 
 from .controllers.xml_serialization_controller import XMLSerializationController
+from .controllers.json_serialization_controller import JSONSerializationController
 from .controllers.serialization_general_controller import SerializationGeneralController
 from .configuration.serialization_constants import (
     ACTION_MAPPING_PATH,
@@ -8,7 +9,7 @@ from .configuration.serialization_constants import (
     INTERNAL_ACTION_MAPPING_PATH,
     MANIFEST_PATH,
     CONFIGURATION_PATH_TEMPLATE,
-    LOG_FILE_PATH
+    LOG_FILE_PATH,
 )
 from . import base
 
@@ -29,12 +30,12 @@ class Serialization(DefaultFacade):
     """
 
     def __init__(
-            self,
-            serialization_action_mapper,
-            request,
-            response,
-            configuration,
-            log_file_path: str = LOG_FILE_PATH,
+        self,
+        serialization_action_mapper,
+        request,
+        response,
+        configuration,
+        log_file_path: str = LOG_FILE_PATH,
     ):
         super().__init__(
             # the path to the external action mapping
@@ -58,7 +59,7 @@ class Serialization(DefaultFacade):
             # the path to the manifest file
             manifest_path=MANIFEST_PATH,
             # the path for log files to be stored
-            log_file_path=log_file_path
+            log_file_path=log_file_path,
         )
         # self.deserialize = SerializationGeneralController()
         # self.serialize_to_file = SerializationGeneralController()
@@ -69,14 +70,20 @@ class Serialization(DefaultFacade):
         # self.domain_to_protobuf_parsing = SerializationGeneralController()
         # self.deserialize_from_file = SerializationGeneralController()
         self.xml_serializer = XMLSerializationController(
-            request, response, serialization_action_mapper, configuration)
+            request, response, serialization_action_mapper, configuration
+        )
         self.general_serializer = SerializationGeneralController(
-            request, response, serialization_action_mapper, configuration)
+            request, response, serialization_action_mapper, configuration
+        )
+        self.json_serializer = JSONSerializationController(
+            request, response, serialization_action_mapper, configuration
+        )
 
     def initialize(self, request, response):
         super().initialize(request, response)
         self.xml_serializer.initialize(request, response)
         self.general_serializer.initialize(request, response)
+        self.json_serializer.initialize(request, response)
 
     def execute(self, method):
         self.request.set_value("logger", self.logger)
@@ -92,11 +99,13 @@ class Serialization(DefaultFacade):
             self.logger.fatal(str(e))
 
     def serialize_node_to_protocol(self, *args, **kwargs):
-        """serialize a node to a given protocol
-        """
+        """serialize a node to a given protocol"""
         self.general_serializer.serialize_node_to_protocol(*args, **kwargs)
 
+    def serialize_node_to_json(self, *args, **kwargs):
+        """serialize a node to json"""
+        self.json_serializer.serialize_node(*args, **kwargs)
+
     def desearialize_protocol_to_node(self, *args, **kwargs):
-        """serialize a protocol to a node
-        """
+        """serialize a protocol to a node"""
         self.general_serializer.deserialize_protocol_to_node(*args, **kwargs)
