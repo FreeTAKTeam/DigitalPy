@@ -34,6 +34,7 @@ from multiprocessing import Process
 import traceback
 from typing import List
 
+from digitalpy.core.main.impl.configuration_factory import ConfigurationFactory
 from digitalpy.core.zmanager.impl.subject_pusher import SubjectPusher
 from digitalpy.core.zmanager.impl.integration_manager_subscriber import (
     IntegrationManagerSubscriber,
@@ -133,9 +134,9 @@ class DigitalPyService:
             args=(
                 ObjectFactory.get_instance("factory"),
                 ObjectFactory.get_instance("TracingProvider"),
+                SingletonConfigurationFactory.get_instance(),
             ),
         )
-
         self._initialize_service_status()
 
     def _initialize_service_status(self):
@@ -145,20 +146,16 @@ class DigitalPyService:
         self._service_status.port = self.configuration.port
         self._service_status.service_name = self.service_id
 
-    def handle_connection(self, client: NetworkClient) -> Request:
+    def handle_connection(self, message: Request):
         """register a client with the server. This method should be called when a client connects to the server
         so that it can be registered with the IAM component.
         Args:
-            client (NetworkClient): the client to register
-            req (Request): the request from the client containing connection data
+            message (Request): the request from the client containing connection data
         """
-        request = ObjectFactory.get_new_instance("Request")
-        resp = ObjectFactory.get_new_instance("Response")
+        client: NetworkClient = message.get_value("client")
         client.service_id = self.service_id
-        self.iam_facade.initialize(request, resp)
-        request.set_value("connection", client)
-        self.iam_facade.execute("connection")
-        return request
+        message.set_value("connection", client)
+        return message
 
     def handle_disconnection(self, client: NetworkClient, req: Request):
         """unregister a client from the server. This method should be called when a client disconnects from the server
@@ -333,7 +330,6 @@ class DigitalPyService:
         Returns:
             bool: True if the message was handled successfully, False otherwise
         """
-
         # TODO: discuss this with giu and see if we should move the to the action mapping system?
         if message.get_value("action") == "connection":
             self.handle_connection(message.get_value("client"), message)
@@ -400,6 +396,7 @@ class DigitalPyService:
         self,
         object_factory: DefaultFactory,
         tracing_provider: TracingProvider,
+        conf_factory: ConfigurationFactory,
     ):
         """used to start the service and initialize the network if provided
 
@@ -407,7 +404,7 @@ class DigitalPyService:
             object_factory (DefaultFactory): the object factory used to create instances of objects
             tracing_provider (TracingProvider): the tracing provider used to create a tracer
         """
-
+        SingletonConfigurationFactory.configure(conf_factory)
         ObjectFactory.configure(object_factory)
         self.tracer = tracing_provider.create_tracer(self.service_id)
         self.initialize_controllers()

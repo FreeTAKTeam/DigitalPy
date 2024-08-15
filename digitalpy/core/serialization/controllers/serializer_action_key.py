@@ -68,8 +68,10 @@ class SerializerActionKey:
         return return_val
 
     def deserialize_from_topic(self, topic: bytes) -> tuple[ActionKey, bytes]:
-        """Deserialize the topic to an ActionKey model and the remaining content."""
-        parts = topic.split(DEL, 5)
+        """Deserialize the topic to an ActionKey model and the remaining content. a topic is in the form
+        config/decorator/source/context/action/content where content contains the rest of the message
+        information."""
+        parts = topic.split(DEL, maxsplit=5)
         action_key = ActionKey(None, None)
         if len(parts) < 3:
             raise ValueError(
@@ -107,7 +109,7 @@ class SerializerActionKey:
         """
         action_key = ActionKey(None, None)
 
-        pattern = r"^(?P<sender>[\w^-]*)\?(?P<context>[\w^-]*)(@?(?P<decorator>[\w^-]*))\?(?P<action>[\w^-]*)\s*(=\s*(?P<target>[\w\.]*))?"
+        pattern = r"^(?P<sender>[\w^-]*)\?(?P<context>[\w^-_]*)(@?(?P<decorator>[\w^-]*))\?(?P<action>[\w^-]*)\s*(=\s*(?P<target>[\w\.]*))?"
 
         match = re.match(pattern, ini_key)
         if not match:

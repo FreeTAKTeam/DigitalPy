@@ -30,27 +30,42 @@ class SerializerContainer:
         self.formatter.serialize(container)
         message_body: bytes = container.values
         message_topic: bytes = self.serializer_action_key.to_topic(container.action_key)
-        return message_topic + ZMANAGER_MESSAGE_DELIMITER + message_body
+        return (
+            message_topic
+            + ZMANAGER_MESSAGE_DELIMITER
+            + container.get_id().encode()
+            + ZMANAGER_MESSAGE_DELIMITER
+            + message_body
+        )
 
     def from_zmanager_message(self, message: bytes) -> ControllerMessage:
         """Deserialize the container from a ZManager message."""
-        action_key, message_body = self.serializer_action_key.deserialize_from_topic(message)
+        action_key, message_body = self.serializer_action_key.deserialize_from_topic(
+            message
+        )
 
         request: Request = ObjectFactory.get_new_instance("Request")
         request.format = ZMANAGER_MESSAGE_FORMAT
-        request.values = message_body
+        body_sections = message_body.split(ZMANAGER_MESSAGE_DELIMITER, maxsplit=1)
+        request.set_id(body_sections[0].decode())
+        request.set_values(body_sections[1])
         self.formatter.deserialize(request)
         request.action_key = action_key
         return request
 
     def from_zmanager_response(self, message: bytes) -> Response:
         """Deserialize the container from a ZManager response."""
-        action_key, message_body = self.serializer_action_key.deserialize_from_topic(message)
+        action_key, message_body = self.serializer_action_key.deserialize_from_topic(
+            message
+        )
         if action_key.config != RESPONSE:
             raise ValueError("The action key is not a response")
         response: Response = ObjectFactory.get_new_instance("Response")
         response.format = ZMANAGER_MESSAGE_FORMAT
         response.values = message_body
+        body_sections = message_body.split(ZMANAGER_MESSAGE_DELIMITER, maxsplit=1)
+        response.set_id(body_sections[0].decode())
+        response.set_values(body_sections[1])
         self.formatter.deserialize(response)
         response.action_key = action_key
         return response

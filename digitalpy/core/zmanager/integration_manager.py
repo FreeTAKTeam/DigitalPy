@@ -130,14 +130,22 @@ class IntegrationManager:
     def _forward_message(self, message):
         c_message = self.serializer_container.from_zmanager_message(message)
         next_action = None
+        new_message: bytes = message
+
         if c_message.action_key.config:
             next_action = self.action_flow_controller.get_next_action(c_message)
-        if next_action:
+
+        if next_action is None:
             c_message.action_key = self.response_action
             new_message = self.serializer_container.to_zmanager_message(c_message)
             self.pub_socket.send(message, copy=False)
+        else:
+            c_message.action_key = next_action
+            new_message = self.serializer_container.to_zmanager_message(c_message)
+
         try:
             # send the response back to the client
             self.pub_socket.send(new_message, copy=False)
+
         except Exception as ex:
             print("Error sending response to client: {}".format(ex))

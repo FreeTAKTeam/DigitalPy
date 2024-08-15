@@ -3,23 +3,28 @@ from typing import Optional
 
 import zmq
 
-from digitalpy.core.digipy_configuration.action_key_controller import \
-    ActionKeyController
-from digitalpy.core.digipy_configuration.domain.model.actionkey import \
-    ActionKey
+from digitalpy.core.digipy_configuration.action_key_controller import (
+    ActionKeyController,
+)
+from digitalpy.core.digipy_configuration.domain.model.actionkey import ActionKey
 from digitalpy.core.main.object_factory import ObjectFactory
-from digitalpy.core.main.singleton_configuration_factory import \
-    SingletonConfigurationFactory
+from digitalpy.core.main.singleton_configuration_factory import (
+    SingletonConfigurationFactory,
+)
 from digitalpy.core.parsing.formatter import Formatter
-from digitalpy.core.serialization.controllers.serializer_action_key import \
-    SerializerActionKey
-from digitalpy.core.serialization.controllers.serializer_container import \
-    SerializerContainer
-from digitalpy.core.zmanager.configuration.zmanager_constants import \
-    ZMANAGER_MESSAGE_DELIMITER
+from digitalpy.core.serialization.controllers.serializer_action_key import (
+    SerializerActionKey,
+)
+from digitalpy.core.serialization.controllers.serializer_container import (
+    SerializerContainer,
+)
+from digitalpy.core.zmanager.configuration.zmanager_constants import (
+    ZMANAGER_MESSAGE_DELIMITER,
+)
 from digitalpy.core.zmanager.controller_message import ControllerMessage
-from digitalpy.core.zmanager.domain.model.zmanager_configuration import \
-    ZManagerConfiguration
+from digitalpy.core.zmanager.domain.model.zmanager_configuration import (
+    ZManagerConfiguration,
+)
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
 
@@ -47,15 +52,23 @@ class IntegrationManagerSubscriber:
 
         self.service_id = service_id
         self.application_protocol = application_protocol
-        self.zmanager_conf: ZManagerConfiguration = SingletonConfigurationFactory.get_configuration_object("ZManagerConfiguration")
-        self.serializer_container: SerializerContainer = ObjectFactory.get_instance("SerializerContainer")
+        self.zmanager_conf: ZManagerConfiguration = (
+            SingletonConfigurationFactory.get_configuration_object(
+                "ZManagerConfiguration"
+            )
+        )
+        self.serializer_container: SerializerContainer = ObjectFactory.get_instance(
+            "SerializerContainer"
+        )
 
         self.timeout = timeout
 
         self.action_key_controller: ActionKeyController = ObjectFactory.get_instance(
             "ActionKeyController"
         )
-        self.serializer_action_key: SerializerActionKey = ObjectFactory.get_instance("SerializerActionKey")
+        self.serializer_action_key: SerializerActionKey = ObjectFactory.get_instance(
+            "SerializerActionKey"
+        )
 
     def setup(self):
         """Connect or reconnect to integration manager"""
@@ -127,17 +140,17 @@ class IntegrationManagerSubscriber:
         except zmq.error.Again:
             return None
 
-    def _receive_message(self) -> list[bytes]:
-        message = self.subscriber_socket.recv_multipart()[0].split(b" ", 1)
+    def _receive_message(self) -> bytes:
+        message = self.subscriber_socket.recv_multipart()[0]
 
         return message
 
-    def _deserialize_response(self, message: list[bytes]) -> Response:
+    def _deserialize_response(self, message: bytes) -> Response:
         response: Response = ObjectFactory.get_new_instance("Response")
         response = self.serializer_container.from_zmanager_message(message)
         return response
-    
-    def _deserialize_request(self, message: list[bytes]) -> Request:
+
+    def _deserialize_request(self, message: bytes) -> Request:
         request: Request = ObjectFactory.get_new_instance("Request")
         request = self.serializer_container.from_zmanager_message(message)
         return request

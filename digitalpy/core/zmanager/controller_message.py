@@ -2,21 +2,22 @@ from abc import ABC
 from uuid import uuid4
 from digitalpy.core.digipy_configuration.domain.model.actionkey import ActionKey
 
+
 class ControllerMessage(ABC):
     """A message that is sent to a controller"""
 
     def __init__(self):
         self.action_key: ActionKey = ActionKey(None, None)
         self.values = {}
-        self.id = str(uuid4())
         self.properties: dict
         self.errors = None
         self.format = ""
+        self._message_id = str(uuid4())
 
     @property
     def decorator(self):
         return self.action_key.decorator
-    
+
     @decorator.setter
     def decorator(self, decorator):
         self.action_key.decorator = decorator
@@ -32,7 +33,7 @@ class ControllerMessage(ABC):
     @property
     def context(self):
         return self.action_key.context
-    
+
     @context.setter
     def context(self, context):
         self.action_key.context = context
@@ -40,11 +41,11 @@ class ControllerMessage(ABC):
     @property
     def action(self):
         return self.action_key.action
-    
+
     @action.setter
     def action(self, action):
         self.action_key.action = action
-    
+
     @property
     def flow_name(self):
         return self.action_key.config
@@ -53,21 +54,29 @@ class ControllerMessage(ABC):
     def flow_name(self, flow_name):
         self.action_key.config = flow_name
 
+    @property
+    def id(self):
+        return self._message_id
+
+    @id.setter
+    def id(self, message_id):
+        self._message_id = message_id
+
     def get_id(self):
         """Get the unique identifier of the message.
 
         Returns:
             str: The unique identifier of the message.
         """
-        return self.id
+        return self._message_id
 
-    def set_id(self, id):
+    def set_id(self, message_id):
         """Set the unique identifier of the message.
 
         Args:
-            id (str): The unique identifier to set.
+            message_id (str): The unique identifier to set.
         """
-        self.id = id
+        self._message_id = message_id
 
     def set_sender(self, sender):
         """Set the sender of the message.
@@ -240,7 +249,7 @@ class ControllerMessage(ABC):
             str: The decorator of the message.
         """
         return self.decorator
-    
+
     def set_flow_name(self, flow_name: str):
         """Set the flow name of the message.
 
@@ -248,7 +257,7 @@ class ControllerMessage(ABC):
             flow_name (str): The flow name to set.
         """
         self.action_key.config = flow_name
-    
+
     def get_flow_name(self):
         """Get the flow name of the message.
 
@@ -256,7 +265,7 @@ class ControllerMessage(ABC):
             str: The flow name of the message.
         """
         return self.action_key.config
-    
+
     def set_action_key(self, action_key: ActionKey):
         """Set the action key of the message.
 

@@ -1,1 +1,2 @@
 ACTION_MAPPING_SECTION = 'actionmapping'
+MAX_FLOW_LENGTH = 100

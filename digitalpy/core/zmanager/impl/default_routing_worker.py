@@ -33,6 +33,9 @@ from digitalpy.core.zmanager.action_mapper import ActionMapper
 from digitalpy.core.zmanager.configuration.zmanager_constants import (
     ZMANAGER_MESSAGE_DELIMITER,
 )
+from digitalpy.core.digipy_configuration.configuration.digipy_configuration_constants import (
+    MAX_FLOW_LENGTH,
+)
 
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
@@ -272,7 +275,8 @@ class DefaultRoutingWorker:
                 self.send_error(ex)
 
     def process_integration_manager_message(self, message: list[bytes]):
-        """process a message published by the integration manager
+        """process a message published by the integration manager, this is a placeholder
+        for future functionality
 
         Args:
             request (Request): the request to be processed
@@ -281,7 +285,9 @@ class DefaultRoutingWorker:
         print(message)
 
     def process_request(self, request: Request):
-        """process a request made by the subject
+        """process a request made by the subject until the default routing worker cannot resolve
+        the action_key to a specific action at which point the method exits. Alternatively
+        if the number of actions processed exceeds the MAX_FLOW_LENGTH the method will exit.
 
         Args:
             response_topic (str): the base topic from which to send the response
@@ -291,7 +297,25 @@ class DefaultRoutingWorker:
         response.action_key = request.action_key
         response.set_id(request.get_id())
 
-        self.action_mapper.process_action(request, response)
+        # alternative to while loop
+        for _ in range(MAX_FLOW_LENGTH):
+            # get the next action in the flow before any changes are made to the request object
+            next_action = self.action_flow_controller.get_next_action(request)
+            # execute the current action
+            self.action_mapper.process_action(request, response)
+            # if there is a next action that we can resolve, set it as the action key
+            # this assumes the Publish action is reserved to signify that the response
+            # should be sent to the integration manager
+            if next_action:
+                response.action_key = next_action
+            else:
+                break
+            try:
+                self.action_key_controller.resolve_action_key(next_action)
+                request.action_key = next_action
+                request.set_values(response.get_values())
+            except ValueError:
+                break
         self.logger.debug("returned values: %s", str(response.get_values()))
         return response
 
@@ -317,26 +341,6 @@ class DefaultRoutingWorker:
             return [self.serializer_container.to_zmanager_message(response)]
         else:
             return [self.serializer_container.to_zmanager_message(response)]
-
-    def process_next_request(self, controller_class: str, response: Response):
-        """process the next request based on the response from the previous request
-
-        Args:
-            controllerClass (str): this is the controller class name from which the response originated
-            response (Response): the response to be processed as the next request
-        """
-        # set the request based on the result
-        next_action = self.action_flow_controller.get_next_action(response)
-
-        response.action_key = next_action
-
-        next_request: Request = ObjectFactory.get_new_instance("request")
-        next_request.action_key = next_action
-        next_request.set_sender(controller_class)
-        next_request.set_format(response.get_format())
-        next_request.set_values(response.get_values())
-
-        self.action_mapper.process_action(next_request, response)
 
     def receive_request(self) -> Request:
         """Receive and process a request from the ZMQ socket.

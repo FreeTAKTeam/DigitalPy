@@ -1,4 +1,3 @@
-
 """
 This module defines two classes: `NetworkFlaskHTTPBlueprints` and `BlueprintCommunicator`. 
 
@@ -15,23 +14,37 @@ will need to be documented once its methods and purpose are clear.
 This module also imports necessary modules and types from Flask, typing, uuid, pickle, and various 
 components from the `digitalpy` package.
 """
+
 import threading
 import pickle
 import uuid
 from typing import Dict, List, TYPE_CHECKING, Union
 from flask import Blueprint, Flask, g
-from flask_jwt_extended import JWTManager, get_jwt_identity, create_access_token, verify_jwt_in_request
+from flask_jwt_extended import (
+    JWTManager,
+    get_jwt_identity,
+    create_access_token,
+    verify_jwt_in_request,
+)
 from flask_jwt_extended.utils import decode_token, get_unverified_jwt_headers
 from flask_cors import CORS
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.network.domain.client_status import ClientStatus
 from digitalpy.core.domain.object_id import ObjectId
-from digitalpy.core.service_management.domain.service_description import ServiceDescription
+from digitalpy.core.service_management.domain.service_description import (
+    ServiceDescription,
+)
+from digitalpy.core.main.singleton_configuration_factory import (
+    SingletonConfigurationFactory,
+)
 
 from digitalpy.core.network.network_sync_interface import NetworkSyncInterface
 from digitalpy.core.domain.domain.network_client import NetworkClient
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
+from digitalpy.core.digipy_configuration.controllers.action_flow_controller import (
+    ActionFlowController,
+)
 
 import zmq
 
@@ -44,15 +57,15 @@ class BlueprintCommunicator:
     The BlueprintCommunicator class is designed to manage network communication for a service in
     a digitalpy environment.
 
-    This class uses ZeroMQ sockets and contexts to establish and manage network communication. 
-    It is designed to be used by a single service in a digitalpy environment, and is **not 
+    This class uses ZeroMQ sockets and contexts to establish and manage network communication.
+    It is designed to be used by a single service in a digitalpy environment, and is **not
     thread-safe** between different services.
 
-    The class maintains a dictionary of push and subscribe sockets for different network 
-    identities, and also manages a local ZeroMQ context. The network addresses for the sink and 
+    The class maintains a dictionary of push and subscribe sockets for different network
+    identities, and also manages a local ZeroMQ context. The network addresses for the sink and
     publisher are stored as class variables to be defined by the network at time of initialization.
 
-    The class assumes that the network will be initialized before any blueprint is used, and 
+    The class assumes that the network will be initialized before any blueprint is used, and
     that the sink address will only be set once by the network.
     """
 
@@ -70,7 +83,7 @@ class BlueprintCommunicator:
     local_context: zmq.Context = zmq.Context()
 
     def _get_id(self) -> bytes:
-        """ this method returns the network id for the current session, if it does not exist then generate
+        """this method returns the network id for the current session, if it does not exist then generate
         a new one and store it in the session.
 
         Returns:
@@ -177,6 +190,35 @@ class BlueprintCommunicator:
         sub_sock.unsubscribe(self._get_message_topic(req))
         return resp
 
+    def send_flow_sync(self, flow_name: str, data: dict) -> Response:
+        """send a message to the network and wait for a response
+
+        Args:
+            action (str): the action key for the request
+            context (str): the context key for the request
+            data (dict): the data to be sent as the values of the request
+
+        Returns:
+            Response: the response from the network
+        """
+        flow = SingletonConfigurationFactory.get_action_flow(flow_name)
+        if flow is None:
+            raise ValueError(f"Action flow {flow_name} not found.")
+        # compose and send the request
+        push_sock = self._get_push_socket()
+        req: Request = ObjectFactory.get_new_instance("Request")
+        req.set_values(data)
+        req.set_value("digitalpy_connection_id", self._get_id())
+        req.action_key = flow.actions[0]
+        push_sock.send_pyobj(req)
+        # wait for the response
+        sub_sock = self._get_sub_socket()
+        sub_sock.subscribe(self._get_message_topic(req))
+        resp_raw = sub_sock.recv_multipart()
+        resp = pickle.loads(resp_raw[1])
+        sub_sock.unsubscribe(self._get_message_topic(req))
+        return resp
+
 
 class FlaskHTTPNetworkBlueprints(NetworkSyncInterface):
     """this class implements the NetworkAsyncInterface using the TCP protocol realizing
@@ -197,7 +239,13 @@ class FlaskHTTPNetworkBlueprints(NetworkSyncInterface):
         self.service_desc: ServiceDescription = None  # type: ignore
         self.app_thread: threading.Thread
 
-    def intialize_network(self, host: str, port: int, blueprints: List[Blueprint], service_desc: ServiceDescription):
+    def intialize_network(
+        self,
+        host: str,
+        port: int,
+        blueprints: List[Blueprint],
+        service_desc: ServiceDescription,
+    ):
         """this method initializes the network
 
         Args:
@@ -223,11 +271,11 @@ class FlaskHTTPNetworkBlueprints(NetworkSyncInterface):
         self.sink = self.local_context.socket(zmq.PULL)
         self.publisher = self.local_context.socket(zmq.PUB)
         self.sink.bind_to_random_port("tcp://127.0.0.1")
-        BlueprintCommunicator.sink_addr = self.sink.getsockopt(
-            zmq.LAST_ENDPOINT)
+        BlueprintCommunicator.sink_addr = self.sink.getsockopt(zmq.LAST_ENDPOINT)
         self.publisher.bind_to_random_port("tcp://127.0.0.1")
         BlueprintCommunicator.publisher_addr = self.publisher.getsockopt(
-            zmq.LAST_ENDPOINT)
+            zmq.LAST_ENDPOINT
+        )
 
         for blueprint in blueprints:
             self.app.register_blueprint(blueprint)
@@ -243,7 +291,7 @@ class FlaskHTTPNetworkBlueprints(NetworkSyncInterface):
         """this method returns the requests from the network
 
         Args:
-            max_requests (int, optional): the maximum number of requests to be returned. 
+            max_requests (int, optional): the maximum number of requests to be returned.
             Defaults to 1000.
 
         Returns:
@@ -292,10 +340,11 @@ class FlaskHTTPNetworkBlueprints(NetworkSyncInterface):
         # create a new client object
         oid = ObjectId("network_client", id=str(network_id))
         client: NetworkClient = ObjectFactory.get_new_instance(
-            "DefaultClient", dynamic_configuration={"oid": oid})
+            "DefaultClient", dynamic_configuration={"oid": oid}
+        )
         client.id = bytes(network_id)
         client.status = ClientStatus.CONNECTED
-        client.service_id = self.service_desc.id
+        client.service_id = self.service_desc.name
         client.protocol = self.service_desc.protocol
 
         # send the response
@@ -310,9 +359,10 @@ class FlaskHTTPNetworkBlueprints(NetworkSyncInterface):
             response (Response): the response
         """
         self.publisher.send_multipart(
-            [self._get_message_topic(message=response), pickle.dumps(response)])
+            [self._get_message_topic(message=response), pickle.dumps(response)]
+        )
 
-    def _get_client(self, network_id: bytes, request: 'Request') -> NetworkClient:
+    def _get_client(self, network_id: bytes, request: "Request") -> NetworkClient:
         """this method returns the client for the given network id
 
         Args:
@@ -339,7 +389,9 @@ class FlaskHTTPNetworkBlueprints(NetworkSyncInterface):
         """
         return str(message.get_id()).encode("utf-8")
 
-    def receive_message_from_client(self, client: NetworkClient, blocking: TYPE_CHECKING = False) -> Request:
+    def receive_message_from_client(
+        self, client: NetworkClient, blocking: TYPE_CHECKING = False
+    ) -> Request:
         """this method has not yet been implemented"""
         return super().receive_message_from_client(client, blocking)
 

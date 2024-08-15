@@ -21,6 +21,11 @@ import traceback
 from typing import List
 import os
 
+from digitalpy.core.digipy_configuration.domain.model.actionkey import ActionKey
+from digitalpy.core.main.singleton_configuration_factory import (
+    SingletonConfigurationFactory,
+)
+from digitalpy.core.main.impl.configuration_factory import ConfigurationFactory
 from digitalpy.core.zmanager.impl.integration_manager_subscriber import (
     IntegrationManagerSubscriber,
 )
@@ -93,21 +98,24 @@ class ApiService(DigitalPyService):
 
         # TODO: discuss this with giu and see if we should move the to the action mapping system?
         if message.get_value("action") == "connection":
-            self.handle_connection(message.get_value("client"))
+            self.handle_connection(
+                message
+            )  # add the specific service information to the connection message
 
         # handle disconnection otherwise call the api message handler
         if message.get_value("action") == "disconnection":
-            self.handle_disconnection(message.get_value("client"), message)
+            self.handle_disconnection(
+                message.get_value("client"), message
+            )  # disconnect the client
 
         else:
             self.handle_api_message(message)
 
-    def response_handler(self, responses: List[Response]):
-        for response in responses:
-            if response.get_action() == COMMAND_ACTION:
-                self.handle_command(response)
-            else:
-                self.handle_response(response)
+    def response_handler(self, response: Response):
+        if response.get_action() == COMMAND_ACTION:
+            self.handle_command(response)
+        else:
+            self.handle_response(response)
 
     def handle_api_message(self, message: Request):
         """this method is responsible for handling the case where a client sends a request.
@@ -115,7 +123,7 @@ class ApiService(DigitalPyService):
             message (request): the request message
         """
         message.set_format("pickled")
-        self._subject_pusher.subject_send_request(message)
+        self._subject_pusher.subject_send_request(message, self.configuration.name)
 
     def handle_response(self, response: Response):
         self.protocol.send_response(response)
@@ -162,14 +170,21 @@ class ApiService(DigitalPyService):
         self,
         object_factory: DefaultFactory,
         tracing_provider: TracingProvider,  # pylint: disable=useless-super-delegation
+        configuration_factory: ConfigurationFactory,
     ):
         """We override the start method to allow for the injection of the endpoints and handlers
         to the network interface.
         """
+        SingletonConfigurationFactory.configure(configuration_factory)
         ObjectFactory.configure(object_factory)
         self.tracer = tracing_provider.create_tracer(self.service_id)
         self.initialize_controllers()
         self.initialize_connections()
+        # TODO: this probably isn't the best solution but giu is busy and I need to get this working
+        # so I'm going to leave it for now see notes for 8/12/2024
+        response_action = ActionKey(None, None)
+        response_action.config = "RESPONSE"
+        self._integration_manager_subscriber.subscribe_to_action(response_action)
 
         # get all blueprints from the configured blueprint path
         blueprints = self._get_blueprints()
