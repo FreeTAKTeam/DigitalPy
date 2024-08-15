@@ -5,7 +5,7 @@ from digitalpy.core.domain.node import Node
 
 
 class ActionKey(Node):
-    """An ActionKey is a key that is used to trigger an action. It is a part of the 
+    """An ActionKey is a key that is used to trigger an action. It is a part of the
     system that can be"""
 
     def __init__(
@@ -125,14 +125,21 @@ class ActionKey(Node):
     def __eq__(self, value: object) -> bool:
         if isinstance(value, ActionKey):
             return (
-                value.action == self.action
-                and value.context == self.context
-                and value.decorator == self.decorator
-                and value.source == self.source
+                (value.action == self.action or not value.action or not self.action)
+                and (
+                    value.context == self.context
+                    or not value.context
+                    or not self.context
+                )
+                and (
+                    value.decorator == self.decorator
+                    or not value.decorator
+                    or not self.decorator
+                )
+                and (value.source == self.source or not value.source or not self.source)
             )
         else:
             return super().__eq__(value)
-
 
     def __str__(self) -> str:
         return f"ActionKey(name={self._name}, action={self._action}, context={self._context}, decorator={self._decorator}, config={self._config}, target={self._target}, source={self._source}, referencedBehaviour={self._referencedBehaviour})"
