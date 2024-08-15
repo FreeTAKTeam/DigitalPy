@@ -14,8 +14,12 @@ import threading
 from time import sleep
 from typing import TYPE_CHECKING
 
-from digitalpy.core.digipy_configuration.controllers.action_flow_controller import ActionFlowController
-from digitalpy.core.service_management.service_management_core import ServiceManagementCore
+from digitalpy.core.digipy_configuration.controllers.action_flow_controller import (
+    ActionFlowController,
+)
+from digitalpy.core.service_management.service_management_core import (
+    ServiceManagementCore,
+)
 from digitalpy.core.telemetry.singleton_status_factory import SingletonStatusFactory
 from digitalpy.core.telemetry.domain.status_factory import StatusFactory
 from digitalpy.core.main.impl.configuration_factory import ConfigurationFactory
@@ -185,10 +189,10 @@ class DigitalPy:
         component_blueprint_path=<path to the blueprint file for the component>
         """
 
-        config: Configuration = ObjectFactory.get_instance("Configuration")
-
-        def register_component(facade: DefaultFacade, config: Configuration):
-            config.add_configuration(facade.get_configuration_path())
+        def register_component(facade: DefaultFacade):
+            action_mapping_conf = InifileConfiguration(facade.get_configuration_path())
+            action_mapping_conf.add_configuration("")
+            SingletonConfigurationFactory.add_configuration(action_mapping_conf)
 
             ObjectFactory.register_instance(
                 facade.__class__.__name__.lower() + "actionmapper",
@@ -197,17 +201,17 @@ class DigitalPy:
 
             facade.setup()
 
-        register_component(ComponentManagement(None, None, None, None), config)
+        register_component(IAM(None, None, None, None))
 
-        register_component(Domain(None, None, None, None), config)
+        register_component(Files(None, None, None, None))
 
-        register_component(IAM(None, None, None, None), config)
+        register_component(ComponentManagement(None, None, None, None))
 
-        register_component(Serialization(None, None, None, None), config)
+        register_component(Domain(None, None, None, None))
 
-        register_component(ServiceManagement(None, None, None, None), config)
+        register_component(Serialization(None, None, None, None))
 
-        register_component(Files(None, None, None, None), config)
+        register_component(ServiceManagement(None, None, None, None))
 
     def test_event_loop(self):
         """the main event loop of the application should be called within a continuous while loop"""
@@ -275,7 +279,10 @@ class DigitalPy:
 
             # begin the integration_manager_service
             self.integration_manager: IntegrationManager = ObjectFactory.get_instance(
-                "IntegrationManager"
+                "IntegrationManager",
+                dynamic_configuration={
+                    "configuration_factory": SingletonConfigurationFactory.get_instance()
+                },
             )
             self.integration_manager_process = multiprocessing.Process(
                 target=self.integration_manager.start

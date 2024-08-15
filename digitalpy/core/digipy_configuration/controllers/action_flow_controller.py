@@ -15,6 +15,9 @@ from digitalpy.core.digipy_configuration.action_key_controller import (
 from digitalpy.core.digipy_configuration.domain.model.actionflow import ActionFlow
 from digitalpy.core.files.domain.model.file import File
 from digitalpy.core.zmanager.configuration.zmanager_constants import DEFAULT_ENCODING
+from digitalpy.core.serialization.controllers.serializer_action_key import (
+    SerializerActionKey,
+)
 
 
 class ActionFlowController:
@@ -24,12 +27,13 @@ class ActionFlowController:
 
     def __init__(self):
         self.action_key_controller = ActionKeyController()
+        self.serializer_action_key = SerializerActionKey()
 
     def create_action_flow(self, file: File):
         """This operation parses the flow at the specified file and saves
         the result to the CofigurationFactory.
         """
-        new_flow = None
+        new_flow: ActionFlow
         for line in file.contents.splitlines():
             line_str = line.decode(DEFAULT_ENCODING)
             if line_str == "":
@@ -40,7 +44,7 @@ class ActionFlowController:
                 SingletonConfigurationFactory.add_action_flow(new_flow)
 
             elif re.match(r"^\w*\?\w*(@\w+)?\?\w*", line_str):
-                new_action = self.action_key_controller.deserialize_from_ini(line_str)
+                new_action = self.serializer_action_key.deserialize_from_ini(line_str)
                 new_action.config = new_flow.config_id
                 new_flow.actions.append(new_action)
 
@@ -56,6 +60,8 @@ class ActionFlowController:
         flow = SingletonConfigurationFactory.get_action_flow(
             controller_message.get_flow_name()
         )
+        if flow is None:
+            return None
         current_action = self.action_key_controller.build_from_controller_message(
             controller_message
         )

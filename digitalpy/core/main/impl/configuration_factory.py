@@ -1,6 +1,9 @@
 from importlib import import_module
 from typing import Any, Optional
 
+from digitalpy.core.serialization.controllers.serializer_action_key import (
+    SerializerActionKey,
+)
 from digitalpy.core.digipy_configuration.domain.model.actionflow import ActionFlow
 from digitalpy.core.digipy_configuration.domain.model.actionkey import ActionKey
 from digitalpy.core.digipy_configuration.configuration.digipy_configuration_constants import (
@@ -17,6 +20,7 @@ class ConfigurationFactory:
         self.configuration_objects: dict[str, Node] = {}
         self.action_mapping: dict[str, ActionKey] = {}
         self.action_flows: dict[str, ActionFlow] = {}
+        self.serializer_action_key: SerializerActionKey = SerializerActionKey()
 
     def add_configuration(self, configuration: Configuration):
         """Register a new configuration in the factory by initializing all of it's referenced
@@ -79,8 +83,10 @@ class ConfigurationFactory:
             self._initialize_action_mapping_configuration_object(
                 configuration, section_name
             )
+        elif section_name in self.configuration_objects:
+            self._extend_generic_configuration_object(configuration, section_name)
         else:
-            self.configuration_objects[section_name] = (
+            self.configuration_objects[section_name] = (  # type: ignore
                 self._initialize_generic_configuration_object(
                     configuration, section_name
                 )
@@ -88,48 +94,14 @@ class ConfigurationFactory:
 
     def _initialize_action_mapping_configuration_object(
         self, configuration: Configuration, section_name: str
-    ) -> Node:
+    ):
         """Initialize an action mapping configuration object."""
-        action_mapping = {}
         for key in configuration.get_section(section_name).keys():
-            action_mapping[key] = self._deserialize_from_ini(
-                configuration.get_value(key, section_name)
+            self.action_mapping[key] = (  # type: ignore
+                self.serializer_action_key.deserialize_from_config_entry(
+                    key, configuration.get_value(key, section_name)
+                )
             )
-
-        return action_mapping
-
-    def _deserialize_from_ini(self, ini_key: str) -> ActionKey:
-        """Deserialize the ini key to an ActionKey model.
-
-        Args:
-            ini_key (str): The ini key to deserialize
-
-        Returns:
-            ActionKey: The deserialized ActionKey model
-        """
-        # TODO: This method should probably be moved to the ActionKeyController class however
-        # in the current implementation this would cause a circular dependecy. I've brought this
-        # up in https://github.com/orgs/FreeTAKTeam/projects/7/views/1?pane=issue&itemId=72571977
-        # and this is a temporary solution.
-        action_key = ActionKey(None, None)
-        sections = ini_key.split("=")
-        if len(sections) > 2:
-            raise ValueError("Invalid ini key format for action key " + ini_key)
-        elif len(sections) == 2:
-            action_key.target = sections[1]
-
-        key_sections = sections[0].split("?")
-        if 3 > len(key_sections) or len(key_sections) > 4:
-            raise ValueError("Invalid ini key format for action key " + ini_key)
-
-        if len(key_sections) < 4:
-            key_sections.insert(0, "")
-
-        action_key.decorator = key_sections[0]
-        action_key.action = key_sections[1]
-        action_key.context = key_sections[2]
-        action_key.source = key_sections[3]
-        return action_key
 
     def _initialize_generic_configuration_object(
         self, configuration: Configuration, section_name: str
@@ -149,7 +121,7 @@ class ConfigurationFactory:
             return None
 
         configuration_class = self._import_class(class_path)
-        configuration_object = configuration_class(None, None)
+        configuration_object = configuration_class(None, None)  # type: ignore
         propeties = configuration_object.get_properties()
 
         for key in configuration.get_section(section_name).keys():
@@ -161,6 +133,28 @@ class ConfigurationFactory:
                 )
 
         return configuration_object
+
+    def _extend_generic_configuration_object(
+        self, configuration: Configuration, section_name: str
+    ):
+        """Extend a generic configuration object.
+
+        Args:
+            configuration (Configuration): The configuration object to extend.
+            section_name (str): The name of the configuration section.
+
+        Returns:
+            Optional[Node]: The extended configuration object.
+        """
+        propeties = self.configuration_objects[section_name].get_properties()
+
+        for key in configuration.get_section(section_name).keys():
+            if key in propeties:
+                setattr(
+                    self.configuration_objects[section_name],
+                    key,
+                    configuration.get_value(key, section_name),
+                )
 
     def _import_class(self, class_name: str) -> type[Node]:
         """Import a class."""

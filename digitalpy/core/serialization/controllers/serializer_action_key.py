@@ -1,9 +1,7 @@
 """This module serializes and de-serializes actions and topics."""
 
-from digitalpy.core.digipy_configuration.action_key_controller import (
-    ActionKeyController,
-)
-from digitalpy.core.component_management.domain.model.actionkey import ActionKey
+import re
+from digitalpy.core.digipy_configuration.domain.model.actionkey import ActionKey
 from digitalpy.core.zmanager.configuration.zmanager_constants import (
     ZMANAGER_MESSAGE_DELIMITER as DEL,
     DEFAULT_ENCODING,
@@ -18,7 +16,7 @@ class SerializerActionKey:
     action_key: ActionKey
 
     def __init__(self):
-        self.action_key_controller = ActionKeyController()
+        pass
 
     def to_topic(self, action_key: ActionKey) -> bytes:
         """Serialize the model to a topic in the form of a string."""
@@ -52,7 +50,7 @@ class SerializerActionKey:
             case (a, c, s) if s:
                 return_val = s.encode()
             case (_, _, _):
-                return_val = b''
+                return_val = b""
         if return_val:
             return_val = DEL + return_val
         match (
@@ -72,9 +70,11 @@ class SerializerActionKey:
     def deserialize_from_topic(self, topic: bytes) -> tuple[ActionKey, bytes]:
         """Deserialize the topic to an ActionKey model and the remaining content."""
         parts = topic.split(DEL, 5)
-        action_key = self.action_key_controller.new_action_key()
+        action_key = ActionKey(None, None)
         if len(parts) < 3:
-            raise ValueError("Invalid topic format for action key " + topic)
+            raise ValueError(
+                "Invalid topic format for action key " + topic.decode(DEFAULT_ENCODING)
+            )
         # optional decorator
         if len(parts) < 4:
             parts.insert(0, b"")
@@ -88,3 +88,34 @@ class SerializerActionKey:
         action_key.action = parts[4].decode(DEFAULT_ENCODING)
 
         return action_key, DEL.join(parts[5:])
+
+    def deserialize_from_config_entry(self, key: str, val: str) -> ActionKey:
+        """Deserialize the config entry to an ActionKey model."""
+        ak = self.deserialize_from_ini(key)
+        ak.target = val
+        return ak
+
+    def deserialize_from_ini(self, ini_key: str) -> ActionKey:
+        """Deserialize the ini key to an ActionKey model from the format
+        [Sender]?[context]@[Optional[decorator]]?[action][Optional[=target]]
+
+        Args:
+            ini_key (str): The ini key to deserialize
+
+        Returns:
+            ActionKey: The deserialized ActionKey model
+        """
+        action_key = ActionKey(None, None)
+
+        pattern = r"^(?P<sender>[\w^-]*)\?(?P<context>[\w^-]*)(@?(?P<decorator>[\w^-]*))\?(?P<action>[\w^-]*)\s*(=\s*(?P<target>[\w\.]*))?"
+
+        match = re.match(pattern, ini_key)
+        if not match:
+            raise ValueError("Invalid ini key format for action key " + ini_key)
+
+        action_key.source = match.group("sender")
+        action_key.context = match.group("context")
+        action_key.decorator = match.group("decorator")
+        action_key.action = match.group("action")
+        action_key.target = match.group("target")
+        return action_key

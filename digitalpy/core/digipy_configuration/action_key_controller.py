@@ -1,6 +1,9 @@
 """This module is responsible for controlling the action key models"""
+
 import re
-from digitalpy.core.main.singleton_configuration_factory import SingletonConfigurationFactory
+from digitalpy.core.main.singleton_configuration_factory import (
+    SingletonConfigurationFactory,
+)
 from digitalpy.core.zmanager.controller_message import ControllerMessage
 from digitalpy.core.digipy_configuration.domain.model.actionkey import ActionKey
 from digitalpy.core.digipy_configuration.configuration.digipy_configuration_constants import (
@@ -10,36 +13,18 @@ from digitalpy.core.zmanager.configuration.zmanager_constants import (
     ZMANAGER_MESSAGE_DELIMITER as DEL,
     DEFAULT_ENCODING,
 )
+from digitalpy.core.serialization.controllers.serializer_action_key import (
+    SerializerActionKey,
+)
+
 
 class ActionKeyController:
     """This class is responsible controlling the action key models,
     this includes primarily, serialization and deserialization of the models.
     """
 
-    def deserialize_from_ini(self, ini_key: str) -> ActionKey:
-        """Deserialize the ini key to an ActionKey model from the format
-        [Sender]?[context]@[Optional[decorator]]?[action][Optional[=target]]
-
-        Args:
-            ini_key (str): The ini key to deserialize
-
-        Returns:
-            ActionKey: The deserialized ActionKey model
-        """
-        action_key = self.new_action_key()
-        
-        pattern = r'^(?P<sender>[\w]*)\?(?P<context>[\w]*)(@?(?P<decorator>[\w]*))\?(?P<action>[\w]*)\s*(=\s*(?P<target>[\w\.]*))?'
-
-        match = re.match(pattern, ini_key)
-        if not match:
-            raise ValueError("Invalid ini key format for action key " + ini_key)
-        
-        action_key.source = match.group("sender")
-        action_key.context = match.group("context")
-        action_key.decorator = match.group("decorator")
-        action_key.action = match.group("action")
-        action_key.target = match.group("target")
-        return action_key
+    def __init__(self) -> None:
+        self.serializer_action_key = SerializerActionKey()
 
     def resolve_action_key(self, action_key: ActionKey) -> ActionKey:
         """Find the action key in the configuration which matches the given action key.
@@ -53,7 +38,11 @@ class ActionKeyController:
         Raises:
             ValueError: If no action key is found
         """
-        action_mapping: dict[str, ActionKey] = SingletonConfigurationFactory.get_configuration_object(ACTION_MAPPING_SECTION)
+        action_mapping: dict[str, ActionKey] = (
+            SingletonConfigurationFactory.get_configuration_object(
+                ACTION_MAPPING_SECTION
+            )
+        )
         match (action_key.source, action_key.context, action_key.action):
             case (s, c, a) if (s and c and a) and f"{s}?{c}?{a}" in action_mapping:
                 key = f"{s}?{c}?{a}"
@@ -85,12 +74,7 @@ class ActionKeyController:
         Returns:
             ActionKey: The action key
         """
-        action_key = self.new_action_key()
-        action_key.action = controller_message.get_action()
-        action_key.context = controller_message.get_context()
-        action_key.source = controller_message.get_sender()
-        action_key.decorator = controller_message.get_decorator()
-        return action_key
+        return controller_message.action_key
 
     def build_from_dictionary_entry(self, entry: tuple[str, str]) -> ActionKey:
         """Build an action key from a tuple.
@@ -101,8 +85,7 @@ class ActionKeyController:
         Returns:
             ActionKey: The action key
         """
-        action_key = self.deserialize_from_ini(entry[0])
-        action_key.target = entry[1]
+        action_key = self.serializer_action_key.deserialize_from_config_entry(*entry)
         return action_key
 
     def new_action_key(self) -> ActionKey:
