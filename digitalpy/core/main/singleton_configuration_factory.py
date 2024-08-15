@@ -25,7 +25,7 @@ class SingletonConfigurationFactory:
         """Add an action flow to the factory."""
         SingletonConfigurationFactory.__check_config()
         return SingletonConfigurationFactory.__factory.add_action_flow(action_flow)
-    
+
     @staticmethod
     def get_action_flow(config_id: str):
         """Get an action flow from the factory."""
@@ -52,3 +52,9 @@ class SingletonConfigurationFactory:
             raise Exception(
                 "No Factory instance provided. Do this by calling the configure() method."
             )
+
+    @staticmethod
+    def get_instance():
+        """Get an instance from the configuration."""
+        SingletonConfigurationFactory.__check_config()
+        return SingletonConfigurationFactory.__factory
