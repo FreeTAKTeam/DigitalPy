@@ -7,11 +7,19 @@ import importlib
 import os
 from typing import TYPE_CHECKING
 
-from digitalpy.core.digipy_configuration.impl.inifile_configuration import InifileConfiguration
+from digitalpy.core.files.files_facade import Files
+from digitalpy.core.digipy_configuration.controllers.action_flow_controller import (
+    ActionFlowController,
+)
+from digitalpy.core.digipy_configuration.impl.inifile_configuration import (
+    InifileConfiguration,
+)
 from digitalpy.core.component_management.domain.model.component_management_configuration import (
     ComponentManagementConfiguration,
 )
-from digitalpy.core.main.singleton_configuration_factory import SingletonConfigurationFactory
+from digitalpy.core.main.singleton_configuration_factory import (
+    SingletonConfigurationFactory,
+)
 from digitalpy.core.component_management.configuration.component_management_constants import (
     RELATIVE_MANIFEST_PATH,
 )
@@ -83,8 +91,16 @@ class ComponentInstallationController(Controller):
         )
 
         self.component_management_configuration: ComponentManagementConfiguration = (
-            SingletonConfigurationFactory.get_configuration_object("ComponentManagementConfiguration")
+            SingletonConfigurationFactory.get_configuration_object(
+                "ComponentManagementConfiguration"
+            )
         )
+
+        self.action_flow_controller: ActionFlowController = ObjectFactory.get_instance(
+            "ActionFlowController"
+        )
+
+        self.files: Files = ObjectFactory.get_instance("files")
 
     def initialize(self, request: "Request", response: "Response"):
         """This function is used to initialize the controller.
@@ -187,9 +203,13 @@ class ComponentInstallationController(Controller):
         )
 
         component_configuration = InifileConfiguration(facade.get_configuration_path())
-        component_configuration.add_configuration()
 
         SingletonConfigurationFactory.add_configuration(component_configuration)
+
+        flow_path = facade.get_flow_configuration_path()
+        if flow_path:
+            flow_file = self.files.get_file(flow_path)
+            self.action_flow_controller.create_action_flow(flow_file)
 
         facade.setup()
 
