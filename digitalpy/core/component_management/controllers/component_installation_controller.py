@@ -203,7 +203,7 @@ class ComponentInstallationController(Controller):
         )
 
         component_configuration = InifileConfiguration(facade.get_configuration_path())
-
+        component_configuration.add_configuration("")
         SingletonConfigurationFactory.add_configuration(component_configuration)
 
         flow_path = facade.get_flow_configuration_path()
