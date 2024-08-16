@@ -43,7 +43,7 @@ class ActionFlowController:
                 new_flow.config_id = line_str[1:-1]
                 SingletonConfigurationFactory.add_action_flow(new_flow)
 
-            elif re.match(r"^[\w^-_]*\?[\w^-_]*(@[\w^-_]+)?\?[\w^-_]*", line_str):
+            elif re.match(r"^[\w^\-_]*\?[\w^\-_]*(@[\w^\-_]+)?\?[\w^\-_]*", line_str):
                 new_action = self.serializer_action_key.deserialize_from_ini(line_str)
                 new_action.config = new_flow.config_id
                 new_flow.actions.append(new_action)
