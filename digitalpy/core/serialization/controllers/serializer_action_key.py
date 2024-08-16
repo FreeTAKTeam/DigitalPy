@@ -109,7 +109,7 @@ class SerializerActionKey:
         """
         action_key = ActionKey(None, None)
 
-        pattern = r"^(?P<sender>[\w^-]*)\?(?P<context>[\w^-_]*)(@?(?P<decorator>[\w^-]*))\?(?P<action>[\w^-]*)\s*(=\s*(?P<target>[\w\.]*))?"
+        pattern = r"^(?P<sender>[\w^-_]*)\?(?P<context>[\w^-_]*)(@?(?P<decorator>[\w^-_]*))\?(?P<action>[\w^-_]*)\s*(=\s*(?P<target>[\w\.]*))?"
 
         match = re.match(pattern, ini_key)
         if not match:
