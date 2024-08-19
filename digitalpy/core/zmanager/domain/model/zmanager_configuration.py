@@ -23,6 +23,7 @@ class ZManagerConfiguration(Node):
         self._subject_push_heartbeat_ivl: int = None
         self._subject_push_heartbeat_timeout: int = None
         self._subject_push_heartbeat_ttl: int = None
+        self._subject_push_timeout: int = None
         
         self._worker_count: int = None
         self._worker_timeout: int = None
@@ -147,6 +148,18 @@ class ZManagerConfiguration(Node):
         if not isinstance(subject_push_heartbeat_ttl, int):
             raise TypeError("'subject_push_heartbeat_ttl' must be of type int")
         self._subject_push_heartbeat_ttl = subject_push_heartbeat_ttl
+
+    @property
+    def subject_push_timeout(self) -> "int":
+        """The subject push timeout."""
+        return self._subject_push_timeout
+    
+    @subject_push_timeout.setter
+    def subject_push_timeout(self, subject_push_timeout: "int"):
+        subject_push_timeout = int(subject_push_timeout)
+        if not isinstance(subject_push_timeout, int):
+            raise TypeError("'subject_push_timeout' must be of type int")
+        self._subject_push_timeout = subject_push_timeout
 
     @property
     def integration_manager_pub_sndhwm(self) -> "int":

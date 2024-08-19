@@ -106,6 +106,7 @@ class Subject:
             zmq.HEARTBEAT_TTL, self.zmanager_configuration.subject_push_heartbeat_ttl
         )
         self.worker_push.setsockopt(zmq.LINGER, 0)
+        self.worker_push.setsockopt(zmq.SNDTIMEO, self.zmanager_configuration.subject_push_timeout)
 
     def _initialize_integration_manager_pusher(self):
         self.integration_manager_push = self.context.socket(zmq.PUSH)
