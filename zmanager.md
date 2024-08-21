@@ -9,6 +9,8 @@ Its asynchronous I/O model gives DigitalPy a scalable multicore applications, bu
 ## Process
 ![image](https://user-images.githubusercontent.com/60719165/232344598-9337857c-c580-4700-bc3a-cb81a66bb5a0.png)
 
+
+
 the FTS services collect requests and push them to the Subject / ventilator. 
 ### the Subject
 The subject AKA ventilator is responsible for dispatching events to registered listeners. 
@@ -27,3 +29,7 @@ The workers receive messages from the ventilator, instantiates the required comp
 The Integration manager receives all answers from all workers, prints them, and sends a message to the workers to shut down when all tasks are complete.
 Uses a ZMQ_PULL socket to receive answers from the workers.
 Uses a ZMQ_PUB socket to send the FINISH message to the workers.
+
+## Core
+certain component are part of the DP core as shown in this diagram
+![image](https://github.com/user-attachments/assets/e29ce140-0c29-49ad-827e-862880e4e1ce)
