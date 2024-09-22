@@ -1,14 +1,15 @@
+import pytest
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.serialization.controllers.serializer_container import (
     SerializerContainer,
 )
 from digitalpy.core.main.object_factory import ObjectFactory
-from tests.testing_utilities.facade_utilities import initialize_test_environment
+from tests.testing_utilities.facade_utilities import (
+    test_environment,
+)
 
-
-def test_serializer_container_decorator_and_flow():
+def test_serializer_container_decorator_and_flow(test_environment):
     """This test is used to test the SerializerContainer class with all optional values."""
-    _, _, _ = initialize_test_environment()
 
     serializer_container: SerializerContainer = ObjectFactory.get_instance(
         "SerializerContainer"
@@ -38,9 +39,8 @@ def test_serializer_container_decorator_and_flow():
     assert deserialized_request != request
 
 
-def test_serializer_container_decorator():
+def test_serializer_container_decorator(test_environment):
     """This test is used to test the SerializerContainer class with decorator and now flow_name."""
-    _, _, _ = initialize_test_environment()
 
     serializer_container: SerializerContainer = ObjectFactory.get_instance(
         "SerializerContainer"
@@ -69,9 +69,8 @@ def test_serializer_container_decorator():
     assert deserialized_request != request
 
 
-def test_serializer_container_flow():
+def test_serializer_container_flow(test_environment):
     """This test is used to test the SerializerContainer class with flow_name and no decorator."""
-    _, _, _ = initialize_test_environment()
 
     serializer_container: SerializerContainer = ObjectFactory.get_instance(
         "SerializerContainer"
@@ -100,10 +99,8 @@ def test_serializer_container_flow():
     assert deserialized_request != request
 
 
-def test_serializer_container_no_decorator_or_flow():
+def test_serializer_container_no_decorator_or_flow(test_environment):
     """This test is used to test the SerializerContainer class with no decorator or flow_name."""
-
-    _, _, _ = initialize_test_environment()
 
     serializer_container: SerializerContainer = ObjectFactory.get_instance(
         "SerializerContainer"

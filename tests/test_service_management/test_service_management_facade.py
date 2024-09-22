@@ -8,12 +8,12 @@ from digitalpy.core.service_management.service_management_facade import ServiceM
 from pathlib import PurePath
 from tests.testing_utilities.facade_utilities import (
     initialize_facade,
-    initialize_test_environment,
+    test_environment,
 )
 
 @pytest.fixture
-def service_management_facade():
-    request, response, _ = initialize_test_environment()
+def service_management_facade(test_environment):
+    request, response, _ = test_environment
 
     service_management_facade = initialize_facade(
         "digitalpy.core.service_management.service_management_facade.ServiceManagement",

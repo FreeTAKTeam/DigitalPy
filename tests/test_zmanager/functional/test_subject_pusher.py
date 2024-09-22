@@ -15,13 +15,13 @@ from digitalpy.core.zmanager.impl.subject_pusher import SubjectPusher
 from digitalpy.core.main.object_factory import ObjectFactory
 from tests.testing_utilities.facade_utilities import (
     initialize_facade,
-    initialize_test_environment,
+    test_environment,
 )
 
 
 @pytest.fixture
-def file_facades():
-    request, response, _ = initialize_test_environment()
+def file_facades(test_environment):
+    request, response, _ = test_environment
 
     files_facade: Files = initialize_facade(
         "digitalpy.core.files.files_facade.Files",
@@ -45,8 +45,6 @@ def subject_pusher():
 def test_subject_send_request(
     mock_zmq, file_facades: Files, subject_pusher: SubjectPusher
 ):
-    _, _, _ = initialize_test_environment()
-
     action_flow_controller = ActionFlowController()
     action_flow_file = str(
         PurePath(__file__).parent.parent / PurePath("conf", "flows.ini")

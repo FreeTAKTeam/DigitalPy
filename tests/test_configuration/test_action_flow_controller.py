@@ -3,8 +3,8 @@ import pytest
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.main.object_factory import ObjectFactory
 from tests.testing_utilities.facade_utilities import (
+    test_environment,
     initialize_facade,
-    initialize_test_environment,
 )
 
 from digitalpy.core.digipy_configuration.controllers.action_flow_controller import (
@@ -17,8 +17,8 @@ from digitalpy.core.main.singleton_configuration_factory import (
 
 
 @pytest.fixture
-def file_facades():
-    request, response, _ = initialize_test_environment()
+def file_facades(test_environment):
+    request, response, _ = test_environment
 
     files_facade: Files = initialize_facade(
         "digitalpy.core.files.files_facade.Files",

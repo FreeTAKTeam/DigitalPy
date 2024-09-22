@@ -10,7 +10,7 @@ import pytest
 from digitalpy.core.domain.domain.network_client import NetworkClient
 from tests.testing_utilities.facade_utilities import (
     initialize_facade,
-    initialize_test_environment,
+    test_environment,
 )
 
 
@@ -47,13 +47,13 @@ def test_fs(zip_name: str):
     
 @pytest.mark.parametrize("zip_name", ["test_discover_component.zip"])
 @pytest.mark.usefixtures("component_mgmt_db_mock")
-def test_discover_components(client_mock, test_fs):
+def test_discover_components(client_mock, test_fs, test_environment):
     mock.patch(
         "digitalpy.core.component_management.controllers.component_discovery_controller.COMPONENT_DOWNLOAD_PATH",
         PurePath(test_fs/"downloads"),
     ).start()
 
-    request, response, _ = initialize_test_environment()
+    request, response, _ = test_environment
 
     component_management_facade = initialize_facade(
         "digitalpy.core.component_management.component_management_facade.ComponentManagement",
@@ -75,7 +75,7 @@ def test_discover_components(client_mock, test_fs):
 )
 @pytest.mark.parametrize("zip_name", ["test_pull_component.zip"])
 @pytest.mark.usefixtures("component_mgmt_db_mock")
-def test_pull_component(mock_get, client_mock, test_fs):
+def test_pull_component(mock_get, client_mock, test_fs, test_environment):
     mock.patch(
         "digitalpy.core.component_management.controllers.component_pull_controller.COMPONENT_DOWNLOAD_PATH",
         PurePath(test_fs / "downloads"),
@@ -83,7 +83,7 @@ def test_pull_component(mock_get, client_mock, test_fs):
 
     zip_file_name = "example.zip"
 
-    request, response, _ = initialize_test_environment()
+    request, response, _ = test_environment
 
     component_management_facade = initialize_facade(
         "digitalpy.core.component_management.component_management_facade.ComponentManagement",
@@ -110,13 +110,13 @@ def test_pull_component(mock_get, client_mock, test_fs):
 @pytest.mark.skip("This test works in isolation but for some reason a lock is being held on the log file. this prevents the test from cleaning up after itself therefore breaking others.")
 @pytest.mark.parametrize("zip_name", ["test_install_component.zip"])
 @pytest.mark.usefixtures("component_mgmt_db_mock")
-def test_install_component(client_mock, test_fs):
+def test_install_component(client_mock, test_fs, test_environment):
     mock.patch(
         "digitalpy.core.component_management.controllers.component_filesystem_controller.COMPONENT_DOWNLOAD_PATH",
         PurePath(test_fs / "downloads"),
     ).start()
 
-    request, response, configuration = initialize_test_environment()
+    request, response, configuration = test_environment
 
     configuration.set_value(
         "component_installation_path",
@@ -163,13 +163,13 @@ def test_install_component(client_mock, test_fs):
 @pytest.mark.parametrize("zip_name", ["test_update_component.zip"])
 @patch("digitalpy.core.component_management.controllers.component_management_persistence_controller_impl.Component_managementPersistenceControllerImpl.get_component")
 @pytest.mark.usefixtures("component_mgmt_db_mock")
-def test_update_component(get_component_mock, client_mock, test_fs):
+def test_update_component(get_component_mock, client_mock, test_fs, test_environment):
     mock.patch(
         "digitalpy.core.component_management.controllers.component_filesystem_controller.COMPONENT_DOWNLOAD_PATH",
         PurePath(test_fs / "downloads"),
     ).start()
 
-    request, response, configuration = initialize_test_environment()
+    request, response, configuration = test_environment
 
     configuration.set_value(
         "component_installation_path",

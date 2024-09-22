@@ -20,13 +20,13 @@ from digitalpy.core.zmanager.request import Request
 from tests.test_zmanager.zmanager_setup import ZmanagerSingleThreadSetup
 from tests.testing_utilities.facade_utilities import (
     initialize_facade,
-    initialize_test_environment,
+    test_environment,
 )
 
 
 @pytest.fixture
-def file_facades():
-    request, response, _ = initialize_test_environment()
+def file_facades(test_environment):
+    request, response, _ = test_environment
 
     files_facade: Files = initialize_facade(
         "digitalpy.core.files.files_facade.Files",
@@ -38,8 +38,8 @@ def file_facades():
 
 
 @pytest.fixture
-def zmanager(file_facades: Files):
-    _, _, _ = initialize_test_environment()
+def zmanager(file_facades: Files, test_environment):
+    _, _, _ = test_environment
 
     action_flow_controller = ActionFlowController()
     action_flow_file = str(

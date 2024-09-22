@@ -5,12 +5,12 @@ import pathlib
 from digitalpy.core.digipy_configuration.impl.yaml_configuration import (
     YamlConfiguration,
 )
-from tests.testing_utilities.facade_utilities import initialize_test_environment
+from tests.testing_utilities.facade_utilities import test_environment
 
 
-def test_load_single_section_configuration():
+def test_load_single_section_configuration(test_environment):
     # Arrange
-    _, _, _ = initialize_test_environment()
+    _, _, _ = test_environment
     configuration = YamlConfiguration(
         str(PurePath(__file__).parent / "test_configuration_resources")
     )
@@ -22,9 +22,9 @@ def test_load_single_section_configuration():
     assert configuration.get_value("key3", "Section1") == "value3"
 
 
-def test_add_multi_section_configuration():
+def test_add_multi_section_configuration(test_environment):
     # Arrange
-    _, _, _ = initialize_test_environment()
+    _, _, _ = test_environment
     configuration = YamlConfiguration(
         str(PurePath(__file__).parent / "test_configuration_resources")
     )
@@ -39,9 +39,9 @@ def test_add_multi_section_configuration():
     assert configuration.get_value("key1", "Section2") == "value3"
     assert configuration.get_value("key2", "Section2") == "value4"  # Arrange
 
-def test_get_configurations():
+def test_get_configurations(test_environment):
     # Arrange
-    _, _, _ = initialize_test_environment()
+    _, _, _ = test_environment
     configuration = YamlConfiguration(
         str(PurePath(__file__).parent / "test_configuration_resources")
     )
@@ -56,9 +56,9 @@ def test_get_configurations():
     assert any(config.path.endswith("single_section_config.yml") for config in configurations)
     assert any(config.path.endswith("multi_section_config.yml") for config in configurations)
 
-def test_get_sections():
+def test_get_sections(test_environment):
     # Arrange
-    _, _, _ = initialize_test_environment()
+    _, _, _ = test_environment
     configuration = YamlConfiguration(
         str(PurePath(__file__).parent / "test_configuration_resources")
     )
@@ -73,9 +73,9 @@ def test_get_sections():
     assert "Section1" in sections
     assert "Section2" in sections
 
-def test_has_section():
+def test_has_section(test_environment):
     # Arrange
-    _, _, _ = initialize_test_environment()
+    _, _, _ = test_environment
     configuration = YamlConfiguration(
         str(PurePath(__file__).parent / "test_configuration_resources")
     )
@@ -87,9 +87,9 @@ def test_has_section():
     assert configuration.has_section("Section2") is True
     assert configuration.has_section("Section3") is False
 
-def test_get_section():
+def test_get_section(test_environment):
     # Arrange
-    _, _, _ = initialize_test_environment()
+    _, _, _ = test_environment
     configuration = YamlConfiguration(
         str(PurePath(__file__).parent / "test_configuration_resources")
     )
@@ -111,9 +111,9 @@ def test_get_section():
         "key2": "value4"
     }
 
-def test_has_value():
+def test_has_value(test_environment):
     # Arrange
-    _, _, _ = initialize_test_environment()
+    _, _, _ = test_environment
     configuration = YamlConfiguration(
         str(PurePath(__file__).parent / "test_configuration_resources")
     )
@@ -128,9 +128,9 @@ def test_has_value():
     assert configuration.has_value("key2", "Section2") is True
     assert configuration.has_value("key3", "Section2") is False
 
-def test_get_value():
+def test_get_value(test_environment):
     # Arrange
-    _, _, _ = initialize_test_environment()
+    _, _, _ = test_environment
     configuration = YamlConfiguration(
         str(PurePath(__file__).parent / "test_configuration_resources")
     )
@@ -144,9 +144,9 @@ def test_get_value():
     assert configuration.get_value("key1", "Section2") == "value3"
     assert configuration.get_value("key2", "Section2") == "value4"
 
-def test_get_boolean_value():
+def test_get_boolean_value(test_environment):
     # Arrange
-    _, _, _ = initialize_test_environment()
+    _, _, _ = test_environment
     configuration = YamlConfiguration(
         str(PurePath(__file__).parent / "test_configuration_resources")
     )
@@ -156,9 +156,9 @@ def test_get_boolean_value():
     assert configuration.get_boolean_value("key1", "SectionX") is True
     assert configuration.get_boolean_value("key2", "SectionX") is False
 
-def test_get_directory_value():
+def test_get_directory_value(test_environment):
     # Arrange
-    _, _, _ = initialize_test_environment()
+    _, _, _ = test_environment
     configuration = YamlConfiguration(
         str(PurePath(__file__).parent / "test_configuration_resources")
     )
@@ -171,9 +171,9 @@ def test_get_directory_value():
     assert isinstance(directory_value, pathlib.Path)
     assert directory_value == pathlib.Path("SomePath")
 
-def test_get_file_value():
+def test_get_file_value(test_environment):
     # Arrange
-    _, _, _ = initialize_test_environment()
+    _, _, _ = test_environment
     configuration = YamlConfiguration(
         str(PurePath(__file__).parent / "test_configuration_resources")
     )
@@ -186,9 +186,9 @@ def test_get_file_value():
     assert isinstance(file_value, pathlib.Path)
     assert file_value == pathlib.Path(PurePath(__file__).parent, "test_configuration_resources", "SomePath")
 
-def test_get_key():
+def test_get_key(test_environment):
     # Arrange
-    _, _, _ = initialize_test_environment()
+    _, _, _ = test_environment
     configuration = YamlConfiguration(
         str(PurePath(__file__).parent / "test_configuration_resources")
     )
@@ -200,9 +200,9 @@ def test_get_key():
     # Assert
     assert key == "key1"
 
-def test_set_value():
+def test_set_value(test_environment):
     # Arrange
-    _, _, _ = initialize_test_environment()
+    _, _, _ = test_environment
     configuration = YamlConfiguration(
         str(PurePath(__file__).parent / "test_configuration_resources")
     )
@@ -214,9 +214,9 @@ def test_set_value():
     # Assert
     assert configuration.get_value("key1", "Section1") == "newValue1"
 
-def test_remove_section():
+def test_remove_section(test_environment):
     # Arrange
-    _, _, _ = initialize_test_environment()
+    _, _, _ = test_environment
     configuration = YamlConfiguration(
         str(PurePath(__file__).parent / "test_configuration_resources")
     )
@@ -228,9 +228,9 @@ def test_remove_section():
     # Assert
     assert not configuration.has_section("Section1")
 
-def test_remove_key():
+def test_remove_key(test_environment):
     # Arrange
-    _, _, _ = initialize_test_environment()
+    _, _, _ = test_environment
     configuration = YamlConfiguration(
         str(PurePath(__file__).parent / "test_configuration_resources")
     )
@@ -244,9 +244,9 @@ def test_remove_key():
     assert configuration.has_value("key2", "Section1")
     assert configuration.has_value("key3", "Section1")
 
-def test_remove_configuration():
+def test_remove_configuration(test_environment):
     # Arrange
-    _, _, _ = initialize_test_environment()
+    _, _, _ = test_environment
     configuration = YamlConfiguration(
         str(PurePath(__file__).parent / "test_configuration_resources")
     )
@@ -263,9 +263,9 @@ def test_remove_configuration():
     assert configuration.get_value("key1", "Section2") == "value3"
     assert configuration.get_value("key2", "Section2") == "value4"
 
-def test_save_new_configuration_changes():
+def test_save_new_configuration_changes(test_environment):
     # Arrange
-    _, _, _ = initialize_test_environment()
+    _, _, _ = test_environment
     configuration = YamlConfiguration(
         str(PurePath(__file__).parent / "test_configuration_resources")
     )
@@ -284,9 +284,9 @@ def test_save_new_configuration_changes():
 
     os.remove(str(PurePath(__file__).parent / "test_configuration_resources" / "persistent_config.yml"))
 
-def test_update_saved_configuration_changest():
+def test_update_saved_configuration_changest(test_environment):
     # Arrange
-    _, _, _ = initialize_test_environment()
+    _, _, _ = test_environment
     configuration = YamlConfiguration(
         str(PurePath(__file__).parent / "test_configuration_resources")
     )

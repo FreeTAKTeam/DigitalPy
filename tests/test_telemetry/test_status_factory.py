@@ -13,12 +13,11 @@ from digitalpy.core.telemetry.domain.system_event import SystemEvent
 from digitalpy.core.telemetry.domain.system_health import SystemHealth
 from digitalpy.core.telemetry.domain.system_log import SystemLog
 from tests.testing_utilities.facade_utilities import \
-    initialize_test_environment
+    test_environment
 
 
 @pytest.fixture
-def status_factory():
-    initialize_test_environment()
+def status_factory(test_environment):
     return StatusFactory()
 
 

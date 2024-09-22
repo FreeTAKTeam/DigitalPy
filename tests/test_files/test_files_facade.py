@@ -8,13 +8,13 @@ import pytest
 from digitalpy.core.files.files_facade import Files
 from tests.testing_utilities.facade_utilities import (
     initialize_facade,
-    initialize_test_environment,
+    test_environment
 )
 
 
 @pytest.fixture
-def files_facade():
-    request, response, _ = initialize_test_environment()
+def files_facade(test_environment):
+    request, response, _ = test_environment
 
     files_facade: Files = initialize_facade(
         "digitalpy.core.files.files_facade.Files",
