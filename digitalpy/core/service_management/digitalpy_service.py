@@ -353,7 +353,7 @@ class DigitalPyService:
             resp.set_action("publish")
             resp.set_format("pickled")
             resp.set_id(command.get_id())
-            self._subject_pusher.subject_send_request(
+            self._subject_pusher.subject_send_container(
                 resp, conf.get_value("service_id", "ServiceManager")
             )
 

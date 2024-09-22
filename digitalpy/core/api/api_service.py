@@ -123,7 +123,7 @@ class ApiService(DigitalPyService):
             message (request): the request message
         """
         message.set_format("pickled")
-        self._subject_pusher.subject_send_request(message, self.configuration.name)
+        self._subject_pusher.subject_send_container(message, self.configuration.name)
 
     def handle_response(self, response: Response):
         self.protocol.send_response(response)

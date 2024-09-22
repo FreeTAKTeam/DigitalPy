@@ -111,7 +111,25 @@ class CoreService(threading.Thread):
             + self.__class__.__name__
         ) from e
 
-    def send_response(self, response: Response):
-        """This operation will send a response to the integration manager.
-        The response will be converted to a message and sent to the integration manager.
-        """
+    def _send_next_action(self, request: Request, response: Response):
+        """Send the next action to the subject."""
+        # Get the next action
+        next_action = self.action_flow_controller.get_next_action(request)
+        # Resolve the action key
+        response.action_key = self.action_key_controller.resolve_action_key(next_action)
+        # Send the updated response to the subject to handle the next action in the sequence
+        self.subject_pusher.subject_send_container(response)
+
+    def _handle_integration_manager_request(self, request: Request):
+        """Handle the integration manager request."""
+        # Execute the method in the configured facade
+        response: Response = ObjectFactory.get_new_instance("Response")
+        self.facade.initialize(request, response)
+        self.facade.execute(request.action)
+
+        # Send subsequent actions to the subject
+        next_action = self.action_flow_controller.get_next_action(request)
+        if next_action:
+            response.action_key = next_action
+            response.id = request.id
+            self.subject_pusher.subject_send_container(response)

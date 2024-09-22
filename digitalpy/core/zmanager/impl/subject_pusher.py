@@ -10,8 +10,12 @@ from digitalpy.core.zmanager.domain.model.zmanager_configuration import (
     ZManagerConfiguration,
 )
 from digitalpy.core.main.object_factory import ObjectFactory
-from digitalpy.core.zmanager.request import Request
 from digitalpy.core.parsing.formatter import Formatter
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from digitalpy.core.zmanager.controller_message import ControllerMessage
 
 
 class SubjectPusher:
@@ -63,11 +67,11 @@ class SubjectPusher:
         self.pusher_socket = None  # type: ignore
         self.pusher_context = None  # type: ignore
 
-    def subject_send_request(self, request: Request, service_id: str = ""):  # type: ignore
-        """send the message to the subject
+    def subject_send_container(self, container: "ControllerMessage", service_id: str = ""):  # type: ignore
+        """send the container object to the subject to the subject
 
         Args:
-            request (Request): the request to be sent to the subject
+            container (ControllerMessage): the request to be sent to the subject
             protocol (str): the protocol of the request to be sent
             service_id (str, optional): the service_id of the request to be sent. Defaults to the id of the current service.
         """
@@ -75,8 +79,8 @@ class SubjectPusher:
             service_id = self.service_id
 
         # set the service_id so it can be used to create the publish topic by the default routing worker
-        request.sender = service_id
-        message = self.serializer_container.to_zmanager_message(request)
+        container.sender = service_id
+        message = self.serializer_container.to_zmanager_message(container)
         self.logger.debug("request message: %s", message)
         self.pusher_socket.send(message)
 
