@@ -123,6 +123,34 @@ class ActionKey(Node):
         self._name = name
 
     def __eq__(self, value: object) -> bool:
+        """Check if the given value is equal to this ActionKey, by comparing the action, context, decorator, and source.
+        The target and referencedBehaviour are not considered in the comparison. The matching only fails if
+        two set values are not equal. If the value is not an ActionKey, the default equality check is used.
+        Example:
+        ActionKey:
+            action: "action"
+            context: "context"
+            decorator: "decorator"
+            source: "source"
+        ActionKey2:
+            action: "action2"
+            context: "context"
+            decorator: "decorator"
+            source: "source"
+        ActionKey == ActionKey2 -> False
+
+        ActionKey:
+            action: "action"
+            context: "context"
+            decorator: "decorator"
+            source: "source"
+        ActionKey2:
+            action: NULL
+            context: "context"
+            decorator: "decorator"
+            source: "source"
+        ActionKey == ActionKey2 -> True
+        """
         if isinstance(value, ActionKey):
             return (
                 (value.action == self.action or not value.action or not self.action)
