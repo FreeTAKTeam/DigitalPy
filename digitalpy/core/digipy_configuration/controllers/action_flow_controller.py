@@ -51,6 +51,28 @@ class ActionFlowController:
             else:
                 pass
 
+    def get_all_flow_actions(self, action: ActionKey) -> list[ActionKey]:
+        """This method will return all the actions in any flow which matches the given action key.
+        for example, imagine the following flows:
+        [flow1]
+        sender1?context1?action1
+        sender2?context2?action2
+
+        [flow2]
+        senderX?contextY?action1
+        senderY?contextZ?action2
+
+        if the action key submitted contains only action 1, the method will return the first actionkeys
+        of both flows as they both match the action key queried.
+        """
+        flows = SingletonConfigurationFactory.get_action_flows()
+        actions = []
+        for flow in flows:
+            for f_action in flow.actions:
+                if f_action == action:
+                    actions.append(f_action)
+        return actions
+
     def get_next_action(
         self, controller_message: ControllerMessage
     ) -> Optional[ActionKey]:

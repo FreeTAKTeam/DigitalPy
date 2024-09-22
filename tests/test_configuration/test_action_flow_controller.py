@@ -128,3 +128,44 @@ def test_get_next_action_final_action(file_facades: Files):
     next_action = action_flow_controller.get_next_action(request)
 
     assert next_action is None
+
+def test_get_all_flow_actions_many(file_facades: Files):
+    """test the get_all_flow_actions method of the ActionFlowController class checking
+    that it returns multiple actions as expected."""
+    action_flow_controller = ActionFlowController()
+    action_flow_file = str(
+        PurePath(__file__).parent
+        / PurePath("test_actionflow_resources", "complex_actionflow.ini")
+    )
+    file = file_facades.get_or_create_file(path=action_flow_file)
+
+    action_flow_controller.create_action_flow(file)
+
+    request: Request = ObjectFactory.get_instance("Request")
+    request.action = "Test"
+
+    actions = action_flow_controller.get_all_flow_actions(request.action_key)
+    assert len(actions) == 4
+    assert all("LoanManagement" in action.context for action in actions)
+    assert all(action.source == "" for action in actions)
+    assert all(action.decorator == "" for action in actions)
+    assert all(action.action == "Test" for action in actions)
+
+def test_get_all_flow_actions_one(file_facades: Files):
+    """test the get_all_flow_actions method of the ActionFlowController class checking
+    that it returns a single action as expected."""
+    action_flow_controller = ActionFlowController()
+    action_flow_file = str(
+        PurePath(__file__).parent
+        / PurePath("test_actionflow_resources", "complex_actionflow.ini")
+    )
+    file = file_facades.get_or_create_file(path=action_flow_file)
+
+    action_flow_controller.create_action_flow(file)
+
+    request: Request = ObjectFactory.get_instance("Request")
+    request.action = "TestDELETELoan"
+
+    actions = action_flow_controller.get_all_flow_actions(request.action_key)
+    assert len(actions) == 1
+    assert actions[0].action == "TestDELETELoan"
