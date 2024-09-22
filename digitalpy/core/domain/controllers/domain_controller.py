@@ -68,7 +68,8 @@ class DomainController(Controller):
             id = str(uuid.uuid1())
         # allow the domain to be extended
         domaindict = self._extend_domain(
-            self.domain, kwargs.get('extended_domain', {}))
+            self.domain.classes, kwargs.get("extended_domain", {})
+        )
         # retrieve the original object class
         object_class: type[Node] = domaindict[object_class_name]
         # instantiate an oid for the instance
