@@ -31,6 +31,12 @@ class SingletonConfigurationFactory:
         """Get an action flow from the factory."""
         SingletonConfigurationFactory.__check_config()
         return SingletonConfigurationFactory.__factory.get_action_flow(config_id)
+    
+    @staticmethod
+    def get_action_flows() -> list[ActionFlow]:
+        """Get all action flows from the factory."""
+        SingletonConfigurationFactory.__check_config()
+        return SingletonConfigurationFactory.__factory.action_flows.values()
 
     @staticmethod
     def remove_configuration(configuration: Configuration):
@@ -58,3 +64,8 @@ class SingletonConfigurationFactory:
         """Get an instance from the configuration."""
         SingletonConfigurationFactory.__check_config()
         return SingletonConfigurationFactory.__factory
+
+    @staticmethod
+    def clear():
+        """Clear the factory."""
+        SingletonConfigurationFactory.__factory = None
