@@ -311,9 +311,13 @@ class DefaultRoutingWorker:
             else:
                 break
             try:
-                self.action_key_controller.resolve_action_key(next_action)
+                # ensure that the next action is a valid action key and resolve it
+                next_action = self.action_key_controller.resolve_action_key(next_action)
+                # set the next action
                 request.action_key = next_action
+                # set the request to the previous response
                 request.set_values(response.get_values())
+            # if the next action is not a valid action key, break the loop
             except ValueError:
                 break
         self.logger.debug("returned values: %s", str(response.get_values()))
