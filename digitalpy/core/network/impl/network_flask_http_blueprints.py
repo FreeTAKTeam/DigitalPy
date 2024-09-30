@@ -31,7 +31,7 @@ from flask_cors import CORS
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.network.domain.client_status import ClientStatus
 from digitalpy.core.domain.object_id import ObjectId
-from digitalpy.core.service_management.domain.service_description import (
+from digitalpy.core.service_management.domain.model.service_description import (
     ServiceDescription,
 )
 from digitalpy.core.main.singleton_configuration_factory import (
@@ -239,7 +239,7 @@ class FlaskHTTPNetworkBlueprints(NetworkSyncInterface):
         self.service_desc: ServiceDescription = None  # type: ignore
         self.app_thread: threading.Thread
 
-    def intialize_network(
+    def initialize_network(
         self,
         host: str,
         port: int,

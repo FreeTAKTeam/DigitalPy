@@ -410,7 +410,7 @@ class DigitalPyService:
         self.initialize_controllers()
         self.initialize_connections()
 
-        self.protocol.intialize_network(
+        self.protocol.initialize_network(
             self.configuration.host,
             self.configuration.port,
             service_desc=self._service_conf,
