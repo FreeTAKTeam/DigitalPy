@@ -324,7 +324,10 @@ class DigitalPy:
 
             # begin the service_manager
             self.service_manager: ServiceManagementCore = ObjectFactory.get_instance(
-                "ServiceManager"
+                "ServiceManager",
+                dynamic_configuration={
+                    "status_factory": SingletonStatusFactory.get_instance()
+                },
             )
 
             self.service_manager.start()

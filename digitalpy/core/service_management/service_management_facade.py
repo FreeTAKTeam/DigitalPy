@@ -1,4 +1,9 @@
-from digitalpy.core.service_management.controllers.service_management_controller import ServiceManagementController
+from digitalpy.core.service_management.controllers.service_management_status_controller import (
+    ServiceManagementStatusController,
+)
+from digitalpy.core.service_management.controllers.service_management_controller import (
+    ServiceManagementController,
+)
 from digitalpy.core.component_management.impl.default_facade import DefaultFacade
 from digitalpy.core.main.object_factory import ObjectFactory
 
@@ -14,6 +19,12 @@ from .configuration.service_management_constants import (
     LOG_FILE_PATH,
 )
 from . import base
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from digitalpy.core.zmanager.impl.integration_manager_pusher import (
+        IntegrationManagerPusher,
+    )
 
 
 class ServiceManagement(DefaultFacade):
@@ -41,6 +52,7 @@ class ServiceManagement(DefaultFacade):
         configuration,
         persistence_path: str = None,
         log_file_path: str = LOG_FILE_PATH,
+        integration_manager_pusher: "IntegrationManagerPusher" = None,
     ):
         super().__init__(
             # the path to the external action mapping
@@ -76,13 +88,22 @@ class ServiceManagement(DefaultFacade):
             configuration,
         )
         self.service_management_controller = ServiceManagementController(
-            request, response, service_management_action_mapper, configuration
+            request,
+            response,
+            sync_action_mapper,
+            configuration,
+            integration_manager_pusher,
+        )
+        self.service_management_status_controller = ServiceManagementStatusController(
+            request, response, sync_action_mapper, configuration
         )
 
     def initialize(self, request, response):
         self.request = request
         self.response = response
         self.sender_controller.initialize(request, response)
+        self.service_management_controller.initialize(request, response)
+        self.service_management_status_controller.initialize(request, response)
 
     def execute(self, method):
         self.request.set_value("logger", self.logger)
@@ -109,15 +130,24 @@ class ServiceManagement(DefaultFacade):
     def start_service(self, *args, **kwargs):
         """This method is used to initialize the service process and start the service"""
         self.service_management_controller.start_service(*args, **kwargs)
-                                                         
+
     @DefaultFacade.public
     def stop_service(self, *args, **kwargs):
         """This method is used to stop the service process"""
         self.service_management_controller.stop_service(*args, **kwargs)
+
     @DefaultFacade.public
     def restart_service(self, *args, **kwargs):
         """This method is used to restart the service process"""
         self.service_management_controller.restart_service(*args, **kwargs)
+
+    @DefaultFacade.public
+    def reload_system_health(self, *args, **kwargs):
+        """This method is used to reload the system health by getting the current
+        system information from the operating system"""
+        self.service_management_status_controller.reload_system_health(*args, **kwargs)
+
     @DefaultFacade.public
     def get_service_status(self, *args, **kwargs):
-        """This method is used to get the status of the service"""
+        """This method is used to get the status of a given service"""
+        self.service_management_controller.get_service_status(*args, **kwargs)

@@ -9,6 +9,9 @@ from digitalpy.core.zmanager.impl.integration_manager_subscriber import (
 from digitalpy.core.zmanager.response import Response
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.zmanager.configuration.zmanager_constants import PUBLISH_DECORATOR
+from digitalpy.core.digipy_configuration.configuration.digipy_configuration_constants import (
+    ACTION_MAPPING_SECTION,
+)
 
 if TYPE_CHECKING:
     from digitalpy.core.digipy_configuration.domain.model.configuration import (
@@ -16,6 +19,13 @@ if TYPE_CHECKING:
     )
     from digitalpy.core.digipy_configuration.action_key_controller import (
         ActionKeyController,
+    )
+    from digitalpy.core.serialization.controllers.serializer_container import (
+        SerializerContainer,
+    )
+    from digitalpy.core.component_management.impl.default_facade import DefaultFacade
+    from digitalpy.core.digipy_configuration.controllers.action_flow_controller import (
+        ActionFlowController,
     )
 
 
@@ -31,6 +41,9 @@ class CoreService(threading.Thread):
     A core service is expected to be a singleton, therefore any repeat call to start or stop
     will raise an exception.
     """
+
+    _default_facade: "DefaultFacade"
+
     def __init__(
         self,
         service_id: str,
@@ -55,6 +68,20 @@ class CoreService(threading.Thread):
             "ActionKeyController"
         )
 
+        self.action_flow_controller: "ActionFlowController" = (
+            ObjectFactory.get_instance("ActionFlowController")
+        )
+
+    @property
+    def facade(self):
+        """Return the default facade."""
+        return self._default_facade
+
+    @facade.setter
+    def facade(self, facade: "DefaultFacade"):
+        """Set the default facade."""
+        self._default_facade = facade
+
     def stop(self):
         """signal the running thread that it is expected to stop operations."""
         self.__running.clear()
@@ -71,17 +98,25 @@ class CoreService(threading.Thread):
         self.integration_manager_subscriber.setup()
         self.subject_pusher.setup()
         self._subscribe_to_actions()
+        self._subscribe_to_flow_actions()
 
     def _subscribe_to_actions(self):
         """subscribe to the actions that the service will be listening to."""
-        for entry in self.action_mapping.items():
+        for entry in self.action_mapping[ACTION_MAPPING_SECTION].items():
             ak = self.action_key_controller.build_from_dictionary_entry(entry)
-            ak.decorator = PUBLISH_DECORATOR
-            self.integration_manager_subscriber.subscribe_to_action(ak)
+            ak_res = self.action_key_controller.resolve_action_key(ak)
+            ak_res.decorator = PUBLISH_DECORATOR
+            self.integration_manager_subscriber.subscribe_to_action(ak_res)
 
-    def _send_request(self, request: Request):
-        """send a request to the subject."""
-        self.subject_pusher.subject_send_request(request, self.id)
+    def _subscribe_to_flow_actions(self):
+        """subscribe to the actions within flows that the service will be listening to.
+        TODO: This method is inneficient and should be refactored to avoid the nested loop.
+        """
+        for entry in self.action_mapping[ACTION_MAPPING_SECTION].items():
+            ak = self.action_key_controller.build_from_dictionary_entry(entry)
+            ak_res = self.action_key_controller.resolve_action_key(ak)
+            for action in self.action_flow_controller.get_all_flow_actions(ak_res):
+                self.integration_manager_subscriber.subscribe_to_action(action)
 
     def run(self) -> None:
         """This is the main entry point for the thread. It will start the event loop and
@@ -118,7 +153,7 @@ class CoreService(threading.Thread):
         # Resolve the action key
         response.action_key = self.action_key_controller.resolve_action_key(next_action)
         # Send the updated response to the subject to handle the next action in the sequence
-        self.subject_pusher.subject_send_container(response)
+        self.subject_pusher.push_container(response)
 
     def _handle_integration_manager_request(self, request: Request):
         """Handle the integration manager request."""
@@ -132,4 +167,4 @@ class CoreService(threading.Thread):
         if next_action:
             response.action_key = next_action
             response.id = request.id
-            self.subject_pusher.subject_send_container(response)
+            self.subject_pusher.push_container(response)

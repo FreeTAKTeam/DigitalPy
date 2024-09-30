@@ -11,18 +11,23 @@
 
 from typing import TYPE_CHECKING, Dict
 
+from digitalpy.core.service_management.controllers.service_management_command_controller import (
+    ServiceManagementCommandController,
+)
+from digitalpy.core.service_management.domain.model.service_status_enum import (
+    ServiceStatusEnum,
+)
+from digitalpy.core.service_management.controllers.service_management_status_controller import (
+    ServiceManagementStatusController,
+)
 from digitalpy.core.main.singleton_configuration_factory import (
     SingletonConfigurationFactory,
 )
-from digitalpy.core.service_management.domain.service_description import (
-    ServiceDescription,
+from digitalpy.core.service_management.domain.model.service_configuration import (
+    ServiceConfiguration,
 )
-from digitalpy.core.telemetry.domain.status_factory import StatusFactory
-from digitalpy.core.telemetry.domain.service_status import ServiceStatus
-from digitalpy.core.service_management.domain.service import Service
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.service_management.digitalpy_service import DigitalPyService
-from digitalpy.core.service_management.domain import service_status
 from digitalpy.core.service_management.controllers.service_management_process_controller import (
     ServiceManagementProcessController,
 )
@@ -41,6 +46,9 @@ if TYPE_CHECKING:
     from digitalpy.core.component_management.domain.model.component import Component
     from digitalpy.core.digipy_configuration.domain.model.actionkey import ActionKey
     from digitalpy.core.component_management.domain.model.error import Error
+    from digitalpy.core.zmanager.impl.integration_manager_pusher import (
+        IntegrationManagerPusher,
+    )
 
 
 class ServiceManagementController(Controller):
@@ -52,6 +60,7 @@ class ServiceManagementController(Controller):
         response: "Response",
         sync_action_mapper: "DefaultActionMapper",
         configuration: "Configuration",
+        integration_manager_pusher: "IntegrationManagerPusher",
     ):
         super().__init__(request, response, sync_action_mapper, configuration)
         self.service_management_process_controller = ServiceManagementProcessController(
@@ -60,22 +69,36 @@ class ServiceManagementController(Controller):
             sync_action_mapper,
             configuration,
         )
+        self.service_management_status_controller = ServiceManagementStatusController(
+            request,
+            response,
+            sync_action_mapper,
+            configuration,
+        )
+        self.service_command_controller = ServiceManagementCommandController(
+            request,
+            response,
+            sync_action_mapper,
+            configuration,
+            integration_manager_pusher,
+        )
         self._services: Dict[str, DigitalPyService] = {}
 
     def initialize(self, request: "Request", response: "Response"):
         """This function is used to initialize the controller."""
         super().initialize(request, response)
         self.service_management_process_controller.initialize(request, response)
+        self.service_management_status_controller.initialize(request, response)
 
     def initialize_service(self, service_id: str, *args, **kwargs):
-        """This function is used to initialize the service. It first retrieves the service status 
+        """This function is used to initialize the service. It first retrieves the service status
         from the status factory. Based on the status, it either starts the service or does nothing.
         Finally, it adds the service to the service index.
 
         Args:
             service_id: The ID of the service to initialize
         """
-        service_configuration: Service = (
+        service_configuration: ServiceConfiguration = (
             SingletonConfigurationFactory.get_configuration_object(service_id)
         )
         # initialize the service based on the service_id
@@ -83,8 +106,8 @@ class ServiceManagementController(Controller):
             service_id, {"service": service_configuration}
         )
         self._services[service_id] = service
-        match service_configuration.status:
-            case service_status.RUNNING:
+        match ServiceStatusEnum(service_configuration.status):
+            case ServiceStatusEnum.RUNNING:
                 self.start_service(service_id)
             case _:
                 pass
@@ -93,13 +116,23 @@ class ServiceManagementController(Controller):
         """This function is used to start the service."""
         service = self._services[service_id]
         self.service_management_process_controller.start_process(service)
+        self.response.set_value("message", service.configuration)
 
     def stop_service(self, service_id: str, *args, **kwargs):
         """This function is used to stop the service."""
         service = self._services[service_id]
+        self.service_command_controller.send_stop_command(service.service_id)
         self.service_management_process_controller.stop_process(service)
+        self.response.set_value("message", service.configuration)
 
     def restart_service(self, service_id: str, *args, **kwargs):
         """This function is used to restart the service."""
         self.stop_service(service_id)
         self.start_service(service_id)
+
+    def get_service_status(self, service_id: str, config_loader, *args, **kwargs):
+        """This function is used to get the status of the service."""
+        service = self._services[service_id]
+        self.service_management_status_controller.get_service_status(
+            service, config_loader
+        )

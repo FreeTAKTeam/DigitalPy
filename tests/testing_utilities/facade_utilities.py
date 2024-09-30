@@ -8,8 +8,8 @@ from digitalpy.core.digipy_configuration.controllers.action_flow_controller impo
     ActionFlowController,
 )
 from digitalpy.core.files.files_facade import Files
-from digitalpy.core.telemetry.singleton_status_factory import SingletonStatusFactory
-from digitalpy.core.telemetry.domain.status_factory import StatusFactory
+from digitalpy.core.main.singleton_status_factory import SingletonStatusFactory
+from digitalpy.core.main.impl.status_factory import StatusFactory
 from digitalpy.core.main.impl.configuration_factory import ConfigurationFactory
 from digitalpy.core.main.singleton_configuration_factory import (
     SingletonConfigurationFactory,
@@ -36,7 +36,7 @@ from digitalpy.core.service_management.service_management_facade import (
 )
 
 def initialize_facade(
-    facade_class: str, request: Request, response: Response
+    facade_class: str, request: Request, response: Response, dynamic_configuration: dict = None
 ) -> Union[DefaultFacade, Request, Response]:
     """intialize the given facade class
     NOTE: you should call the initialize test environment method first
@@ -49,8 +49,10 @@ def initialize_facade(
         Request: the initialized request object
         Response: the initialized response object
     """
+    if not dynamic_configuration:
+        dynamic_configuration = {}
     facade = ObjectFactory.get_instance_of(
-        facade_class, dynamic_configuration={"request": request, "response": response}
+        facade_class, dynamic_configuration={"request": request, "response": response, **dynamic_configuration}
     )
     facade.initialize(request, response)
     return facade

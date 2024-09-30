@@ -21,6 +21,7 @@ import traceback
 from typing import List
 import os
 
+from digitalpy.core.service_management.domain.model.service_status_enum import ServiceStatusEnum
 from digitalpy.core.digipy_configuration.domain.model.actionkey import ActionKey
 from digitalpy.core.main.singleton_configuration_factory import (
     SingletonConfigurationFactory,
@@ -30,13 +31,14 @@ from digitalpy.core.zmanager.impl.integration_manager_subscriber import (
     IntegrationManagerSubscriber,
 )
 from digitalpy.core.zmanager.impl.subject_pusher import SubjectPusher
-from digitalpy.core.service_management.domain.service import Service
+from digitalpy.core.service_management.domain.model.service_configuration import ServiceConfiguration
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.service_management.digitalpy_service import (
     DigitalPyService,
     COMMAND_ACTION,
 )
-from digitalpy.core.service_management.domain import service_status
+from digitalpy.core.zmanager.configuration.zmanager_constants import RESPONSE
+from digitalpy.core.service_management.domain.model.service_status_enum import ServiceStatusEnum
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.main.impl.default_factory import DefaultFactory
 from digitalpy.core.telemetry.tracing_provider import TracingProvider
@@ -70,7 +72,7 @@ class ApiService(DigitalPyService):
 
     def __init__(
         self,
-        service: Service,
+        service: ServiceConfiguration,
         integration_manager_subscriber: IntegrationManagerSubscriber,
         subject_pusher: SubjectPusher,
         blueprint_path,
@@ -123,7 +125,7 @@ class ApiService(DigitalPyService):
             message (request): the request message
         """
         message.set_format("pickled")
-        self._subject_pusher.subject_send_container(message, self.configuration.name)
+        self._subject_pusher.push_container(message, self.configuration.name)
 
     def handle_response(self, response: Response):
         self.protocol.send_response(response)
@@ -136,7 +138,7 @@ class ApiService(DigitalPyService):
             exception (Exception): the exception that occurred
         """
         if isinstance(exception, SystemExit):
-            self.status = service_status.STOPPED
+            self.status = ServiceStatusEnum.STOPPED
         else:
             traceback.print_exc()
             print("An exception occurred: " + str(exception))
@@ -183,17 +185,19 @@ class ApiService(DigitalPyService):
         # TODO: this probably isn't the best solution but giu is busy and I need to get this working
         # so I'm going to leave it for now see notes for 8/12/2024
         response_action = ActionKey(None, None)
-        response_action.config = "RESPONSE"
+        response_action.config = RESPONSE
         self._integration_manager_subscriber.subscribe_to_action(response_action)
+
+        self._subscribe_to_commands()
 
         # get all blueprints from the configured blueprint path
         blueprints = self._get_blueprints()
 
-        self.protocol.intialize_network(
+        self.protocol.initialize_network(
             self.configuration.host,
             self.configuration.port,
             blueprints=blueprints,
             service_desc=self._service_conf,
         )
-        self.status = service_status.RUNNING
+        self.status = ServiceStatusEnum.RUNNING.value
         self.execute_main_loop()

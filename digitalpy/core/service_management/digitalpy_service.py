@@ -32,8 +32,12 @@ respectively.
 from datetime import datetime
 from multiprocessing import Process
 import traceback
-from typing import List
+from typing import List, Optional
 
+from digitalpy.core.digipy_configuration.domain.model.actionkey import ActionKey
+from digitalpy.core.service_management.domain.model.service_status_enum import (
+    ServiceStatusEnum,
+)
 from digitalpy.core.main.impl.configuration_factory import ConfigurationFactory
 from digitalpy.core.zmanager.impl.subject_pusher import SubjectPusher
 from digitalpy.core.zmanager.impl.integration_manager_subscriber import (
@@ -42,22 +46,19 @@ from digitalpy.core.zmanager.impl.integration_manager_subscriber import (
 from digitalpy.core.main.singleton_configuration_factory import (
     SingletonConfigurationFactory,
 )
-from digitalpy.core.telemetry.domain.service_status import ServiceStatus
-from digitalpy.core.service_management.domain.service import Service
+from digitalpy.core.service_management.domain.model.service_configuration import (
+    ServiceConfiguration,
+)
 from digitalpy.core.zmanager.domain.model.zmanager_configuration import (
     ZManagerConfiguration,
 )
 from digitalpy.core.domain.domain.service_health import ServiceHealth
 from digitalpy.core.main.impl.default_factory import DefaultFactory
 from digitalpy.core.main.object_factory import ObjectFactory
-from digitalpy.core.service_management.domain.service_operations import (
+from digitalpy.core.service_management.domain.model.service_operations import (
     ServiceOperations,
 )
-from digitalpy.core.service_management.domain.service_status import (
-    STOPPING,
-    STOPPED,
-    RUNNING,
-)
+
 from digitalpy.core.telemetry.tracing_provider import TracingProvider
 from digitalpy.core.telemetry.tracer import Tracer
 from digitalpy.core.network.network_interface import NetworkInterface
@@ -94,7 +95,7 @@ class DigitalPyService:
     def __init__(
         self,
         service_id: str,
-        service: Service,
+        service: ServiceConfiguration,
         integration_manager_subscriber: IntegrationManagerSubscriber,
         subject_pusher: SubjectPusher,
         error_threshold: float = 0.1,
@@ -129,22 +130,7 @@ class DigitalPyService:
         self.total_errors = 0
         self.total_request_processing_time = 0
         self.error_threshold = error_threshold
-        self._process = Process(
-            target=self.start,
-            args=(
-                ObjectFactory.get_instance("factory"),
-                ObjectFactory.get_instance("TracingProvider"),
-                SingletonConfigurationFactory.get_instance(),
-            ),
-        )
-        self._initialize_service_status()
-
-    def _initialize_service_status(self):
-        self._service_status = ServiceStatus(None, None)
-        self._service_status.service_status = self.configuration.status
-        self._service_status.service_status_actual = self.configuration.status
-        self._service_status.port = self.configuration.port
-        self._service_status.service_name = self.service_id
+        self._process: Optional[Process] = None
 
     def handle_connection(self, message: Request):
         """register a client with the server. This method should be called when a client connects to the server
@@ -154,7 +140,11 @@ class DigitalPyService:
         """
         client: NetworkClient = message.get_value("client")
         client.service_id = self.service_id
+        client.protocol = self.configuration.protocol
+        resp = ObjectFactory.get_new_instance("Response")
         message.set_value("connection", client)
+        self.iam_facade.initialize(message, resp)
+        self.iam_facade.execute("connection")
         return message
 
     def handle_disconnection(self, client: NetworkClient, req: Request):
@@ -179,8 +169,17 @@ class DigitalPyService:
         """
         return self._process
 
+    @process.setter
+    def process(self, value: Process):
+        """set the process of the service
+
+        Args:
+            value (Process): the process of the service
+        """
+        self._process = value
+
     @property
-    def configuration(self) -> Service:
+    def configuration(self) -> ServiceConfiguration:
         """get the configuration of the service
 
         Returns:
@@ -189,7 +188,7 @@ class DigitalPyService:
         return self._service_conf
 
     @configuration.setter
-    def configuration(self, value: Service):
+    def configuration(self, value: ServiceConfiguration):
         """set the configuration of the service
 
         Args:
@@ -308,7 +307,7 @@ class DigitalPyService:
         disconnects the broker, tears down connections, sets the service status to STOPPED,
         and raises SystemExit to exit the program.
         """
-        self.status = STOPPING
+        self.status = ServiceStatusEnum.STOPPING.value
 
         if self.protocol:
             self.protocol.teardown_network()
@@ -316,7 +315,7 @@ class DigitalPyService:
         self._integration_manager_subscriber.teardown()
         self._subject_pusher.teardown()
 
-        self.status = STOPPED
+        self.status = ServiceStatusEnum.STOPPED.value
 
         raise SystemExit
 
@@ -332,7 +331,7 @@ class DigitalPyService:
         """
         # TODO: discuss this with giu and see if we should move the to the action mapping system?
         if message.get_value("action") == "connection":
-            self.handle_connection(message.get_value("client"), message)
+            self.handle_connection(message)
             return True
 
         elif message.get_value("action") == "disconnection":
@@ -340,6 +339,13 @@ class DigitalPyService:
             return True
 
         return False
+
+    def _subscribe_to_commands(self):
+        """used to subscribe to commands"""
+        command_action: ActionKey = ActionKey(None, None)
+        command_action.action = COMMAND_ACTION
+        command_action.config = self.service_id
+        self._integration_manager_subscriber.subscribe_to_action(command_action)
 
     def handle_command(self, command: Response):
         """used to handle a command. Should be overriden by inheriting classes"""
@@ -353,7 +359,7 @@ class DigitalPyService:
             resp.set_action("publish")
             resp.set_format("pickled")
             resp.set_id(command.get_id())
-            self._subject_pusher.subject_send_container(
+            self._subject_pusher.push_container(
                 resp, conf.get_value("service_id", "ServiceManager")
             )
 
@@ -385,7 +391,7 @@ class DigitalPyService:
         It is intiated by the event loop.
         """
         if isinstance(exception, SystemExit):
-            self.status = STOPPED
+            self.status = ServiceStatusEnum.STOPPED.value
             raise SystemExit
         else:
             traceback.print_exc()
@@ -416,15 +422,15 @@ class DigitalPyService:
             service_desc=self._service_conf,
         )
 
-        self.status = RUNNING
+        self.status = ServiceStatusEnum.RUNNING.value
         self.execute_main_loop()
 
     def execute_main_loop(self):
         """used to execute the main loop of the service"""
-        while self.status == RUNNING:
+        while self.status == ServiceStatusEnum.RUNNING.value:
             try:
                 self.event_loop()
             except Exception as ex:
                 self.handle_exception(ex)
-        if self.status == STOPPED:
+        if self.status == ServiceStatusEnum.STOPPED.value:
             exit(0)

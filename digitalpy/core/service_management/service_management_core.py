@@ -2,15 +2,21 @@
 
 from typing import TYPE_CHECKING, Dict
 
-from digitalpy.core.service_management.domain.service_description import (
+from digitalpy.core.zmanager.impl.integration_manager_pusher import (
+    IntegrationManagerPusher,
+)
+from digitalpy.core.main.singleton_status_factory import SingletonStatusFactory
+from digitalpy.core.main.impl.status_factory import StatusFactory
+from digitalpy.core.service_management.domain.model.service_description import (
     ServiceDescription,
 )
-from digitalpy.core.service_management.domain.service_management_configuration import (
+from digitalpy.core.service_management.domain.model.service_management_configuration import (
     ServiceManagementConfiguration,
 )
 from digitalpy.core.main.singleton_configuration_factory import (
     SingletonConfigurationFactory,
 )
+from digitalpy.core.zmanager.action_mapper import ActionMapper
 from digitalpy.core.zmanager.impl.subject_pusher import SubjectPusher
 from digitalpy.core.zmanager.response import Response
 from digitalpy.core.main.object_factory import ObjectFactory
@@ -36,6 +42,8 @@ class ServiceManagementCore(CoreService):
         self,
         integration_manager_subscriber: IntegrationManagerSubscriber,
         subject_pusher: SubjectPusher,
+        status_factory: StatusFactory,
+        integration_manager_pusher: IntegrationManagerPusher,
     ):
         super().__init__(
             service_id="service_management_core",
@@ -43,8 +51,15 @@ class ServiceManagementCore(CoreService):
             subject_pusher=subject_pusher,
         )
 
+        integration_manager_pusher.setup()
+
+        SingletonStatusFactory.configure(status_factory)
+
         self.service_management_facade: ServiceManagement = ObjectFactory.get_instance(
-            "ServiceManagement"
+            "ServiceManagement",
+            dynamic_configuration={
+                "integration_manager_pusher": integration_manager_pusher
+            },
         )
 
         self.action_key_controller: "ActionKeyController" = ObjectFactory.get_instance(
@@ -58,6 +73,19 @@ class ServiceManagementCore(CoreService):
         )
 
         self._service_index: Dict[str, ServiceDescription] = {}
+
+        self.action_mapper: ActionMapper = ObjectFactory.get_instance(
+            "SyncActionMapper"
+        )
+
+        # set the action mapping so that the service is subscribed to the integration manager properly
+        self.action_mapping = self.service_management_facade.get_action_mapping()
+
+        # set the flow path for the service
+        self.flow_path = self.service_management_facade.get_flow_configuration_path()
+
+        # set the facade to the service management facade
+        self.facade = self.service_management_facade
 
     def _setup(self):
         super()._setup()
@@ -84,9 +112,3 @@ class ServiceManagementCore(CoreService):
 
     def _handle_subject_request(self, request: Request):
         """Handle the subject request."""
-
-    def _handle_integration_manager_request(self, request: Request):
-        """Handle the integration manager request."""
-        response: Response = ObjectFactory.get_new_instance("Response")
-        self.service_management_facade.initialize(request, response)
-        self.service_management_facade.execute(request.action)

@@ -14,6 +14,7 @@ import zmq
 
 from digitalpy.core.main.impl.configuration_factory import ConfigurationFactory
 from digitalpy.core.zmanager.configuration.zmanager_constants import RESPONSE
+from digitalpy.core.zmanager.configuration.zmanager_constants import PUBLISH_DECORATOR
 from digitalpy.core.digipy_configuration.controllers.action_flow_controller import (
     ActionFlowController,
 )
@@ -132,9 +133,16 @@ class IntegrationManager:
         next_action = None
         new_message: bytes = message
 
-        if c_message.action_key.config:
+        # check if the message is a publish message or if it has a config
+        # if it is a publish message, leave it as is
+        if c_message.decorator == PUBLISH_DECORATOR:
+            next_action = c_message.action_key
+        # otherwise, check if the message has a config and get the next action
+        elif c_message.action_key.config:
             next_action = self.action_flow_controller.get_next_action(c_message)
 
+        # TODO: this is probably a suboptimal solution, essentially we set a response action
+        # which all services subscribe to.
         if next_action is None:
             c_message.action_key = self.response_action
             new_message = self.serializer_container.to_zmanager_message(c_message)

@@ -122,10 +122,10 @@ class ConfigurationFactory:
 
         configuration_class = self._import_class(class_path)
         configuration_object = configuration_class(None, None)  # type: ignore
-        propeties = configuration_object.get_properties()
+        properties = configuration_object.get_properties()
 
         for key in configuration.get_section(section_name).keys():
-            if key in propeties:
+            if key in properties:
                 setattr(
                     configuration_object,
                     key,
@@ -146,15 +146,41 @@ class ConfigurationFactory:
         Returns:
             Optional[Node]: The extended configuration object.
         """
-        propeties = self.configuration_objects[section_name].get_properties()
-
+        # iterate over the configuration section keys
         for key in configuration.get_section(section_name).keys():
-            if key in propeties:
-                setattr(
-                    self.configuration_objects[section_name],
-                    key,
-                    configuration.get_value(key, section_name),
-                )
+            self._extend_property(configuration, section_name, key)
+
+    def _extend_property(
+        self, configuration: Configuration, section_name: str, key: str
+    ):
+        """Extend a property of a configuration object.
+
+        Args:
+            configuration (Configuration): The configuration object to extend.
+            section_name (str): The name of the configuration section.
+            key (str): The key of the property to extend.
+        """
+        # do not extend the class property
+        if key == "__class":
+            return
+
+        # Get the configuration object property and the updated value
+        cur_attr = getattr(self.configuration_objects[section_name], key, None)
+        updated_attr = configuration.get_value(key, section_name)
+
+        if isinstance(cur_attr, list) and not isinstance(updated_attr, list):
+            # append the value to the list
+            cur_attr.append(configuration.get_value(key, section_name))
+        elif isinstance(cur_attr, list) and isinstance(updated_attr, list):
+            # extend the list
+            cur_attr.extend(configuration.get_value(key, section_name))
+        else:
+            #
+            setattr(
+                self.configuration_objects[section_name],
+                key,
+                configuration.get_value(key, section_name),
+            )
 
     def _import_class(self, class_name: str) -> type[Node]:
         """Import a class."""

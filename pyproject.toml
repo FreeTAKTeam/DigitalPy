@@ -21,9 +21,13 @@ flask_cors="*"
 sqlalchemy="^2.0.30"
 flask_jwt_extended="*"
 requests="*"
+psutil="*"
 
 [tool.poetry.extras]
 dev = ["pytest"]
+
+[tool.poetry.group.dev.dependencies]
+pytest-cov = "^5.0.0"
 
 [build-system]
 requires = ["poetry-core"]
