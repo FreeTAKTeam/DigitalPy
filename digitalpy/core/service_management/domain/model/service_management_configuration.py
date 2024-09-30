@@ -5,6 +5,12 @@ from digitalpy.core.parsing.load_configuration import ModelConfiguration
 
 class ServiceManagementConfiguration(Node):
     """ This class defines the basic configuration of a service management in a digitalpy environment.
+    Primarily, it contains the list of services that are managed by the service management. As a configuration
+    object, it is expected to be initialized dynamically by the configuration factory. An iniconfiguration
+    which could be used to initialize this object is shown below:
+    [ServiceManagementConfiguration]
+    __class = digitalpy.core.service_management.domain.service_management_configuration.ServiceManagementConfiguration
+    services = [digitalpy.core_api]
     
     Attributes:
         services (list[str]): The list of services.

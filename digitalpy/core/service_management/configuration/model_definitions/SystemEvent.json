@@ -1,0 +1,26 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"id": "http://iec.ch/TC57/HealthClasses#",
+	"type": "object",
+	"definitions":
+	{
+		"SystemEvent":
+		{
+			"type": "object",
+			"properties": {
+				"eventID":
+				{
+					"type": "string"
+				},
+				"source":
+				{
+					"type": "string"
+				},
+				"message":
+				{
+					"type": "string"
+				}
+			}
+		}
+	}
+}

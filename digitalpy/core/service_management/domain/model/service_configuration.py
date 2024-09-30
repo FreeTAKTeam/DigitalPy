@@ -4,7 +4,7 @@ from digitalpy.core.domain.node import Node
 from digitalpy.core.parsing.load_configuration import ModelConfiguration
 
 
-class Service(Node):
+class ServiceConfiguration(Node):
     """
     This class defines the basic configuration of a service in a digitalpy environment.
     Attributes:

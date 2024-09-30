@@ -4,18 +4,18 @@ system events, system health, and system logs.
 
 from typing import Dict, List, Optional
 from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
-from digitalpy.core.telemetry.domain.metric import Metric
-from digitalpy.core.telemetry.domain.service_status import ServiceStatus
-from digitalpy.core.telemetry.domain.status_factory import StatusFactory
-from digitalpy.core.telemetry.domain.system_event import SystemEvent
-from digitalpy.core.telemetry.domain.system_health import SystemHealth
-from digitalpy.core.telemetry.domain.system_log import SystemLog
-
+from digitalpy.core.service_management.domain.model.service_configuration import ServiceConfiguration
+from digitalpy.core.service_management.domain.model.service_status import ServiceStatus
+from digitalpy.core.main.impl.status_factory import StatusFactory
+from digitalpy.core.service_management.domain.model.system_event import SystemEvent
+from digitalpy.core.service_management.domain.model.system_health import SystemHealth
+from digitalpy.core.service_management.domain.model.system_log import SystemLog
+from digitalpy.core.telemetry.domain.model.metric import Metric
 
 class SingletonStatusFactory:
     """
-    A singleton class for managing metrics, service statuses, system events, system health, 
-    and system logs. This class provides methods for adding, retrieving, removing, and 
+    A singleton class for managing service statuses, system events, system health,
+    and system logs. This class provides methods for adding, retrieving, removing, and
     clearing various types of objects in the factory.
     """
 
@@ -36,7 +36,6 @@ class SingletonStatusFactory:
 
         """
         return SingletonStatusFactory.__factory is not None
-
 
     @staticmethod
     def add_configuration(configuration: Configuration):
@@ -238,3 +237,23 @@ class SingletonStatusFactory:
         Clear all system logs from the factory.
         """
         SingletonStatusFactory.__factory.clear_system_logs()
+
+    @staticmethod
+    def clear() -> None:
+        """
+        Clear all objects from the factory.
+        """
+        SingletonStatusFactory.__factory = None
+
+    @staticmethod
+    def __check_config():
+        if SingletonStatusFactory.__factory is None:
+            raise Exception(
+                "No Factory instance provided. Do this by calling the configure() method."
+            )
+
+    @staticmethod
+    def get_instance():
+        """Get an instance from the configuration."""
+        SingletonStatusFactory.__check_config()
+        return SingletonStatusFactory.__factory

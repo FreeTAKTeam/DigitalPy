@@ -1,0 +1,38 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"id": "http://iec.ch/TC57/HealthClasses#",
+	"type": "object",
+	"definitions":
+	{
+		"ServiceStatus":
+		{
+			"type": "object",
+			"properties": {
+				"ServiceName":
+				{
+					"type": "string"
+				},
+				"ServiceStatus":
+				{
+					"type": "string"
+				},
+				"Port":
+				{
+					"type": "integer"
+				},
+				"ServiceStatusActual":
+				{
+					"type": "string"
+				},
+				"upTime":
+				{
+					"type": "integer"
+				},
+				"lastError":
+				{
+					"type": "integer"
+				}
+			}
+		}
+	}
+}
