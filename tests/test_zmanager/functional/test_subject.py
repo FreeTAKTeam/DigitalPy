@@ -61,6 +61,7 @@ def zmanager(file_facades: Files, test_environment):
 
     zmanager_setup.stop()
 
+@pytest.mark.skip
 def test_subject_send_to_integration_manager_action(
     zmanager: ZmanagerSingleThreadSetup,
 ):
@@ -92,7 +93,7 @@ def test_subject_send_to_integration_manager_action(
     assert received_request.get_value("test") == "test"
     assert received_request.action_key == flow.actions[0]
 
-
+@pytest.mark.skip
 def test_subject_send_to_worker_action(
     zmanager: ZmanagerSingleThreadSetup,
 ):

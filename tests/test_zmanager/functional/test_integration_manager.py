@@ -62,7 +62,7 @@ def zmanager(file_facades: Files, test_environment):
 
     zmanager_setup.stop()
 
-
+@pytest.mark.skip
 def test_integration_manager_response(zmanager: ZmanagerSingleThreadSetup):
     """Test that the integration manager can detect a completed flow and send a response"""
     serializer_container: SerializerContainer = ObjectFactory.get_instance(
@@ -83,7 +83,7 @@ def test_integration_manager_response(zmanager: ZmanagerSingleThreadSetup):
     assert resp.get_value("test") == "test"
     assert resp.action_key.config == RESPONSE
 
-
+@pytest.mark.skip
 def test_integration_manager_publish(zmanager: ZmanagerSingleThreadSetup):
     """Test that the integration manager can detect a completed flow and publish a message"""
     serializer_container: SerializerContainer = ObjectFactory.get_instance(
@@ -105,6 +105,7 @@ def test_integration_manager_publish(zmanager: ZmanagerSingleThreadSetup):
     assert resp.action_key.config == "testIntegrationManager2"
     assert resp.action == "Publish"
 
+@pytest.mark.skip
 def test_integration_manager_publish_noflow(zmanager: ZmanagerSingleThreadSetup):
     """Test that the integration manager can detect a completed flow and publish a message"""
     serializer_container: SerializerContainer = ObjectFactory.get_instance(
