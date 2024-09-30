@@ -1,0 +1,42 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"id": "http://iec.ch/TC57/HealthClasses#",
+	"type": "object",
+	"definitions":
+	{
+		"Metric":
+		{
+			"type": "object",
+			"properties": {
+				"metricName":
+				{
+					"type": "string"
+				},
+				"description":
+				{
+					"type": "string"
+				},
+				"value":
+				{
+					"type": "integer"
+				},
+				"valueExpected":
+				{
+					"type": "integer"
+				},
+				"unit":
+				{
+					"type": "integer"
+				},
+				"timestamp":
+				{
+					"type": "string"
+				},
+				"ID":
+				{
+					"type": "string"
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,90 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"id": "http://iec.ch/TC57/HealthClasses#",
+	"type": "object",
+	"definitions":
+	{
+		"Trace":
+		{
+			"type": "object",
+			"properties": {
+				"traceId":
+				{
+					"type": "integer"
+				}
+			}
+		}
+		,"Span":
+		{
+			"type": "object",
+			"properties": {
+				"spanId":
+				{
+					"type": "integer"
+				},
+				"traceId":
+				{
+					"type": "integer"
+				},
+				"name":
+				{
+					"type": "string"
+				},
+				"kind":
+				{
+					"type": "string"
+				},
+				"startTime":
+				{
+					"type": "string"
+				},
+				"endTime":
+				{
+					"type": "string"
+				},
+				"relatedSpanID":
+				{
+					"type": "string"
+				}
+			}
+		}
+		,"Resource":
+		{
+			"type": "object",
+			"properties": {
+			}
+		}
+		,"attribute":
+		{
+			"type": "object",
+			"properties": {
+				"key":
+				{
+					"type": "string"
+				},
+				"value":
+				{
+					"type": "string"
+				},
+				"ownerID":
+				{
+					"type": "string"
+				}
+			}
+		}
+		,"InstrumentationLibrary":
+		{
+			"type": "object",
+			"properties": {
+				"name":
+				{
+					"type": "string"
+				},
+				"version":
+				{
+					"type": "integer"
+				}
+			}
+		}
+	}
+}
