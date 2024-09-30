@@ -2,7 +2,7 @@ import os
 from typing import TYPE_CHECKING
 import uuid
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import Session, sessionmaker, scoped_session
 from sqlalchemy.pool import NullPool
 
 # import tables in initialization order
@@ -21,11 +21,19 @@ from digitalpy.core.IAM.persistence.permissions import Permissions
 
 from digitalpy.core.main.controller import Controller
 from ..persistence.iam_base import IAMBase
-from ..configuration.iam_constants import AUTHENTICATED_USERS, UNAUTHENTICATED_USERS, ADMIN_USERS, DB_PATH
+from ..configuration.iam_constants import (
+    AUTHENTICATED_USERS,
+    UNAUTHENTICATED_USERS,
+    ADMIN_USERS,
+    DB_PATH,
+)
+
 if TYPE_CHECKING:
     from digitalpy.core.zmanager.request import Request
     from digitalpy.core.zmanager.response import Response
-    from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
+    from digitalpy.core.digipy_configuration.domain.model.configuration import (
+        Configuration,
+    )
     from digitalpy.core.zmanager.action_mapper import ActionMapper
 
 
@@ -48,10 +56,10 @@ class IAMPersistenceController(Controller):
 
     def __init__(
         self,
-        request: 'Request',
-        response: 'Response',
-        sync_action_mapper: 'ActionMapper',
-        configuration: 'Configuration',
+        request: "Request",
+        response: "Response",
+        sync_action_mapper: "ActionMapper",
+        configuration: "Configuration",
     ):
         super().__init__(request, response, sync_action_mapper, configuration)
         self.ses = self.create_db_session()
@@ -62,23 +70,20 @@ class IAMPersistenceController(Controller):
         Returns:
             Session: the session connecting the db
         """
-        # create an engine if it does not exist
-        if IAMPersistenceController.engine is None or IAMPersistenceController.engine_pid is None:
-            IAMPersistenceController.engine = create_engine(DB_PATH)
-            IAMPersistenceController.engine_pid = os.getpid()
-
-        # if the engine exists but the pid is different, dispose the engine
-        elif IAMPersistenceController.engine_pid != os.getpid():
-            IAMPersistenceController.engine.dispose(close=False)
-            IAMPersistenceController.engine_pid = os.getpid()
-
+        # use NullPool to prevent connections from remaning open, this allows
+        # us to delete the component and it's database at runtime (component management)
+        engine = create_engine(DB_PATH, poolclass=NullPool)
         # create a configured "Session" class
-        SessionClass = sessionmaker(bind=IAMPersistenceController.engine)
-
-        IAMBase.metadata.create_all(IAMPersistenceController.engine)
-
+        SessionClass = sessionmaker(bind=engine, expire_on_commit=False)
         # create a Session
         return SessionClass()
+
+    def intialize_db(self):
+        """create the tables in the database"""
+        # use NullPool to prevent connections from remaning open, this allows
+        # us to delete the component and it's database at runtime (component management)
+        engine = create_engine(DB_PATH, poolclass=NullPool)
+        IAMBase.metadata.create_all(engine, checkfirst=True)
 
     def save_user(self, user: User, *args, **kwargs):
         """this function is responsible for creating a user in the IAM
@@ -150,6 +155,20 @@ class IAMPersistenceController(Controller):
         self.ses.query(DBSession).delete()
         self.ses.commit()
 
+    def remove_session(self, session: DBSession, *args, **kwargs):
+        """this function is responsible for removing a session from the IAM
+        system.
+
+        Args:
+            session (Session): the session to be removed
+        """
+        if not isinstance(session, DBSession):
+            raise TypeError("'session' must be an instance of Session")
+        for ses_con in session.session_contacts:
+            self.ses.delete(ses_con)
+        self.ses.delete(session)
+        self.ses.commit()
+
     def save_session(self, session: DBSession, user: User, *args, **kwargs):
         """this function is responsible for saving a session in the IAM
         system.
@@ -162,11 +181,7 @@ class IAMPersistenceController(Controller):
         self.ses.add(session)
         self.ses.commit()
 
-        ses_con = SessionContact(
-            uid=str(uuid.uuid4()),
-            session=session,
-            user=user
-        )
+        ses_con = SessionContact(uid=str(uuid.uuid4()), session=session, user=user)
         self.ses.add(ses_con)
         self.ses.commit()
 
@@ -201,7 +216,12 @@ class IAMPersistenceController(Controller):
         """
         permissions = []
         # TODO: add more permissions
-        if self.ses.query(Permissions).filter(Permissions.PermissionName == "receiveData").first() is None:
+        if (
+            self.ses.query(Permissions)
+            .filter(Permissions.PermissionName == "receiveData")
+            .first()
+            is None
+        ):
             recvDataPerm = Permissions(
                 PermissionID=str(uuid.uuid4()),
                 PermissionName="receiveData",
@@ -210,20 +230,30 @@ class IAMPersistenceController(Controller):
             self.ses.add(recvDataPerm)
             self.ses.commit()
             permissions.append(recvDataPerm)
-        if self.ses.query(Permissions).filter(Permissions.PermissionName == "requestStandardAction").first() is None:
+        if (
+            self.ses.query(Permissions)
+            .filter(Permissions.PermissionName == "requestStandardAction")
+            .first()
+            is None
+        ):
             reqStdActionPerm = Permissions(
                 PermissionID=str(uuid.uuid4()),
                 PermissionName="requestStandardAction",
-                PermissionDescription="Request a standard action"
+                PermissionDescription="Request a standard action",
             )
             self.ses.add(reqStdActionPerm)
             self.ses.commit()
             permissions.append(reqStdActionPerm)
-        if self.ses.query(Permissions).filter(Permissions.PermissionName == "requestCoreAction").first() is None:
+        if (
+            self.ses.query(Permissions)
+            .filter(Permissions.PermissionName == "requestCoreAction")
+            .first()
+            is None
+        ):
             reqCoreActionPerm = Permissions(
                 PermissionID=str(uuid.uuid4()),
                 PermissionName="requestCoreAction",
-                PermissionDescription="Request a core action"
+                PermissionDescription="Request a core action",
             )
             self.ses.add(reqCoreActionPerm)
             self.ses.commit()
@@ -264,24 +294,27 @@ class IAMPersistenceController(Controller):
             rcvDataGrp = SystemGroupPermission(
                 uid=str(uuid.uuid4()),
                 system_group=group,
-                permission=self.ses.query(Permissions).filter(
-                    Permissions.PermissionName == "receiveData").first()
+                permission=self.ses.query(Permissions)
+                .filter(Permissions.PermissionName == "receiveData")
+                .first(),
             )
             self.ses.add(rcvDataGrp)
             self.ses.commit()
             rqstStdAct = SystemGroupPermission(
                 uid=str(uuid.uuid4()),
                 system_group=group,
-                permission=self.ses.query(Permissions).filter(
-                    Permissions.PermissionName == "requestStandardAction").first()
+                permission=self.ses.query(Permissions)
+                .filter(Permissions.PermissionName == "requestStandardAction")
+                .first(),
             )
             self.ses.add(rqstStdAct)
             self.ses.commit()
             rqstCoreActGrpPerm = SystemGroupPermission(
                 uid=str(uuid.uuid4()),
                 system_group=group,
-                permission=self.ses.query(Permissions).filter(
-                    Permissions.PermissionName == "requestCoreAction").first()
+                permission=self.ses.query(Permissions)
+                .filter(Permissions.PermissionName == "requestCoreAction")
+                .first(),
             )
             self.ses.add(rqstCoreActGrpPerm)
             self.ses.commit()
@@ -321,16 +354,18 @@ class IAMPersistenceController(Controller):
             rcvDataGrp = SystemGroupPermission(
                 uid=str(uuid.uuid4()),
                 system_group=group,
-                permission=self.ses.query(Permissions).filter(
-                    Permissions.PermissionName == "receiveData").first()
+                permission=self.ses.query(Permissions)
+                .filter(Permissions.PermissionName == "receiveData")
+                .first(),
             )
             self.ses.add(rcvDataGrp)
             self.ses.commit()
             rqstStdAct = SystemGroupPermission(
                 uid=str(uuid.uuid4()),
                 system_group=group,
-                permission=self.ses.query(Permissions).filter(
-                    Permissions.PermissionName == "requestStandardAction").first()
+                permission=self.ses.query(Permissions)
+                .filter(Permissions.PermissionName == "requestStandardAction")
+                .first(),
             )
             self.ses.add(rqstStdAct)
             self.ses.commit()
@@ -365,23 +400,19 @@ class IAMPersistenceController(Controller):
             callsign="Administrator",
             system_user=admin_sysuser,
             CN="Administrator",
-            status=ClientStatus.DISCONNECTED.value
+            status=ClientStatus.DISCONNECTED.value,
         )
         self.ses.add(admin_usr)
         self.ses.commit()
 
         # create the system user groups
         admin_usr_grps = SystemUserGroups(
-            uid=str(uuid.uuid4()),
-            system_user=admin_sysuser,
-            system_group=admin_users
+            uid=str(uuid.uuid4()), system_user=admin_sysuser, system_group=admin_users
         )
         self.ses.add(admin_usr_grps)
         self.ses.commit()
         authed_usr_grps = SystemUserGroups(
-            uid=str(uuid.uuid4()),
-            system_user=admin_sysuser,
-            system_group=authed_users
+            uid=str(uuid.uuid4()), system_user=admin_sysuser, system_group=authed_users
         )
         self.ses.add(authed_usr_grps)
         self.ses.commit()
@@ -415,16 +446,14 @@ class IAMPersistenceController(Controller):
             callsign="Anonymous",
             system_user=anon_sysuser,
             CN="Anonymous",
-            status=ClientStatus.DISCONNECTED.value
+            status=ClientStatus.DISCONNECTED.value,
         )
         self.ses.add(anon_user)
         self.ses.commit()
 
         unauthed_users = self.get_group_by_name(UNAUTHENTICATED_USERS)
         unauth_sysgrp = SystemUserGroups(
-            uid=str(uuid.uuid4()),
-            system_user=anon_sysuser,
-            system_group=unauthed_users
+            uid=str(uuid.uuid4()), system_user=anon_sysuser, system_group=unauthed_users
         )
         self.ses.add(unauth_sysgrp)
         self.ses.commit()
@@ -467,7 +496,9 @@ class IAMPersistenceController(Controller):
         """
         if not isinstance(group_name, str):
             raise TypeError("'group_name' must be an instance of str")
-        return self.ses.query(SystemGroup).filter(SystemGroup.name == group_name).first()
+        return (
+            self.ses.query(SystemGroup).filter(SystemGroup.name == group_name).first()
+        )
 
     def get_all_groups(self, *args, **kwargs) -> list[SystemGroup]:
         """this function is responsible for getting all groups from the IAM
@@ -478,7 +509,9 @@ class IAMPersistenceController(Controller):
         """
         return self.ses.query(SystemGroup).all()
 
-    def create_group_permission(self, group_permission: SystemGroupPermission, *args, **kwargs):
+    def create_group_permission(
+        self, group_permission: SystemGroupPermission, *args, **kwargs
+    ):
         """this function is responsible for creating a group permission in the IAM
         system.
 
@@ -487,7 +520,8 @@ class IAMPersistenceController(Controller):
         """
         if not isinstance(group_permission, SystemGroupPermission):
             raise TypeError(
-                "'group_permission' must be an instance of SystemGroupPermission")
+                "'group_permission' must be an instance of SystemGroupPermission"
+            )
         self.ses.add(group_permission)
         self.ses.commit()
 
@@ -500,7 +534,9 @@ class IAMPersistenceController(Controller):
         """
         return self.ses.query(SystemUser).all()
 
-    def get_system_user_by_name(self, system_user_name: str, *args, **kwargs) -> SystemUser:
+    def get_system_user_by_name(
+        self, system_user_name: str, *args, **kwargs
+    ) -> SystemUser:
         """this function is responsible for creating a system user in the IAM
         system.
 
@@ -509,12 +545,17 @@ class IAMPersistenceController(Controller):
         """
         if not isinstance(system_user_name, str):
             raise TypeError("'system_user' must be an instance of SystemUser")
-        sys_user = self.ses.query(SystemUser).filter(
-            SystemUser.name == system_user_name).first()
+        sys_user = (
+            self.ses.query(SystemUser)
+            .filter(SystemUser.name == system_user_name)
+            .first()
+        )
         self.ses.close()
         return sys_user
 
-    def add_user_to_system_user(self, user: User, system_user: SystemUser, *args, **kwargs):
+    def add_user_to_system_user(
+        self, user: User, system_user: SystemUser, *args, **kwargs
+    ):
         """this function is responsible for adding a user to a system user in the IAM
         system.
 
