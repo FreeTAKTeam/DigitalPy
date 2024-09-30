@@ -1,6 +1,7 @@
 import pytest
 from tests.testing_utilities.facade_utilities import test_environment, initialize_facade
 from tests.testing_utilities.domain_utilities import (
+    initialize_enum_object,
     initialize_simple_object,
     initialize_list_object,
     initialize_list_object_with_min,
@@ -8,9 +9,10 @@ from tests.testing_utilities.domain_utilities import (
     initialize_nested_object_required,
     initialize_simple_list
 )
-from tests.testing_utilities.domain_objects import SimpleObject, ListObject, NestedObject, SimpleList
+from tests.testing_utilities.domain_objects import SimpleObject, ListObject, NestedObject, SimpleList, EnumObject, SimpleEnum
 from digitalpy.core.serialization.configuration.serialization_constants import Protocols
 import json
+from enum import Enum
 
 def test_json_serialization_controller_simple_object(test_environment):
     request, response, _ = test_environment
@@ -144,3 +146,26 @@ def test_json_serialization_controller_nested_object_required(test_environment):
     assert completed_obj.string == "some other string"
     assert completed_obj.nested.string == "abc"
     assert completed_obj.nested.number == 1
+
+def test_json_serialization_controller_enum_object(test_environment):
+    """Test the JSON serialization controller with an object containing an enumeration"""
+    request, response, _ = test_environment
+    enum_obj = initialize_enum_object(request, response)
+    enum_obj.enum = SimpleEnum.OPTION_ONE
+    enum_obj.string = "some string data"
+    enum_obj.number = 1234
+
+    serialization_facade = initialize_facade(
+        "digitalpy.core.serialization.serialization_facade.Serialization", 
+        request,
+        response
+    )
+    request.set_value("protocol", Protocols.JSON)
+    request.set_value("message", enum_obj)
+    serialization_facade.execute("serialize_node_to_json")
+
+    serialized_json: dict = response.get_value("message")
+    assert len(serialized_json) == 1
+    assert serialized_json[0]["enum"] == "a"
+    assert serialized_json[0]["string"] == "some string data"
+    assert serialized_json[0]["number"] == 1234

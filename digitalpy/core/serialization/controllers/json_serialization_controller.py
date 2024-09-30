@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Any, Dict, Union
 from digitalpy.core.main.controller import (
     Controller,
@@ -145,15 +146,23 @@ class JSONSerializationController(Controller):
         for attrib_name in node.get_properties():
             # below line is required because get_all_properties function returns only cot property names
             value = getattr(node, attrib_name)
-            if hasattr(value, "__dict__"):
+
+            # if the value is a nonetype, skip it
+            if value == None:
+                continue
+
+            # if the value is an enum, convert it to its basic value
+            if isinstance(value, Enum):
+                self.handle_attribute(json_data, attrib_name, value.value)
+
+            # if the value is a node, serialize it
+            elif hasattr(value, "__dict__"):
                 attrib_name, json_sub_element = self.handle_nested_object(
                     level, attrib_name, value
                 )
                 json_data[attrib_name] = json_sub_element
 
-            elif value == None:
-                continue
-
+            # if the value is a list, serialize each element
             elif isinstance(value, list):
                 json_data[attrib_name] = []
                 for element in value:
@@ -170,6 +179,7 @@ class JSONSerializationController(Controller):
                 # TODO: modify so double underscores are handled differently
                 # handles instances in which attribute name begins with double underscore
                 self.handle_attribute(json_data, attrib_name, value)
+
         for child in list(node.get_children().values()):
             self.handle_child(json_data, child, level)
         if level == 0:
