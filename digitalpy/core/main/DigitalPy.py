@@ -20,8 +20,8 @@ from digitalpy.core.digipy_configuration.controllers.action_flow_controller impo
 from digitalpy.core.service_management.service_management_core import (
     ServiceManagementCore,
 )
-from digitalpy.core.telemetry.singleton_status_factory import SingletonStatusFactory
-from digitalpy.core.telemetry.domain.status_factory import StatusFactory
+from digitalpy.core.main.singleton_status_factory import SingletonStatusFactory
+from digitalpy.core.main.impl.status_factory import StatusFactory
 from digitalpy.core.main.impl.configuration_factory import ConfigurationFactory
 from digitalpy.core.zmanager.integration_manager import IntegrationManager
 from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration

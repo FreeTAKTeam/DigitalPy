@@ -31,7 +31,7 @@ class SingletonConfigurationFactory:
         """Get an action flow from the factory."""
         SingletonConfigurationFactory.__check_config()
         return SingletonConfigurationFactory.__factory.get_action_flow(config_id)
-    
+
     @staticmethod
     def get_action_flows() -> list[ActionFlow]:
         """Get all action flows from the factory."""
