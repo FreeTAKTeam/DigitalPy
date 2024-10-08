@@ -125,6 +125,32 @@ def test_to_generic_topic_no_decorator(test_environment):
     expected_result = b"config~~source~context~action"
     assert serializer.to_generic_topic(action_key) == expected_result
     
+def test_to_generic_topic_no_source(test_environment):
+    _, _, _ = test_environment
+
+    serializer = SerializerActionKey()
+    action_key = ActionKey(None, None)
+    action_key.config = "config"
+    action_key.decorator = "decorator"
+    action_key.context = "context"
+    action_key.action = "action"
+
+    expected_result = b"config~decorator~~context~action"
+    assert serializer.to_generic_topic(action_key) == expected_result
+
+def test_to_generic_topic_no_context(test_environment):
+    _, _, _ = test_environment
+
+    serializer = SerializerActionKey()
+    action_key = ActionKey(None, None)
+    action_key.config = "config"
+    action_key.decorator = "decorator"
+    action_key.source = "source"
+    action_key.action = "action"
+
+    expected_result = b"config~decorator~source~~action"
+    assert serializer.to_generic_topic(action_key) == expected_result
+
 def test_deserialize_from_topic_no_context(test_environment):
     _, _, _ = test_environment
 
