@@ -43,11 +43,11 @@ class SerializerActionKey:
             action_key.context,
             action_key.source,
         ):
-            case (a, c, s) if a and c and s:
+            case (a, c, s) if a:
                 return_val = s.encode() + DEL + c.encode() + DEL + a.encode()
-            case (a, c, s) if s and c:
+            case ("", c, s) if c:
                 return_val = s.encode() + DEL + c.encode()
-            case (a, c, s) if s:
+            case ("", "", s) if s:
                 return_val = s.encode()
             case (_, _, _):
                 return_val = b""
