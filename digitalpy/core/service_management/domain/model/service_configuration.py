@@ -33,6 +33,7 @@ class ServiceConfiguration(Node):
         self._name: str = None  # type: ignore
         self._host: str = None  # type: ignore
         self._port: int = None  # type: ignore
+        self._flows: list[str] = []  # type: ignore
 
     @property
     def protocol(self) -> str:
@@ -73,3 +74,11 @@ class ServiceConfiguration(Node):
     @port.setter
     def port(self, value: int) -> None:
         self._port = value
+
+    @property
+    def flows(self) -> list[str]:
+        return self._flows
+    
+    @flows.setter
+    def flows(self, value: list[str]) -> None:
+        self._flows = value
