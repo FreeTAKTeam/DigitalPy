@@ -15,13 +15,14 @@ if TYPE_CHECKING:
         ZManagerConfiguration,
     )
     from digitalpy.core.parsing.formatter import Formatter
+    from digitalpy.core.zmanager.controller_message import ControllerMessage
 
 
 class Pusher(ABC):
     def __init__(self, formatter: "Formatter", pull_address: str) -> None:
         # list of connection to which the socket should reconnect after
         # being unpickled
-        self.__pusher_socket_connections = []
+        self.__pusher_socket_connections: list[tuple[bool, str]] = []
         self.pusher_context: zmq.Context = None  # type: ignore
         self.pusher_socket: zmq.Socket = None  # type: ignore
         self.pusher_formatter: Formatter = formatter
@@ -30,21 +31,31 @@ class Pusher(ABC):
             "SerializerContainer"
         )
 
-    def setup(self) -> None:
-        """initiate subject connection"""
+    def setup(self, bind: bool = False) -> None:
+        """initiate subject connection
+
+        Args:
+            bind (bool): if the connection should bind to the address
+        """
         # added to fix hanging connect issue as per
         # https://stackoverflow.com/questions/44257579/zeromq-hangs-in-a-python-multiprocessing-class-object-solution
         if self.pusher_context is None:
             self.pusher_context = zmq.Context()
         if self.pusher_socket is None:
             self.pusher_socket = self.pusher_context.socket(zmq.PUSH)
-        self.pusher_socket.connect(self.pull_address)
-        self.__pusher_socket_connections.append(self.pull_address)
+        if bind:
+            self.pusher_socket.bind(self.pull_address)
+        else:
+            self.pusher_socket.connect(self.pull_address)
+        self.__pusher_socket_connections.append((bind, self.pull_address))
 
     def teardown(self):
         """teardown subject connection"""
         for connection in self.__pusher_socket_connections:
-            self.pusher_socket.disconnect(connection)
+            if connection[0]:
+                self.pusher_socket.unbind(connection[1])
+            else:
+                self.pusher_socket.disconnect(connection[1])
         self.pusher_socket.close()
         self.pusher_context.term()
         self.pusher_context.destroy()
@@ -55,9 +66,7 @@ class Pusher(ABC):
         """send the container object to the target
 
         Args:
-            container (ControllerMessage): the request to be sent to the subject
-            protocol (str): the protocol of the request to be sent
-            service_id (str, optional): the service_id of the request to be sent. Defaults to the id of the current service.
+            container (ControllerMessage): the request to be sent to the target
         """
         # set the service_id so it can be used to create the publish topic by the default routing worker
         message = self.serializer_container.to_zmanager_message(container)
@@ -66,9 +75,9 @@ class Pusher(ABC):
     def __getstate__(self):
         state = self.__dict__
         if "pusher_socket" in state:
-            del state["pusher_socket"]
+            state["pusher_socket"] = None
         if "pusher_context" in state:
-            del state["pusher_context"]
+            state["pusher_context"] = None
         return state
 
     def __setstate__(self, state):
@@ -77,4 +86,7 @@ class Pusher(ABC):
         self.pusher_socket = self.pusher_context.socket(zmq.PUSH)
 
         for connection in self.__pusher_socket_connections:
-            self.pusher_socket.connect(connection)
+            if connection[0]:
+                self.pusher_socket.bind(connection[1])
+            else:
+                self.pusher_socket.connect(connection[1])
