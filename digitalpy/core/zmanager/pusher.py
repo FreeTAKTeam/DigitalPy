@@ -52,7 +52,7 @@ class Pusher(ABC):
         self.pusher_context = None  # type: ignore
 
     def push_container(self, container: "ControllerMessage"):  # type: ignore
-        """send the container object to the subject to the subject
+        """send the container object to the target
 
         Args:
             container (ControllerMessage): the request to be sent to the subject
