@@ -140,7 +140,10 @@ class ApiService(DigitalPyService):
     def serialize(self, message: Response):
         """This function is used to serialize a message object to a json dictionary. The message object is updated in place."""
         if message.has_value("message"):
-            self.serialization.serialize_node_to_json(**message.get_values())
+            serialized = self.serialization.serialize_node_to_json(
+                **message.get_values()
+            )
+            message.set_value("message", serialized)
 
     def handle_response(self, response: Response):
         """This function is used to handle a response message. It is intiated by the event loop."""

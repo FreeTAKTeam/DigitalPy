@@ -104,7 +104,7 @@ class Serialization(DefaultFacade):
 
     def serialize_node_to_json(self, *args, **kwargs):
         """serialize a node to json"""
-        self.json_serializer.serialize_node(*args, **kwargs)
+        return self.json_serializer.serialize_node(*args, **kwargs)
 
     def desearialize_protocol_to_node(self, *args, **kwargs):
         """serialize a protocol to a node"""
