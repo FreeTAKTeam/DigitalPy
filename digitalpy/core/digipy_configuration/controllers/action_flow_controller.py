@@ -79,8 +79,8 @@ class ActionFlowController:
         """This method will get the next action of the sequence referenced by the controller message.
         If the current Action is the final one, a None value will be returned
         """
-        return self.get_next_action(controller_message.action)
-        
+        return self.get_next_action(controller_message.action_key)
+
     def get_next_action(self, action: ActionKey) -> Optional[ActionKey]:
         """This method will return the next action of the flow in which the given action key is part of.
         If the current Action is the final one, a None value will be returned
