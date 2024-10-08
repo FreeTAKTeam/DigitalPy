@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from digitalpy.core.zmanager.controller_message import ControllerMessage
 
 
-class IntegrationManagerPusher(Pusher):
+class RoutingWorkerPusher(Pusher):
     """This class is responsible for pushing messages to the integration manager."""
 
     def __init__(self, formatter: Formatter):
@@ -24,5 +24,5 @@ class IntegrationManagerPusher(Pusher):
             )
         )
         super().__init__(
-            formatter, zmanager_configuration.integration_manager_pull_address
+            formatter, zmanager_configuration.subject_push_address
         )
