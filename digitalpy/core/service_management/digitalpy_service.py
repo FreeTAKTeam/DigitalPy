@@ -29,6 +29,7 @@ respectively.
 # Original author: Giu Platania
 #
 #######################################################
+from abc import abstractmethod
 from datetime import datetime
 from multiprocessing import Process
 import traceback
@@ -241,6 +242,10 @@ class DigitalPyService:
             raise ValueError("Tracer must be an instance of TracingProvider")
         self._tracer = value
 
+    @abstractmethod
+    def serialize(self, message: Request) -> bytes:
+        """used to serialize a message to bytes. Should be overriden by inheriting classes"""
+
     def discovery(self):
         """used to  inform the discoverer of the specifics of this service"""
         # TODO: the contract for discovery needs to be established
@@ -259,12 +264,7 @@ class DigitalPyService:
 
     def initialize_connections(self):
         """initialize connections to the subject and the integration manager within the
-        zmanager architecture. The topic subscribed to by the subject is as follows:
-        /messages/<service_id>
-        /commands/<service_id>
-
-        Args:
-            application_protocol (str): the application protocol of the service
+        zmanager architecture.
         """
         self._integration_manager_subscriber.setup()
         self._subject_pusher.setup()
@@ -280,6 +280,7 @@ class DigitalPyService:
         """used to handle a response. Should be overriden by inheriting classes"""
         if self.protocol:
             response.set_value("client", response.get_value("recipients"))
+            self.serialize(response)
             self.protocol.send_response(response)
 
     def event_loop(self):
@@ -346,6 +347,15 @@ class DigitalPyService:
         command_action.action = COMMAND_ACTION
         command_action.config = self.service_id
         self._integration_manager_subscriber.subscribe_to_action(command_action)
+
+    def _subscribe_to_flows(self):
+        """used to subscribe to flows"""
+        for flow_id in self.configuration.flows:
+            flow = SingletonConfigurationFactory.get_action_flow(flow_id)
+            flow_done_action: ActionKey = ActionKey(None, None)
+            flow_done_action.config = flow
+            flow_done_action.action = "done"
+            self._integration_manager_subscriber.subscribe_to_action(flow_done_action)
 
     def handle_command(self, command: Response):
         """used to handle a command. Should be overriden by inheriting classes"""

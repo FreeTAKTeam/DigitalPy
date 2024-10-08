@@ -21,7 +21,10 @@ import traceback
 from typing import List
 import os
 
-from digitalpy.core.service_management.domain.model.service_status_enum import ServiceStatusEnum
+from digitalpy.core.serialization.serialization_facade import Serialization
+from digitalpy.core.service_management.domain.model.service_status_enum import (
+    ServiceStatusEnum,
+)
 from digitalpy.core.digipy_configuration.domain.model.actionkey import ActionKey
 from digitalpy.core.main.singleton_configuration_factory import (
     SingletonConfigurationFactory,
@@ -31,14 +34,18 @@ from digitalpy.core.zmanager.impl.integration_manager_subscriber import (
     IntegrationManagerSubscriber,
 )
 from digitalpy.core.zmanager.impl.subject_pusher import SubjectPusher
-from digitalpy.core.service_management.domain.model.service_configuration import ServiceConfiguration
+from digitalpy.core.service_management.domain.model.service_configuration import (
+    ServiceConfiguration,
+)
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.service_management.digitalpy_service import (
     DigitalPyService,
     COMMAND_ACTION,
 )
 from digitalpy.core.zmanager.configuration.zmanager_constants import RESPONSE
-from digitalpy.core.service_management.domain.model.service_status_enum import ServiceStatusEnum
+from digitalpy.core.service_management.domain.model.service_status_enum import (
+    ServiceStatusEnum,
+)
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.main.impl.default_factory import DefaultFactory
 from digitalpy.core.telemetry.tracing_provider import TracingProvider
@@ -78,6 +85,7 @@ class ApiService(DigitalPyService):
         subject_pusher: SubjectPusher,
         blueprint_path,
         blueprint_import_base: str,
+        serialization: Serialization,
     ):
         super().__init__(
             service_id="digitalpy.api",
@@ -87,6 +95,7 @@ class ApiService(DigitalPyService):
         )
         self.blueprint_path = blueprint_path
         self.blueprint_import_base = blueprint_import_base
+        self.serialization = serialization
 
     def handle_inbound_message(self, message: Request):
         """This function is used to handle inbound messages from other services.
@@ -128,7 +137,14 @@ class ApiService(DigitalPyService):
         message.set_format("pickled")
         self._subject_pusher.push_container(message, self.configuration.name)
 
+    def serialize(self, message: Response):
+        """This function is used to serialize a message object to a json dictionary. The message object is updated in place."""
+        if message.has_value("message"):
+            self.serialization.serialize_node_to_json(**message.get_values())
+
     def handle_response(self, response: Response):
+        """This function is used to handle a response message. It is intiated by the event loop."""
+        self.serialize(response)
         self.protocol.send_response(response)
 
     def handle_exception(self, exception: Exception):
@@ -139,7 +155,7 @@ class ApiService(DigitalPyService):
             exception (Exception): the exception that occurred
         """
         if isinstance(exception, SystemExit):
-            self.status = ServiceStatusEnum.STOPPED
+            self.status = ServiceStatusEnum.STOPPED.value
         else:
             traceback.print_exc()
             print("An exception occurred: " + str(exception))
