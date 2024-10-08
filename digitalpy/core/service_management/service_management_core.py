@@ -49,6 +49,7 @@ class ServiceManagementCore(CoreService):
             service_id="service_management_core",
             integration_manager_subscriber=integration_manager_subscriber,
             subject_pusher=subject_pusher,
+            integration_manager_pusher=integration_manager_pusher,
         )
 
         integration_manager_pusher.setup()

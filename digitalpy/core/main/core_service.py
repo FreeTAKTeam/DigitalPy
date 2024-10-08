@@ -3,6 +3,9 @@ from typing import TYPE_CHECKING
 import threading
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.impl.subject_pusher import SubjectPusher
+from digitalpy.core.zmanager.impl.integration_manager_pusher import (
+    IntegrationManagerPusher,
+)
 from digitalpy.core.zmanager.impl.integration_manager_subscriber import (
     IntegrationManagerSubscriber,
 )
@@ -12,6 +15,7 @@ from digitalpy.core.zmanager.configuration.zmanager_constants import PUBLISH_DEC
 from digitalpy.core.digipy_configuration.configuration.digipy_configuration_constants import (
     ACTION_MAPPING_SECTION,
 )
+
 
 if TYPE_CHECKING:
     from digitalpy.core.digipy_configuration.domain.model.configuration import (
@@ -49,6 +53,7 @@ class CoreService(threading.Thread):
         service_id: str,
         integration_manager_subscriber: IntegrationManagerSubscriber,
         subject_pusher: SubjectPusher,
+        integration_manager_pusher: IntegrationManagerPusher,
     ):
         super().__init__(group=None, target=None, name=service_id, daemon=False)
 
@@ -58,6 +63,7 @@ class CoreService(threading.Thread):
 
         self.integration_manager_subscriber = integration_manager_subscriber
         self.integration_manager_subscriber.service_id = self.id
+        self.integration_manager_pusher = integration_manager_pusher
 
         self.subject_pusher = subject_pusher
         self.subject_pusher.service_id = self.id

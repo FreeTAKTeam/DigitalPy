@@ -74,6 +74,7 @@ class ApiService(DigitalPyService):
         self,
         service: ServiceConfiguration,
         integration_manager_subscriber: IntegrationManagerSubscriber,
+        integration_manager_pusher: SubjectPusher,
         subject_pusher: SubjectPusher,
         blueprint_path,
         blueprint_import_base: str,
