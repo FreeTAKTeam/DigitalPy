@@ -149,7 +149,7 @@ class CoreService(threading.Thread):
     def _send_next_action(self, request: Request, response: Response):
         """Send the next action to the subject."""
         # Get the next action
-        next_action = self.action_flow_controller.get_next_action(request)
+        next_action = self.action_flow_controller.get_next_message_action(request)
         # Resolve the action key
         response.action_key = self.action_key_controller.resolve_action_key(next_action)
         # Send the updated response to the subject to handle the next action in the sequence
@@ -163,8 +163,10 @@ class CoreService(threading.Thread):
         self.facade.execute(request.action)
 
         # Send subsequent actions to the subject
-        next_action = self.action_flow_controller.get_next_action(request)
+        next_action = self.action_flow_controller.get_next_message_action(request)
         if next_action:
             response.action_key = next_action
             response.id = request.id
             self.subject_pusher.push_container(response)
+        else:
+            self.integration_manager_pusher.push_container(response)

@@ -157,7 +157,7 @@ class Subject:
     def _determine_next_action(self, message: list[bytes]) -> Request:
         request = self.serializer_container.from_zmanager_message(message[0])
         if request.action == "Push":
-            next_action = self.action_flow_controller.get_next_action(request)
+            next_action = self.action_flow_controller.get_next_message_action(request)
             request.action_key = next_action
         return request
 

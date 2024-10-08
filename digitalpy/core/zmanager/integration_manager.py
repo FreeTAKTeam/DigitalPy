@@ -139,7 +139,7 @@ class IntegrationManager:
             next_action = c_message.action_key
         # otherwise, check if the message has a config and get the next action
         elif c_message.action_key.config:
-            next_action = self.action_flow_controller.get_next_action(c_message)
+            next_action = self.action_flow_controller.get_next_message_action(c_message)
 
         # TODO: this is probably a suboptimal solution, essentially we set a response action
         # which all services subscribe to.

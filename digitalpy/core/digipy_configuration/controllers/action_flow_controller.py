@@ -73,24 +73,24 @@ class ActionFlowController:
                     actions.append(f_action)
         return actions
 
-    def get_next_action(
+    def get_next_message_action(
         self, controller_message: ControllerMessage
     ) -> Optional[ActionKey]:
         """This method will get the next action of the sequence referenced by the controller message.
         If the current Action is the final one, a None value will be returned
         """
-        flow = SingletonConfigurationFactory.get_action_flow(
-            controller_message.get_flow_name()
-        )
+        return self.get_next_action(controller_message.action)
+        
+    def get_next_action(self, action: ActionKey) -> Optional[ActionKey]:
+        """This method will return the next action of the flow in which the given action key is part of.
+        If the current Action is the final one, a None value will be returned
+        """
+        flow = SingletonConfigurationFactory.get_action_flow(action.config)
         if flow is None:
             return None
-        current_action = self.action_key_controller.build_from_controller_message(
-            controller_message
-        )
         i = 0
-        for action in flow.actions:
-            if action == current_action:
-                current_action = action
+        for f_action in flow.actions:
+            if f_action == action:
                 break
             i += 1
         if len(flow.actions) > i + 1:

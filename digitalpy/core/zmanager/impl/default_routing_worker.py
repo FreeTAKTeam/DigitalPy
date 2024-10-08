@@ -300,7 +300,7 @@ class DefaultRoutingWorker:
         # alternative to while loop
         for _ in range(MAX_FLOW_LENGTH):
             # get the next action in the flow before any changes are made to the request object
-            next_action = self.action_flow_controller.get_next_action(request)
+            next_action = self.action_flow_controller.get_next_message_action(request)
             # execute the current action
             self.action_mapper.process_action(request, response)
             # if there is a next action that we can resolve, set it as the action key
@@ -340,7 +340,7 @@ class DefaultRoutingWorker:
         """
         if isinstance(response.get_value("topics"), list):
             return response.get_value("topics")
-        elif next_action := self.action_flow_controller.get_next_action(response):
+        elif next_action := self.action_flow_controller.get_next_message_action(response):
             response.action_key = next_action
             return [self.serializer_container.to_zmanager_message(response)]
         else:

@@ -87,7 +87,7 @@ def test_get_next_action(file_facades: Files):
     request.context = "context"
     request.action = "Push"
     request.set_flow_name("actionflow1")
-    next_action = action_flow_controller.get_next_action(request)
+    next_action = action_flow_controller.get_next_message_action(request)
 
     assert next_action is not None
     assert next_action.action == "Publish"
@@ -101,7 +101,7 @@ def test_get_next_action(file_facades: Files):
     next_request.context = next_action.context
     next_request.action = next_action.action
     next_request.set_flow_name("actionflow1")
-    final_action = action_flow_controller.get_next_action(next_request)
+    final_action = action_flow_controller.get_next_message_action(next_request)
 
     assert final_action is not None
     assert final_action.action == "DoAction"
@@ -125,7 +125,7 @@ def test_get_next_action_final_action(file_facades: Files):
     request.context = "context"
     request.action = "DoAction"
     request.set_flow_name("actionflow1")
-    next_action = action_flow_controller.get_next_action(request)
+    next_action = action_flow_controller.get_next_message_action(request)
 
     assert next_action is None
 
