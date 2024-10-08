@@ -170,9 +170,10 @@ class CoreService(threading.Thread):
 
         # Send subsequent actions to the subject
         next_action = self.action_flow_controller.get_next_message_action(request)
-        if next_action:
-            response.action_key = next_action
-            response.id = request.id
+        response.action_key = next_action
+        response.id = request.id
+
+        if not self.action_flow_controller.is_end_of_flow(next_action):
             self.subject_pusher.push_container(response)
         else:
             self.integration_manager_pusher.push_container(response)

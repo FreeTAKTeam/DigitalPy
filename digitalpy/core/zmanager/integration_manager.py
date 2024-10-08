@@ -9,29 +9,33 @@
 
 
 import multiprocessing
+from typing import TYPE_CHECKING
 
 import zmq
-
-from digitalpy.core.main.impl.configuration_factory import ConfigurationFactory
-from digitalpy.core.zmanager.configuration.zmanager_constants import RESPONSE
-from digitalpy.core.zmanager.configuration.zmanager_constants import PUBLISH_DECORATOR
+from digitalpy.core.digipy_configuration.action_key_controller import (
+    ActionKeyController,
+)
 from digitalpy.core.digipy_configuration.controllers.action_flow_controller import (
     ActionFlowController,
+)
+from digitalpy.core.main.factory import Factory
+from digitalpy.core.main.impl.configuration_factory import ConfigurationFactory
+from digitalpy.core.main.object_factory import ObjectFactory
+from digitalpy.core.main.singleton_configuration_factory import (
+    SingletonConfigurationFactory,
 )
 from digitalpy.core.serialization.controllers.serializer_container import (
     SerializerContainer,
 )
+from digitalpy.core.zmanager.configuration.zmanager_constants import (
+    RESPONSE,
+)
 from digitalpy.core.zmanager.domain.model.zmanager_configuration import (
     ZManagerConfiguration,
 )
-from digitalpy.core.main.singleton_configuration_factory import (
-    SingletonConfigurationFactory,
-)
-from digitalpy.core.main.object_factory import ObjectFactory
-from digitalpy.core.digipy_configuration.action_key_controller import (
-    ActionKeyController,
-)
-from digitalpy.core.main.factory import Factory
+
+if TYPE_CHECKING:
+    from digitalpy.core.zmanager.controller_message import ControllerMessage
 
 
 class IntegrationManager:
@@ -128,32 +132,10 @@ class IntegrationManager:
                 print("Error " + str(ex))
         self._teardown()
 
-    def _forward_message(self, message):
-        c_message = self.serializer_container.from_zmanager_message(message)
-        next_action = None
-        new_message: bytes = message
-
-        # check if the message is a publish message or if it has a config
-        # if it is a publish message, leave it as is
-        if c_message.decorator == PUBLISH_DECORATOR:
-            next_action = c_message.action_key
-        # otherwise, check if the message has a config and get the next action
-        elif c_message.action_key.config:
-            next_action = self.action_flow_controller.get_next_message_action(c_message)
-
-        # TODO: this is probably a suboptimal solution, essentially we set a response action
-        # which all services subscribe to.
-        if next_action is None:
-            c_message.action_key = self.response_action
-            new_message = self.serializer_container.to_zmanager_message(c_message)
-            self.pub_socket.send(message, copy=False)
-        else:
-            c_message.action_key = next_action
-            new_message = self.serializer_container.to_zmanager_message(c_message)
-
+    def _forward_message(self, message: bytes):
+        """publish the message to all listeners"""
         try:
-            # send the response back to the client
-            self.pub_socket.send(new_message, copy=False)
-
+            # publish the message
+            self.pub_socket.send(message, copy=False)
         except Exception as ex:
             print("Error sending response to client: {}".format(ex))

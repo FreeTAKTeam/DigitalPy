@@ -268,6 +268,8 @@ class DigitalPyService:
         """
         self._integration_manager_subscriber.setup()
         self._subject_pusher.setup()
+        self._subscribe_to_commands()
+        self._subscribe_to_flows()
 
     def response_handler(self, response: Response):
         """used to handle a response. Should be overriden by inheriting classes"""
@@ -351,9 +353,8 @@ class DigitalPyService:
     def _subscribe_to_flows(self):
         """used to subscribe to flows"""
         for flow_id in self.configuration.flows:
-            flow = SingletonConfigurationFactory.get_action_flow(flow_id)
             flow_done_action: ActionKey = ActionKey(None, None)
-            flow_done_action.config = flow
+            flow_done_action.config = flow_id
             flow_done_action.action = "done"
             self._integration_manager_subscriber.subscribe_to_action(flow_done_action)
 

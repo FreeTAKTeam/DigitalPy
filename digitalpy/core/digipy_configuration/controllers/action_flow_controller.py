@@ -97,3 +97,13 @@ class ActionFlowController:
             return flow.actions[i + 1]
         else:
             return None
+
+    def is_end_of_flow(self, action: ActionKey) -> bool:
+        """This method will return True if the given action is the final one in the flow.
+        """
+        return action is None or self._is_done_action(action)
+
+    def _is_done_action(self, action: ActionKey) -> bool:
+        """This method will return True if the given action is a done action.
+        """
+        return action.action == "done" and action.context == "" and action.source == ""
