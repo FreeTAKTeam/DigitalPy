@@ -1,7 +1,6 @@
 """this module is responsible for handling all domain interactions"""
 
 import uuid
-from types import ModuleType
 from typing import Any, List, Optional, Type
 from digitalpy.core.zmanager.action_mapper import ActionMapper
 from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
@@ -31,7 +30,7 @@ class DomainController(Controller):
         **kwargs,  # pylint: disable=unused-argument
     ):
         super().__init__(request, response, domain_action_mapper, configuration)
-        self.domain = domain
+        self.domain_classes = domain.classes
 
     def execute(self, method=None):
         return getattr(self, method)(**self.request.get_values())
@@ -68,7 +67,7 @@ class DomainController(Controller):
             id = str(uuid.uuid1())
         # allow the domain to be extended
         domaindict = self._extend_domain(
-            self.domain.classes, kwargs.get("extended_domain", {})
+            self.domain_classes, kwargs.get("extended_domain", {})
         )
         # retrieve the original object class
         object_class: type[Node] = domaindict[object_class_name]
