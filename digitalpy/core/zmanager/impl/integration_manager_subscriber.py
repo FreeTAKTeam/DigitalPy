@@ -139,6 +139,10 @@ class IntegrationManagerSubscriber:
             return self._deserialize_response(message)
         except zmq.error.Again:
             return None
+        
+    def unsubscribe_from_topic(self, topic: bytes):
+        """Unsubscribe from a topic"""
+        self.subscriber_socket.setsockopt(zmq.UNSUBSCRIBE, topic)
 
     def _receive_message(self) -> bytes:
         message = self.subscriber_socket.recv_multipart()[0]
