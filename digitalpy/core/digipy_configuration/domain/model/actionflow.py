@@ -36,6 +36,11 @@ class ActionFlow(Node):
         self._actions = actions
 
     @property
+    def last_action(self) -> ActionKey:
+        """The last action in the action flow."""
+        return self._actions[-1]
+
+    @property
     def config_id(self) -> str:
         """The configuration id of the action flow."""
         return self._config_id
