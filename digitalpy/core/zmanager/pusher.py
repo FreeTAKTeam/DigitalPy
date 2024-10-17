@@ -85,11 +85,13 @@ class Pusher(ABC):
 
     def __setstate__(self, state):
         self.__dict__ = state
-        self.pusher_context = zmq.Context()
-        self.pusher_socket = self.pusher_context.socket(zmq.PUSH)
+        if self.pusher_context is None:
+            self.pusher_context = zmq.Context()
+        if self.pusher_socket is None:
+            self.pusher_socket = self.pusher_context.socket(zmq.PUSH)
 
-        for connection in self.__pusher_socket_connections:
-            if connection[0]:
-                self.pusher_socket.bind(connection[1])
-            else:
-                self.pusher_socket.connect(connection[1])
+            for connection in self.__pusher_socket_connections:
+                if connection[0]:
+                    self.pusher_socket.bind(connection[1])
+                else:
+                    self.pusher_socket.connect(connection[1])
