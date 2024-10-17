@@ -276,3 +276,4 @@ class ControllerMessage(ABC):
         self.set_context(action_key.context)
         self.set_sender(action_key.source)
         self.set_decorator(action_key.decorator)
+        self.set_flow_name(action_key.config)
