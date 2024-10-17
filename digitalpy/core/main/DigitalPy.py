@@ -14,6 +14,7 @@ import threading
 from time import sleep
 from typing import TYPE_CHECKING
 
+from digitalpy.core.service_management.domain.model.service_configuration import ServiceConfiguration
 from digitalpy.core.digipy_configuration.controllers.action_flow_controller import (
     ActionFlowController,
 )
@@ -321,6 +322,9 @@ class DigitalPy:
             bool: True if successful, False otherwise.
         """
         try:
+            service_configuration: ServiceConfiguration = (
+                SingletonConfigurationFactory.get_configuration_object("ServiceManagementConfiguration")
+            )
 
             # begin the service_manager
             self.service_manager: ServiceManagementCore = ObjectFactory.get_instance(
@@ -329,6 +333,7 @@ class DigitalPy:
                     "status_factory": SingletonStatusFactory.get_instance()
                 },
             )
+            self.service_manager.configuration = service_configuration
 
             self.service_manager.start()
 
