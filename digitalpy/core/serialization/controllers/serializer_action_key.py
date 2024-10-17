@@ -61,8 +61,10 @@ class SerializerActionKey:
                 return_val = c.encode() + DEL + d.encode() + return_val
             case (d, c) if d:
                 return_val = DEL + d.encode() + return_val
-            case (d, c) if c:
+            case (d, c) if c and return_val:
                 return_val = c.encode() + DEL + return_val
+            case (d, c) if c and not return_val:
+                return_val = c.encode()
             case (_, _):
                 return_val = return_val
         return return_val
