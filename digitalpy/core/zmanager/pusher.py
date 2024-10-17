@@ -70,7 +70,10 @@ class Pusher(ABC):
         """
         # set the service_id so it can be used to create the publish topic by the default routing worker
         message = self.serializer_container.to_zmanager_message(container)
-        self.pusher_socket.send(message)
+        if len(self.__pusher_socket_connections) > 0:
+            self.pusher_socket.send(message)
+        else:
+            raise ConnectionError("No connection to pusher established")
 
     def __getstate__(self):
         state = self.__dict__
