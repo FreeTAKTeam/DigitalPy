@@ -113,7 +113,24 @@ class IntegrationManagerSubscriber:
             action_key (ActionKey): the action key to subscribe to
         """
         topic = self.serializer_action_key.to_generic_topic(action_key)
+        self.subscribe_to_topic(topic)
+
+    def unsubscribe_from_action(self, action_key: ActionKey):
+        """Unsubscribe from a topic
+
+        Args:
+            action_key (ActionKey): the action key to unsubscribe from
+        """
+        topic = self.serializer_action_key.to_generic_topic(action_key)
+        self.unsubscribe_from_topic(topic)
+
+    def subscribe_to_topic(self, topic: bytes):
+        """Subscribe to a topic"""
         self.subscriber_socket.setsockopt(zmq.SUBSCRIBE, topic)
+
+    def unsubscribe_from_topic(self, topic: bytes):
+        """Unsubscribe from a topic"""
+        self.subscriber_socket.setsockopt(zmq.UNSUBSCRIBE, topic)
 
     def teardown(self):
         """Disconnect from broker"""
@@ -133,16 +150,13 @@ class IntegrationManagerSubscriber:
             return None
 
     def fetch_integration_manager_response(self) -> Optional[Response]:
+        """receive the next response from the integration manager"""
         try:
             message = self._receive_message()
 
             return self._deserialize_response(message)
         except zmq.error.Again:
             return None
-        
-    def unsubscribe_from_topic(self, topic: bytes):
-        """Unsubscribe from a topic"""
-        self.subscriber_socket.setsockopt(zmq.UNSUBSCRIBE, topic)
 
     def _receive_message(self) -> bytes:
         message = self.subscriber_socket.recv_multipart()[0]
