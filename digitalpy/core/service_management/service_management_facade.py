@@ -1,3 +1,6 @@
+from digitalpy.core.zmanager.impl.integration_manager_subscriber import (
+    IntegrationManagerSubscriber,
+)
 from digitalpy.core.service_management.controllers.service_management_status_controller import (
     ServiceManagementStatusController,
 )
@@ -53,6 +56,7 @@ class ServiceManagement(DefaultFacade):
         persistence_path: str = None,
         log_file_path: str = LOG_FILE_PATH,
         integration_manager_pusher: "IntegrationManagerPusher" = None,
+        integration_manager_subscriber: "IntegrationManagerSubscriber" = None,
     ):
         super().__init__(
             # the path to the external action mapping
@@ -93,6 +97,7 @@ class ServiceManagement(DefaultFacade):
             sync_action_mapper,
             configuration,
             integration_manager_pusher,
+            integration_manager_subscriber,
         )
         self.service_management_status_controller = ServiceManagementStatusController(
             request, response, sync_action_mapper, configuration
@@ -151,3 +156,34 @@ class ServiceManagement(DefaultFacade):
     def get_service_status(self, *args, **kwargs):
         """This method is used to get the status of a given service"""
         self.service_management_controller.get_service_status(*args, **kwargs)
+
+    @DefaultFacade.public
+    def get_service_topics(self, *args, **kwargs):
+        """This method is used to get the topics of a given service"""
+        self.service_management_controller.get_service_topics(*args, **kwargs)
+
+    @DefaultFacade.public
+    def get_service_topics_response(self, *args, **kwargs):
+        """This method is used to get the topics of a given service"""
+        self.service_management_controller.get_service_topics_response(*args, **kwargs)
+
+    @DefaultFacade.public
+    def put_service_topic(self, *args, **kwargs):
+        """This method is used to put a topic to a given service"""
+        self.service_management_controller.put_service_topic(*args, **kwargs)
+
+    @DefaultFacade.public
+    def put_service_topic_response(self, *args, **kwargs):
+        """This method is used to put topics to a given service"""
+        self.service_management_controller.put_service_topics_response(*args, **kwargs)
+
+    @DefaultFacade.public
+    def delete_service_topic(self, *args, **kwargs):
+        """This method is used to delete a topic from a given service"""
+        self.service_management_controller.delete_service_topic(*args, **kwargs)
+
+
+    @DefaultFacade.public
+    def delete_service_topic_response(self, *args, **kwargs):
+        """This method is used to delete a topic from a given service"""
+        self.service_management_controller.delete_service_topic_response(*args, **kwargs)
