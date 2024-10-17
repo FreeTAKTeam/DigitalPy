@@ -33,8 +33,9 @@ from abc import abstractmethod
 from datetime import datetime
 from multiprocessing import Process
 import traceback
-from typing import List, Optional
+from typing import Optional
 
+from digitalpy.core.service_management.configuration.message_keys import COMMAND
 from digitalpy.core.digipy_configuration.domain.model.actionkey import ActionKey
 from digitalpy.core.service_management.domain.model.service_status_enum import (
     ServiceStatusEnum,
@@ -43,6 +44,9 @@ from digitalpy.core.main.impl.configuration_factory import ConfigurationFactory
 from digitalpy.core.zmanager.impl.subject_pusher import SubjectPusher
 from digitalpy.core.zmanager.impl.integration_manager_subscriber import (
     IntegrationManagerSubscriber,
+)
+from digitalpy.core.zmanager.impl.integration_manager_pusher import (
+    IntegrationManagerPusher,
 )
 from digitalpy.core.main.singleton_configuration_factory import (
     SingletonConfigurationFactory,
@@ -57,7 +61,7 @@ from digitalpy.core.domain.domain.service_health import ServiceHealth
 from digitalpy.core.main.impl.default_factory import DefaultFactory
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.service_management.domain.model.service_operations import (
-    ServiceOperations,
+    ServiceCommands,
 )
 
 from digitalpy.core.telemetry.tracing_provider import TracingProvider
@@ -72,6 +76,7 @@ from digitalpy.core.digipy_configuration.domain.model.configuration import Confi
 
 COMMAND_PROTOCOL = "command"
 COMMAND_ACTION = "ServiceCommand"
+COMPLETED_COMMAND = "completed_command"
 
 
 class DigitalPyService:
@@ -99,6 +104,7 @@ class DigitalPyService:
         service: ServiceConfiguration,
         integration_manager_subscriber: IntegrationManagerSubscriber,
         subject_pusher: SubjectPusher,
+        integration_manager_pusher: IntegrationManagerPusher,
         error_threshold: float = 0.1,
     ):
         """the constructor for the digitalpy service class
@@ -110,6 +116,7 @@ class DigitalPyService:
         """
         self._integration_manager_subscriber = integration_manager_subscriber
         self._subject_pusher = subject_pusher
+        self._integration_manager_pusher = integration_manager_pusher
         self._service_conf = service
         self._zmanager_configuration: ZManagerConfiguration = (
             SingletonConfigurationFactory.get_configuration_object(
@@ -120,18 +127,21 @@ class DigitalPyService:
         self.integration_manager_address = (
             self._zmanager_configuration.integration_manager_pub_address
         )
-        self.service_id = service_id
+
         self._tracer = None
         self.protocol: NetworkInterface = ObjectFactory.get_instance(
             self.configuration.protocol
         )
-        self.response_queue: List[Response] = []
         self.iam_facade: IAM = ObjectFactory.get_instance("IAM")
+        self.service_id = service_id
         self.total_requests = 0
         self.total_errors = 0
         self.total_request_processing_time = 0
         self.error_threshold = error_threshold
+
         self._process: Optional[Process] = None
+
+        self._topics: list[ActionKey] = []
 
     def handle_connection(self, message: Request):
         """register a client with the server. This method should be called when a client connects to the server
@@ -268,6 +278,7 @@ class DigitalPyService:
         """
         self._integration_manager_subscriber.setup()
         self._subject_pusher.setup()
+        self._integration_manager_pusher.setup()
         self._subscribe_to_commands()
         self._subscribe_to_flows()
 
@@ -346,33 +357,79 @@ class DigitalPyService:
     def _subscribe_to_commands(self):
         """used to subscribe to commands"""
         command_action: ActionKey = ActionKey(None, None)
-        command_action.action = COMMAND_ACTION
-        command_action.config = self.service_id
+        # Subscribe to all commands sent to this service at the topic ServiceCommand_<service_id>
+        command_action.config = COMMAND_PROTOCOL + "_" + self.service_id
         self._integration_manager_subscriber.subscribe_to_action(command_action)
 
     def _subscribe_to_flows(self):
-        """used to subscribe to flows"""
+        """used to subscribe to flows in the configuration.
+        This assumes that the configuration has a flows property that contains a list of flow ids.
+        This also assumes that each flow ends with a done action that is used to signal the end of the flow.
+        """
         for flow_id in self.configuration.flows:
             flow_done_action: ActionKey = ActionKey(None, None)
             flow_done_action.config = flow_id
             flow_done_action.action = "done"
+            self._topics.append(flow_done_action)
             self._integration_manager_subscriber.subscribe_to_action(flow_done_action)
 
     def handle_command(self, command: Response):
         """used to handle a command. Should be overriden by inheriting classes"""
-        if command.get_value("command") == ServiceOperations.STOP.value:
-            self.stop()
-        elif command.get_value("command") == ServiceOperations.GET_HEALTH.value:
-            service_health = self.get_health()
-            conf: Configuration = ObjectFactory.get_instance("Configuration")
-            resp = ObjectFactory.get_new_instance("Response")
-            resp.set_value("message", service_health)
-            resp.set_action("publish")
-            resp.set_format("pickled")
+        resp = None
+        match command.get_value(COMMAND):
+            case ServiceCommands.STOP.value:
+                self.stop()
+            case ServiceCommands.GET_HEALTH.value:
+                resp = self._handle_command_get_health()
+            case ServiceCommands.GET_TOPICS.value:
+                resp = self._handle_command_get_topics()
+            case ServiceCommands.ADD_TOPIC.value:
+                resp = self._handle_command_add_topic(command)
+            case ServiceCommands.REMOVE_TOPIC.value:
+                resp = self._handle_command_remove_topic(command)
+            case _:
+                pass
+
+        if resp:
             resp.set_id(command.get_id())
-            self._subject_pusher.push_container(
-                resp, conf.get_value("service_id", "ServiceManager")
-            )
+            resp.set_flow_name(COMPLETED_COMMAND)
+            resp.set_action("done")
+            resp.set_value("prev_flows", command.get_value("prev_flows"))
+            resp.set_format("pickled")
+            self._integration_manager_pusher.push_container(resp)
+
+    def _handle_command_get_health(self) -> Response:
+        """used to handle the get health command"""
+        service_health = self.get_health()
+        conf: Configuration = ObjectFactory.get_instance("Configuration")
+        resp: Response = ObjectFactory.get_new_instance("Response")
+        resp.set_value("message", service_health)
+        return resp
+
+    def _handle_command_get_topics(self) -> Response:
+        """used to handle the get topics command"""
+        resp: Response = ObjectFactory.get_new_instance("Response")
+        resp.set_value("message", self._topics)
+        return resp
+
+    def _handle_command_add_topic(self, command: Response) -> Response:
+        """used to handle the add topic command by adding a topic to the list of topics
+        and subscribing to it"""
+        resp: Response = ObjectFactory.get_new_instance("Response")
+        topic: ActionKey = command.get_value("topic")
+        self._integration_manager_subscriber.subscribe_to_action(topic)
+        self._topics.append(topic)
+        resp.set_value("message", topic)
+        return resp
+
+    def _handle_command_remove_topic(self, command: Response) -> Response:
+        """used to handle the remove topic command"""
+        resp: Response = ObjectFactory.get_new_instance("Response")
+        topic: ActionKey = command.get_value("topic")
+        self._integration_manager_subscriber.unsubscribe_from_action(topic)
+        self._topics.remove(topic)
+        resp.set_value("message", topic)
+        return resp
 
     def get_health(self):
         """used to get the health of the service."""
