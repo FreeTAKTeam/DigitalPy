@@ -1,0 +1,276 @@
+openapi: 3.0.1
+info:
+  title: Files
+  version: '1.0'
+  description: >-
+    This is the API for the Files package. It allows you to interact with the file system in a programmatic way.
+  contact:
+    name: name
+    url: url
+    email: email
+  license:
+    name: License
+paths:
+  /file/get-or-create:
+    get:
+      x-scope: package
+      tags:
+       - file
+      description: >-
+        get a file from the filesystem based on the specified path or create a new file if one does not yet exist.
+      summary: get a file from the filesystem based on the specified path or create a new file if one does not yet exist.
+      operationId: get_or_create_file
+      parameters:
+        - $ref: '#/components/parameters/path'
+      responses:
+        '200':
+          $ref: '#/components/responses/200File_get'
+  /folder/get-or-create:
+    get:
+      x-scope: package
+      tags:
+        - folder
+      description: >-
+        get a folder from the filesystem based on the specified path or create a new folder if one does not yet exist.
+      summary: get a folder from the filesystem based on the specified path or create a new folder if one does not yet exist.
+      operationId: get_or_create_folder
+      parameters:
+        - $ref: '#/components/parameters/path'
+      responses:
+        '200':
+          $ref: '#/components/responses/200Folder_get'
+  /folder:
+    get:
+      x-scope: package
+      tags:
+        - folder
+      description: >-
+        get a folder based on the specified path
+      summary: get a folder based on the specified path
+      operationId: get_folder
+      parameters:
+        - $ref: '#/components/parameters/path'
+      responses:
+        '200':
+          $ref: '#/components/responses/200Folder_get'
+    post:
+      x-scope: package
+      tags:
+       - folder
+      description: >-
+        create a new folder in the file system at the specified path
+      summary: create a new folder in the file system at the specified path
+      operationId: create_folder
+      parameters:
+        - $ref: '#/components/parameters/path'
+      responses:
+        '200':
+          $ref: '#/components/responses/200Folder_post'
+    delete:
+      x-scope: package
+      tags:
+       - folder
+      description: >-
+        delete the given folder instance.
+      summary: delete the given folder instance.
+      operationId: delete_folder
+      parameters:
+        - $ref: '#/components/parameters/recursive'
+      responses:
+        '200':
+          $ref: '#/components/responses/200'
+  /file:
+    get:
+      x-scope: package
+      tags:
+       - file
+      description: >-
+        get a file from the file system based on the specified path
+      summary: get a file from the file system based on the specified path
+      operationId: get_file
+      parameters:
+        - $ref: '#/components/parameters/path'
+      responses:
+        '200':
+          $ref: '#/components/responses/200File_get'
+    post:
+      x-scope: package
+      tags:
+       - file
+      description: >-
+        create a new file in the filesystem at the specified path.
+      summary: create a new file in the filesystem at the specified path.
+      operationId: create_file
+      parameters:
+        - $ref: '#/components/parameters/path'
+      responses:
+        '200':
+          $ref: '#/components/responses/200File_post'
+    delete:
+      x-scope: package
+      tags:
+       - file
+      description: >-
+        delete the file at the specified path
+      summary: delete the file at the specified path
+      operationId: delete_file
+      responses:
+        '200':
+          $ref: '#/components/responses/200'
+components:
+  schemas:
+    Folder:
+      allOf:
+        - type: object
+          properties:
+            path:
+              type: string
+              description: >-
+            size:
+              type: integer
+              description: >-
+            permissions:
+              type: string
+              description: >-
+    File:
+      allOf:
+        - type: object
+          properties:
+            path:
+              type: string
+              description: >-
+            permissions:
+              type: string
+              description: >-
+            size:
+              type: integer
+              description: >-
+    Error:
+      description: Error
+  parameters:
+    path:
+      name: path
+      required: true
+      description: >-
+        TODO
+      schema:
+        type: string
+      in: query
+    recursive:
+      name: recursive
+      required: true
+      description: >-
+        TODO
+      schema:
+        type: string
+      in: query
+  responses:
+    200File_get:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/File'
+    200Folder_get:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Folder'
+    200Folder_post:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Folder'
+    200File_post:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/File'
+    '200':
+      description: OK
+    '201':
+      description: Added Object
+    '202':
+      description: Accepted
+    '204':
+      description: Deleted
+    '400':
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '405':
+      description: Method Not allowed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '409':
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '501':
+      description: Not Implemented
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '503':
+      description: Service Unavailable
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    'Error':
+      description: Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  requestBodies:
+    Folder:
+      description: >-
+        the object contains data from a folder in the filesystem
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Folder'
+      required: true
+    File:
+      description: >-
+        This object contains data from a file in the filesystem.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/File'
+      required: true  

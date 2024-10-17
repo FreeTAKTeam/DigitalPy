@@ -18,35 +18,55 @@ The `CONFIGURATION_SECTION` constant is also defined in this module, which is us
 import importlib
 import pathlib
 import traceback
-from typing import List
 import os
 
+from digitalpy.core.serialization.serialization_facade import Serialization
+from digitalpy.core.service_management.domain.model.service_status_enum import (
+    ServiceStatusEnum,
+)
+from digitalpy.core.main.singleton_configuration_factory import (
+    SingletonConfigurationFactory,
+)
+from digitalpy.core.main.impl.configuration_factory import ConfigurationFactory
+from digitalpy.core.zmanager.impl.integration_manager_subscriber import (
+    IntegrationManagerSubscriber,
+)
+from digitalpy.core.zmanager.impl.integration_manager_pusher import (
+    IntegrationManagerPusher,
+)
+from digitalpy.core.zmanager.impl.subject_pusher import SubjectPusher
+from digitalpy.core.service_management.domain.model.service_configuration import (
+    ServiceConfiguration,
+)
 from digitalpy.core.main.object_factory import ObjectFactory
-from digitalpy.core.parsing.formatter import Formatter
-from digitalpy.core.service_management.digitalpy_service import DigitalPyService, COMMAND_ACTION
-from digitalpy.core.service_management.domain.service_status import ServiceStatus
-from digitalpy.core.network.network_sync_interface import NetworkSyncInterface
+from digitalpy.core.service_management.digitalpy_service import (
+    DigitalPyService,
+    COMMAND_ACTION,
+)
+from digitalpy.core.service_management.domain.model.service_status_enum import (
+    ServiceStatusEnum,
+)
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.main.impl.default_factory import DefaultFactory
 from digitalpy.core.telemetry.tracing_provider import TracingProvider
 from digitalpy.core.zmanager.response import Response
-from digitalpy.core.service_management.domain.service_description import ServiceDescription
+
 
 CONFIGURATION_SECTION = "digitalpy.core_api"
 
 
 class ApiService(DigitalPyService):
     """
-    The ApiService class is a subclass of the DigitalPyService class and is designed to manage 
+    The ApiService class is a subclass of the DigitalPyService class and is designed to manage
     API services in a digitalpy environment.
 
-    This class initializes with several parameters including service_id, subject_address, 
-    subject_port, subject_protocol, integration_manager_address, integration_manager_port, 
-    integration_manager_protocol, formatter, network, protocol, service_desc, blueprint_path, 
-    and blueprint_import_base. These parameters are used to configure the service and establish 
+    This class initializes with several parameters including service_id, subject_address,
+    subject_port, subject_protocol, integration_manager_address, integration_manager_port,
+    integration_manager_protocol, formatter, network, protocol, service_desc, blueprint_path,
+    and blueprint_import_base. These parameters are used to configure the service and establish
     network communication.
 
-    The `event_loop` method is the main event loop for the ApiService. It is initiated by the 
+    The `event_loop` method is the main event loop for the ApiService. It is initiated by the
     service manager.
 
     The `blueprint_path` and `blueprint_import_base` attributes are used to manage the blueprint
@@ -57,20 +77,29 @@ class ApiService(DigitalPyService):
     # The path to the blueprints directory in this module
     base_blueprints = pathlib.Path(pathlib.Path(__file__).parent, "blueprints")
 
-    def __init__(self, service_id: str, subject_address: str, subject_port: int,  # pylint: disable=useless-super-delegation
-                 subject_protocol: str, integration_manager_address: str,
-                 integration_manager_port: int, integration_manager_protocol: str,
-                 formatter: Formatter, network: NetworkSyncInterface, protocol: str,
-                 service_desc: ServiceDescription, blueprint_path, blueprint_import_base: str):
+    def __init__(
+        self,
+        service: ServiceConfiguration,
+        integration_manager_subscriber: IntegrationManagerSubscriber,
+        integration_manager_pusher: IntegrationManagerPusher,
+        subject_pusher: SubjectPusher,
+        blueprint_path,
+        blueprint_import_base: str,
+        serialization: Serialization,
+    ):
         super().__init__(
-            service_id, subject_address, subject_port, subject_protocol,
-            integration_manager_address, integration_manager_port, integration_manager_protocol,
-            formatter, network, protocol, service_desc)
+            service_id="digitalpy.core_api",
+            service=service,
+            subject_pusher=subject_pusher,
+            integration_manager_subscriber=integration_manager_subscriber,
+            integration_manager_pusher=integration_manager_pusher,
+        )
         self.blueprint_path = blueprint_path
         self.blueprint_import_base = blueprint_import_base
+        self.serialization = serialization
 
     def handle_inbound_message(self, message: Request):
-        """This function is used to handle inbound messages from other services. 
+        """This function is used to handle inbound messages from other services.
         It is intiated by the event loop.
 
         Args:
@@ -82,21 +111,24 @@ class ApiService(DigitalPyService):
 
         # TODO: discuss this with giu and see if we should move the to the action mapping system?
         if message.get_value("action") == "connection":
-            self.handle_connection(message.get_value("client"))
+            self.handle_connection(
+                message
+            )  # add the specific service information to the connection message
 
         # handle disconnection otherwise call the api message handler
         if message.get_value("action") == "disconnection":
-            self.handle_disconnection(message.get_value("client"), message)
+            self.handle_disconnection(
+                message.get_value("client"), message
+            )  # disconnect the client
 
         else:
             self.handle_api_message(message)
 
-    def response_handler(self, responses: List[Response]):
-        for response in responses:
-            if response.get_action() == COMMAND_ACTION:
-                self.handle_command(response)
-            else:
-                self.handle_response(response)
+    def response_handler(self, response: Response):
+        if response.get_action() == COMMAND_ACTION:
+            self.handle_command(response)
+        else:
+            self.handle_response(response)
 
     def handle_api_message(self, message: Request):
         """this method is responsible for handling the case where a client sends a request.
@@ -104,21 +136,30 @@ class ApiService(DigitalPyService):
             message (request): the request message
         """
         message.set_format("pickled")
-        message.set_value("source_format", self.protocol)
-        self.subject_send_request(message, self.protocol)
+        self._subject_pusher.push_container(message, self.configuration.name)
+
+    def serialize(self, message: Response):
+        """This function is used to serialize a message object to a json dictionary. The message object is updated in place."""
+        if message.has_value("message"):
+            serialized = self.serialization.serialize_node_to_json(
+                **message.get_values()
+            )
+            message.set_value("message", serialized)
 
     def handle_response(self, response: Response):
-        self.network.send_response(response)
+        """This function is used to handle a response message. It is intiated by the event loop."""
+        self.serialize(response)
+        self.protocol.send_response(response)
 
     def handle_exception(self, exception: Exception):
-        """This function is used to handle exceptions that occur in the service. 
+        """This function is used to handle exceptions that occur in the service.
         It is intiated by the event loop.
 
         Args:
             exception (Exception): the exception that occurred
         """
         if isinstance(exception, SystemExit):
-            self.status = ServiceStatus.STOPPED
+            self.status = ServiceStatusEnum.STOPPED.value
         else:
             traceback.print_exc()
             print("An exception occurred: " + str(exception))
@@ -134,7 +175,8 @@ class ApiService(DigitalPyService):
 
                 # import the file
                 blueprint_module = importlib.import_module(
-                    self.blueprint_import_base+"."+filename.strip(".py"))
+                    self.blueprint_import_base + "." + filename.strip(".py")
+                )
 
                 # get the blueprint from the file
                 blueprints.append(blueprint_module.page)
@@ -142,24 +184,34 @@ class ApiService(DigitalPyService):
         for filename in os.listdir(ApiService.base_blueprints):
             if filename.endswith(".py") and filename != "__init__.py":
                 blueprint_module = importlib.import_module(
-                    "digitalpy.core.api.blueprints."+filename.strip(".py"))
+                    "digitalpy.core.api.blueprints." + filename.strip(".py")
+                )
                 blueprints.append(blueprint_module.page)
         return blueprints
 
-    def start(self, object_factory: DefaultFactory, tracing_provider: TracingProvider,  # pylint: disable=useless-super-delegation
-              host: str = "", port: int = 0,) -> None:
+    def start(
+        self,
+        object_factory: DefaultFactory,
+        tracing_provider: TracingProvider,  # pylint: disable=useless-super-delegation
+        configuration_factory: ConfigurationFactory,
+    ):
         """We override the start method to allow for the injection of the endpoints and handlers
         to the network interface.
         """
+        SingletonConfigurationFactory.configure(configuration_factory)
         ObjectFactory.configure(object_factory)
         self.tracer = tracing_provider.create_tracer(self.service_id)
         self.initialize_controllers()
-        self.initialize_connections(self.protocol)
+        self.initialize_connections()
 
         # get all blueprints from the configured blueprint path
         blueprints = self._get_blueprints()
 
-        self.network.intialize_network(
-            host, port, blueprints=blueprints, service_desc=self.service_desc)
-        self.status = ServiceStatus.RUNNING
+        self.protocol.initialize_network(
+            self.configuration.host,
+            self.configuration.port,
+            blueprints=blueprints,
+            service_desc=self._service_conf,
+        )
+        self.status = ServiceStatusEnum.RUNNING.value
         self.execute_main_loop()

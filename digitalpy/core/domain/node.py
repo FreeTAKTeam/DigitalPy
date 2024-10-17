@@ -972,7 +972,6 @@ class Node(DefaultPersistentObject):
         # default behaviour
         return super().set_value(name, value, force_set, track_change)
 
-    @lru_cache(maxsize=1)
     def get_properties(self):
         # iterate over all properties of the class and add them to the list then add all properties defined in the node object
         # NOTE: this will not work with a system using inheritance!

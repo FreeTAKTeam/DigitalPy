@@ -27,19 +27,19 @@ from digitalpy.core.component_management.configuration.component_management_cons
     COMPONENT_DOWNLOAD_PATH,
     RELATIVE_MANIFEST_PATH,
 )
+from digitalpy.core.files.domain.model.extensions import Extensions
 
 from digitalpy.core.component_management.domain.model.component import Component
 
 if TYPE_CHECKING:
     from digitalpy.core.component_management.impl.default_facade import DefaultFacade
-    from digitalpy.core.digipy_configuration.configuration import Configuration
+    from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
     from digitalpy.core.zmanager.impl.default_action_mapper import DefaultActionMapper
     from digitalpy.core.zmanager.request import Request
     from digitalpy.core.zmanager.response import Response
     from digitalpy.core.domain.domain.network_client import NetworkClient
 
     from digitalpy.core.component_management.domain.model.error import Error
-
 
 class ComponentDiscoveryController(Controller):
     """This controller is responsible for discovering the **compressed** components in the
@@ -93,7 +93,7 @@ class ComponentDiscoveryController(Controller):
 
         for root, _, files in os.walk(COMPONENT_DOWNLOAD_PATH):
             for file in files:
-                if file.endswith(".zip"):
+                if file.endswith(Extensions.ZIP):
                     component = self._discover_component(
                         PurePath(root, file), config_loader
                     )

@@ -20,9 +20,9 @@ class NetworkClient(Node):
         # the status of the client
         self._status: ClientStatus = ClientStatus.CONNECTING
         # id of the related service
-        self._service_id: str
+        self._service_id: str = None
         # the protocol used by the client
-        self._protocol: str
+        self._protocol: str = None
 
     @property
     def protocol(self) -> str:

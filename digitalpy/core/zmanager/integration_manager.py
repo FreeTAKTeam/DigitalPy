@@ -9,66 +9,109 @@
 
 
 import multiprocessing
-from typing import Optional
+from typing import TYPE_CHECKING
 
 import zmq
+from digitalpy.core.digipy_configuration.action_key_controller import (
+    ActionKeyController,
+)
+from digitalpy.core.digipy_configuration.controllers.action_flow_controller import (
+    ActionFlowController,
+)
+from digitalpy.core.main.factory import Factory
+from digitalpy.core.main.impl.configuration_factory import ConfigurationFactory
+from digitalpy.core.main.object_factory import ObjectFactory
+from digitalpy.core.main.singleton_configuration_factory import (
+    SingletonConfigurationFactory,
+)
+from digitalpy.core.serialization.controllers.serializer_container import (
+    SerializerContainer,
+)
+from digitalpy.core.zmanager.configuration.zmanager_constants import (
+    RESPONSE,
+)
+from digitalpy.core.zmanager.domain.model.zmanager_configuration import (
+    ZManagerConfiguration,
+)
 
-from digitalpy.core.zmanager.configuration.zmanager_constants import \
-    ZMANAGER_MESSAGE_DELIMITER
+if TYPE_CHECKING:
+    from digitalpy.core.zmanager.controller_message import ControllerMessage
 
 
 class IntegrationManager:
+    """The Integration Manager is responsible for receiving messages from the workers and sending messages to the workers"""
+
     def __init__(
-        self,
-        integration_manager_puller_protocol: str,
-        integration_manager_puller_address: str,
-        integration_manager_puller_port: int,
-        integration_manager_publisher_protocol: str,
-        integration_manager_publisher_address: str,
-        integration_manager_publisher_port: int,
-        timeout=3000,
+        self, factory: Factory, configuration_factory: ConfigurationFactory
     ) -> None:
-        self.integration_manager_puller_protocol = integration_manager_puller_protocol
-        self.integration_manager_puller_address = integration_manager_puller_address
-        self.integration_manager_puller_port = integration_manager_puller_port
-        self.integration_manager_publisher_protocol = (
-            integration_manager_publisher_protocol
+        self.zmanager_configuration: ZManagerConfiguration = (
+            SingletonConfigurationFactory.get_configuration_object(
+                "ZManagerConfiguration"
+            )
         )
-        self.integration_manager_publisher_address = (
-            integration_manager_publisher_address
-        )
-        self.integration_manager_publisher_port = integration_manager_publisher_port
-        self.context: Optional[zmq.Context] = None
-        self.pull_socket: Optional[zmq.Socket] = None
-        self.pub_socket: Optional[zmq.Socket] = None
+        self.context: zmq.Context
+        self.pull_socket: zmq.Socket
+        self.pub_socket: zmq.Socket
         self.running = multiprocessing.Event()
         self.running.set()
-        self.timeout = timeout
+        self.action_key_controller: "ActionKeyController" = ObjectFactory.get_instance(
+            "ActionKeyController"
+        )
+
+        self.serializer_container: "SerializerContainer" = ObjectFactory.get_instance(
+            "SerializerContainer"
+        )
+
+        self.action_flow_controller: "ActionFlowController" = (
+            ObjectFactory.get_instance("ActionFlowController")
+        )
+        self._factory = factory
+        self._configuration_factory = configuration_factory
+        self.response_action = self.action_key_controller.new_action_key()
+        self.response_action.config = RESPONSE
 
     def initialize_connections(self):
         """initialize the connections for the integration manager"""
-        self.context = zmq.Context()
+        self.context: zmq.Context = zmq.Context()
 
         # create a pull socket
-        self.pull_socket = self.context.socket(zmq.PULL)
-        # unlimited as trunkating can result in unsent data and broken messages
-        # TODO: determine a sane default
-        self.pull_socket.setsockopt(zmq.RCVHWM, 0)
-        self.pull_socket.bind(
-            f"{self.integration_manager_puller_protocol}://{self.integration_manager_puller_address}:{self.integration_manager_puller_port}"
-        )
-        self.pull_socket.setsockopt(zmq.RCVTIMEO, self.timeout)
+        self._initialize_pull_socket()
 
         # create a pub socket
-        self.pub_socket = self.context.socket(zmq.PUB)
+        self._initialize_pub_socket()
+
+    def _initialize_pub_socket(self):
+        self.pub_socket: zmq.Socket = self.context.socket(zmq.PUB)
         # unlimited as trunkating can result in unsent data and broken messages
         # TODO: determine a sane default
-        self.pub_socket.setsockopt(zmq.SNDHWM, 0)
+        self.pub_socket.setsockopt(
+            zmq.SNDHWM, self.zmanager_configuration.integration_manager_pub_sndhwm
+        )
         self.pub_socket.bind(
-            f"{self.integration_manager_publisher_protocol}://{self.integration_manager_publisher_address}:{self.integration_manager_publisher_port}"
+            self.zmanager_configuration.integration_manager_pub_address
         )
 
-    def cleanup(self):
+    def _initialize_pull_socket(self):
+        self.pull_socket: zmq.Socket = self.context.socket(zmq.PULL)
+        # unlimited as trunkating can result in unsent data and broken messages
+        # TODO: determine a sane default
+        self.pull_socket.setsockopt(
+            zmq.RCVHWM, self.zmanager_configuration.integration_manager_pull_rcvhwm
+        )
+        self.pull_socket.bind(
+            self.zmanager_configuration.integration_manager_pull_address
+        )
+        self.pull_socket.setsockopt(
+            zmq.RCVTIMEO, self.zmanager_configuration.integration_manager_pull_timeout
+        )
+
+    def _setup(self):
+        """setup the integration manager"""
+        ObjectFactory.configure(self._factory)
+        SingletonConfigurationFactory.configure(self._configuration_factory)
+        self.initialize_connections()
+
+    def _teardown(self):
         """cleanup the connections for the integration manager"""
         self.pull_socket.close()
         self.pub_socket.close()
@@ -76,26 +119,23 @@ class IntegrationManager:
 
     def start(self):
         """this is the main running function for the integration manager"""
-        self.initialize_connections()
+        self._setup()
 
         while self.running.is_set():
             try:
                 # receive a message from a client
-                request = self.pull_socket.recv_multipart().pop(0)
-                
-                response_protocol, response_object_unserialized = request.split(
-                    ZMANAGER_MESSAGE_DELIMITER, 1
-                )
-                subject = b"/messages" + response_protocol
-                try:
-                    # send the response back to the client
-                    self.pub_socket.send(
-                        subject + b" " + response_object_unserialized, copy=False
-                    )
-                except Exception as ex:
-                    print("Error sending response to client: {}".format(ex))
+                message = self.pull_socket.recv_multipart().pop(0)
+                self._forward_message(message)
             except zmq.error.Again:
                 pass
             except Exception as ex:
                 print("Error " + str(ex))
-        self.cleanup()
+        self._teardown()
+
+    def _forward_message(self, message: bytes):
+        """publish the message to all listeners"""
+        try:
+            # publish the message
+            self.pub_socket.send(message, copy=False)
+        except Exception as ex:
+            print("Error sending response to client: {}".format(ex))

@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Any, Dict, Union
 from digitalpy.core.main.controller import (
     Controller,
@@ -20,9 +21,12 @@ class JSONSerializationController(Controller):
         JSONSerializationController.serializing = []
         super().__init__(sync_action_mapper, request, response, configuration)
         self.domain_controller = Domain(
-            sync_action_mapper, request, response, configuration)
+            sync_action_mapper, request, response, configuration
+        )
 
-    def deserialize(self, message: Union[str, bytes, dict], model_object: Node, *args, **kwargs):
+    def deserialize(
+        self, message: Union[str, bytes, dict], model_object: Node, *args, **kwargs
+    ):
         """converts the provided xml string to a node
 
         Args:
@@ -35,7 +39,8 @@ class JSONSerializationController(Controller):
         else:
             dictionary = message
         deserialized_model_obj = self._deserialize(
-            dictionary=dictionary, node=model_object)
+            dictionary=dictionary, node=model_object
+        )
         self.response.set_value("model_object", deserialized_model_obj)
         return deserialized_model_obj
 
@@ -57,31 +62,44 @@ class JSONSerializationController(Controller):
         """add a value to a node object"""
 
         # handles the case in which the value is a dictionary and the node attribute is a node
-        if isinstance(value, dict) and (isinstance(getattr(node, key, None), Node) or isinstance(getattr(node, key, None), list)):
+        if isinstance(value, dict) and (
+            isinstance(getattr(node, key, None), Node)
+            or isinstance(getattr(node, key, None), list)
+        ):
             self._deserialize(value, getattr(node, key))
 
         # handles the case in which the value is a dictionary and the node attribute is not yet initialized such as in the case of an optional
         # attribute
         elif isinstance(value, dict):
-            new_node = self.domain_controller.create_node(node._model_configuration,
-                                                          node._model_configuration.elements[
-                                                              node.__class__.__name__].relationships[key].target_class,
-                                                          extended_domain=node._model)
+            new_node = self.domain_controller.create_node(
+                node._model_configuration,
+                node._model_configuration.elements[node.__class__.__name__]
+                .relationships[key]
+                .target_class,
+                extended_domain=node._model,
+            )
             self._deserialize(value, new_node)
             setattr(node, key, new_node)
 
         # handles the case in which the value is a list and the node attribute is a list
-        elif isinstance(value, list) and isinstance(getattr(node, key, None), list) and isinstance(type(node).__dict__[key], Relationship):
+        elif (
+            isinstance(value, list)
+            and isinstance(getattr(node, key, None), list)
+            and isinstance(type(node).__dict__[key], Relationship)
+        ):
             # add all mandatory nodes
             for i in range(len(getattr(node, key))):
                 self._deserialize(value[i], getattr(node, key)[i])
 
             # add all optional nodes
             for i in range(len(getattr(node, key)), len(value)):
-                new_node = self.domain_controller.create_node(node._model_configuration,
-                                                              node._model_configuration.elements[
-                                                                  node.__class__.__name__].relationships[key].target_class,
-                                                              extended_domain=node._model)
+                new_node = self.domain_controller.create_node(
+                    node._model_configuration,
+                    node._model_configuration.elements[node.__class__.__name__]
+                    .relationships[key]
+                    .target_class,
+                    extended_domain=node._model,
+                )
                 self._deserialize(value[i], new_node)
                 setattr(node, key, new_node)
 
@@ -89,18 +107,26 @@ class JSONSerializationController(Controller):
         else:
             setattr(node, key, value)
 
-    def serialize_node(self, node, **kwargs):
-        """converts the provided node to an xml string
+    def serialize_node(self, message, **kwargs):
+        """converts the provided node to an json string
 
         Args:
             node (Node): the node to be serialized to xml
         """
-        # TODO this should not be a direct return and should be fixed ASAP
-        return self._serialize_node(node, node.__class__.__name__.lower())
+        messages = []
+        if isinstance(message, list):
+            messages = [
+                self._serialize_node(node, node.__class__.__name__.lower())
+                for node in message
+            ]
+        else:
+            messages = [
+                self._serialize_node(message, message.__class__.__name__.lower())
+            ]
+        self.response.set_value("message", messages)
+        return messages
 
-    def _serialize_node(
-        self, node: Node, tag_name: str, level=0
-    ) -> Union[str, Dict]:
+    def _serialize_node(self, node: Node, tag_name: str, level=0) -> Union[str, Dict]:
         """the body of the serialization function recursively serializes each node class
 
         Args:
@@ -120,14 +146,23 @@ class JSONSerializationController(Controller):
         for attrib_name in node.get_properties():
             # below line is required because get_all_properties function returns only cot property names
             value = getattr(node, attrib_name)
-            if hasattr(value, "__dict__"):
-                attrib_name, json_sub_element = self.handle_nested_object(
-                    level, attrib_name, value)
-                json_data[attrib_name] = json_sub_element
 
-            elif value == None:
+            # if the value is a nonetype, skip it
+            if value == None:
                 continue
 
+            # if the value is an enum, convert it to its basic value
+            if isinstance(value, Enum):
+                self.handle_attribute(json_data, attrib_name, value.value)
+
+            # if the value is a node, serialize it
+            elif hasattr(value, "__dict__"):
+                attrib_name, json_sub_element = self.handle_nested_object(
+                    level, attrib_name, value
+                )
+                json_data[attrib_name] = json_sub_element
+
+            # if the value is a list, serialize each element
             elif isinstance(value, list):
                 json_data[attrib_name] = []
                 for element in value:
@@ -136,13 +171,15 @@ class JSONSerializationController(Controller):
                         break
                     else:
                         attrib_name, json_sub_element = self.handle_nested_object(
-                            level, attrib_name, element)
+                            level, attrib_name, element
+                        )
                         json_data[attrib_name].append(json_sub_element)
 
             else:
                 # TODO: modify so double underscores are handled differently
                 # handles instances in which attribute name begins with double underscore
                 self.handle_attribute(json_data, attrib_name, value)
+
         for child in list(node.get_children().values()):
             self.handle_child(json_data, child, level)
         if level == 0:
@@ -168,22 +205,19 @@ class JSONSerializationController(Controller):
         if isinstance(json_data.get(child_class_name, None), dict):
             json_data[child_class_name] = [
                 json_data[child_class_name],
-                self._serialize_node(child, child_class_name, level=level + 1)
+                self._serialize_node(child, child_class_name, level=level + 1),
             ]
         elif isinstance(json_data.get(child_class_name, None), list):
             json_data[child_class_name].append(
                 self._serialize_node(child, child_class_name, level=level + 1)
             )
         else:
-            resp = self._serialize_node(
-                child, child_class_name, level=level + 1
-            )
+            resp = self._serialize_node(child, child_class_name, level=level + 1)
             if resp:
                 json_data[child_class_name] = resp
 
     def handle_nested_object(self, level, attrib_name, value):
-        json_sub_element = self._serialize_node(
-            value, attrib_name, level=level + 1)
+        json_sub_element = self._serialize_node(value, attrib_name, level=level + 1)
         # TODO: modify so double underscores are handled differently
         try:
             if attrib_name[0] == "_":

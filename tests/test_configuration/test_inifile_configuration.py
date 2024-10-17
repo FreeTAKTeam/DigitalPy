@@ -87,3 +87,21 @@ def test_remove_modified_configuration():
 
     assert list(configuration.get_sections()) == ["Section1"]
     assert configuration.get_value("key1", "Section1") == "value"
+
+def test_boolean_values():
+    configuration = InifileConfiguration(str(PurePath(__file__).parent / "test_configuration_resources"))
+    configuration.add_configuration(os.sep+"boolean_values.ini")
+    assert configuration.get_value("key_true", "Section1") is True
+    assert configuration.get_value("key_false", "Section1") is False
+
+def test_float_values():
+    configuration = InifileConfiguration(str(PurePath(__file__).parent / "test_configuration_resources"))
+    configuration.add_configuration(os.sep+"float_values.ini")
+    assert configuration.get_value("key_float", "Section1") == 3.14
+    assert configuration.get_value("key_float2", "Section1") == 43.0
+
+def test_list_values():
+    configuration = InifileConfiguration(str(PurePath(__file__).parent / "test_configuration_resources"))
+    configuration.add_configuration(os.sep+"list_values.ini")
+    assert configuration.get_value("key_int_list", "Section1") == [1.1, 2, 3.0]
+    assert configuration.get_value("key_str_list", "Section1") == ["a", "b", "c"]

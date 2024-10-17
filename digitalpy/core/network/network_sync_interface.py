@@ -10,7 +10,7 @@ class NetworkSyncInterface(NetworkInterface):
     """
     
     @abstractmethod
-    def intialize_network(self, host: str, port: int):
+    def initialize_network(self, host: str, port: int):
         """initialize the network connection, bind to the port and host.
         """
 

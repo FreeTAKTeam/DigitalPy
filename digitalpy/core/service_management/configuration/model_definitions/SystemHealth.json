@@ -1,0 +1,30 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"id": "http://iec.ch/TC57/HealthClasses#",
+	"type": "object",
+	"definitions":
+	{
+		"SystemHealth":
+		{
+			"type": "object",
+			"properties": {
+				"cpu":
+				{
+					"type": "integer"
+				},
+				"disk":
+				{
+					"type": "integer"
+				},
+				"memory":
+				{
+					"type": "integer"
+				},
+				"timestamp":
+				{
+					"type": "string"
+				}
+			}
+		}
+	}
+}

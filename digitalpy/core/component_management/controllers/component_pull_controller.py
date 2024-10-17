@@ -15,7 +15,7 @@ from .component_management_persistence_controller_impl import (
 
 if TYPE_CHECKING:
     from digitalpy.core.component_management.impl.default_facade import DefaultFacade
-    from digitalpy.core.digipy_configuration.configuration import Configuration
+    from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
     from digitalpy.core.zmanager.impl.default_action_mapper import DefaultActionMapper
     from digitalpy.core.zmanager.request import Request
     from digitalpy.core.zmanager.response import Response

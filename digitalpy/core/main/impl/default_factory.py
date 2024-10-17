@@ -1,6 +1,7 @@
 import inspect
+import threading
 from typing import Any
-from digitalpy.core.digipy_configuration.configuration import Configuration
+from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
 from digitalpy.core.main.factory import Factory
 import json
 import importlib
@@ -14,7 +15,6 @@ class DefaultFactory(Factory):
         "session": "session.Session",
         "configuration": "digitalpy.core.configuration.Configuration",
         "message": "message.Message",
-        "persistence_facade": "wcmf\lib\persistence\PersistenceFacade",
         "concurrency_manager": "concurrency_manager.ConcurrencyManager",
         "action_mapper": "digitalpy.core.zmanager.action_mapper.ActionMapper",
         "request": "digitalpy.core.zmanager.request.Request",
@@ -37,17 +37,24 @@ class DefaultFactory(Factory):
         }
         # store imported modules to prevent multiple imports
         self.modules = {}
+        self.stack_lock = threading.Lock()
+        self._module_lock = threading.Lock()
+        self._instances_lock = threading.Lock()
+        self._instances_condition = threading.Condition(self._instances_lock)
 
     def add_interfaces(self, interfaces: dict):
         raise NotImplementedError("this method has not yet been implemented")
 
     def clear(self):
-        self.current_stack = []
-        self.instances = {
-            "configuration": self.configuration,
-            "factory": self,
-        }
-        self.modules = {}
+        with self._instances_lock:
+            self.instances = {
+                "configuration": self.configuration,
+                "factory": self,
+            }
+        with self.stack_lock:
+            self.current_stack = []
+        with self._module_lock:
+            self.modules = {}
         DefaultFactory.required_interfaces = {
             "event_manager": "digitalpy.core.main.event_manager.EventManager",
             "logger": "logger.Logger",
@@ -55,7 +62,6 @@ class DefaultFactory(Factory):
             "session": "session.Session",
             "configuration": "digitalpy.core.configuration.Configuration",
             "message": "message.Message",
-            "persistence_facade": "wcmf\lib\persistence\PersistenceFacade",
             "concurrency_manager": "concurrency_manager.ConcurrencyManager",
             "action_mapper": "digitalpy.core.zmanager.action_mapper.ActionMapper",
             "request": "digitalpy.core.zmanager.request.Request",
@@ -68,13 +74,16 @@ class DefaultFactory(Factory):
 
     def get_instance(self, name, dynamic_configuration={}) -> object:
         instance = None
-        self.current_stack.append(name)
+
+        with self.stack_lock:
+            self.current_stack.append(name)
+
         instance_key = self.get_instance_key(name, dynamic_configuration)
         if (
             instance_key in self.instances
             and dynamic_configuration.get("__cached", True) is True
         ):
-            instance = self.instances[instance_key]
+            instance = self._access_instance(instance_key)
         else:
             static_configuration = self.configuration.get_section(name, True)
             configuration = dict(static_configuration, **dynamic_configuration)
@@ -139,7 +148,7 @@ class DefaultFactory(Factory):
                         )
                     # then check if a parameter has already been initialized
                     elif param_instance_key in self.instances:
-                        c_params[param_name] = self.instances[param_instance_key]
+                        c_params[param_name] = self._access_instance(param_instance_key)
                     # check if a section with the name of the parameter exists
                     elif self.configuration.has_section(param_name):
                         c_params[param_name] = self.get_instance(param_name)
@@ -238,9 +247,34 @@ class DefaultFactory(Factory):
             return instance_class
         return None
 
-    def register_instance(self, name, instance):
-        instance_key = name.lower()
-        self.instances[instance_key] = instance
+    def register_instance(self, name: str, instance: object):
+        """Register an instance with the factory
+
+        Args:
+            name (str): the name of the instance
+            instance (object): the instance to be registered
+        """
+        with self._instances_lock:
+            instance_key = name.lower()
+            self.instances[instance_key] = instance
+            self._instances_condition.notify_all()
+
+    def _access_instance(self, key: str) -> Any:
+        """Access an instance by name
+
+        Args:
+            key (str): the name of the instance
+
+        Returns:
+            Any: the instance if it exists, otherwise None
+        """
+        if self._instances_lock.locked():
+            self._instances_condition.wait()
+
+        instance_key = key.lower()
+        if instance_key in self.instances:
+            return self.instances[instance_key]
+        return None
 
     def get_instance_of(self, class_name, dynamic_configuration={}):
         configuration = {
@@ -249,28 +283,31 @@ class DefaultFactory(Factory):
         }
         # check if an instance of the class has already been created note this is only applicable
         # for classes that have a defined section in a configuration file
-        if class_name in self.instances:
-            instance = self.instances[class_name]
-        else:
-            instance = self.create_instance(class_name, configuration, None)
-        return instance
+        instance = self._access_instance(class_name)
+        if instance is not None:
+            return instance
+
+        return self.create_instance(class_name, configuration, None)
 
     def get_new_instance(self, name, dynamic_configuration={}):
         configuration = {**dynamic_configuration, "__shared": False}
         instance = self.get_instance(name, configuration)
         return instance
 
-    def clear_instance(self, name):
-        instance_key = name.lower()
-        if instance_key in self.instances:
-            del self.instances[instance_key]
+    def clear_instance(self, name: str):
+        with self._instances_lock:
+            instance_key = name.lower()
+            if instance_key in self.instances:
+                del self.instances[instance_key]
+            self._instances_condition.notify_all()
 
     def import_module(self, module_name):
-        module = self.modules.get(module_name)
-        if module is None:
-            module = importlib.import_module(module_name)
-            self.modules[module_name] = module
-        return module
+        with self._module_lock:
+            module = self.modules.get(module_name)
+            if module is None:
+                module = importlib.import_module(module_name)
+                self.modules[module_name] = module
+            return module
 
     def __getstate__(self) -> object:
         tmp_dict = self.__dict__.copy()
@@ -289,10 +326,23 @@ class DefaultFactory(Factory):
                     del tmp_dict["instances"][key]
             tmp_dict["instances"]["configuration"] = self.configuration
             tmp_dict["instances"]["factory"] = self
+        # delete the locks
+        if "stack_lock" in tmp_dict:
+            del tmp_dict["stack_lock"]
+        if "_instances_lock" in tmp_dict:
+            del tmp_dict["_instances_lock"]
+        if "_instances_condition" in tmp_dict:
+            del tmp_dict["_instances_condition"]
+        if "_module_lock" in tmp_dict:
+            del tmp_dict["_module_lock"]
         return tmp_dict
 
     def __setstate__(self, state: dict) -> None:
         self.__dict__.update(state)
+        self.stack_lock = threading.Lock()
+        self._instances_lock = threading.Lock()
+        self._instances_condition = threading.Condition(self._instances_lock)
+        self._module_lock = threading.Lock()
         self.modules = {}
 
     def __str__(self) -> str:

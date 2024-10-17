@@ -1,9 +1,7 @@
-from digitalpy.core.zmanager.impl.abstract_controller_message import AbstractControllerMessage
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
-import json
 
-class DefaultRequest(Request, AbstractControllerMessage):
+class DefaultRequest(Request):
     """default request object used in most cases
     """
     def __init__(self):

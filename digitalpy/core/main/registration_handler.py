@@ -1,12 +1,8 @@
-import importlib
-import os
 from pathlib import PurePath
 from typing import List
-import pkg_resources
 
 from abc import ABC, abstractmethod
-from digitalpy.core.component_management.impl.default_facade import DefaultFacade
-from digitalpy.core.digipy_configuration.configuration import Configuration
+from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
 from digitalpy.core.digipy_configuration.impl.inifile_configuration import InifileConfiguration
 class RegistrationHandler(ABC):
     @staticmethod

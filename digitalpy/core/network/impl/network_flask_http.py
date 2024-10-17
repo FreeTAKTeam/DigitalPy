@@ -13,7 +13,7 @@ import pickle
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.network.domain.client_status import ClientStatus
 from digitalpy.core.domain.object_id import ObjectId
-from digitalpy.core.service_management.domain.service_description import ServiceDescription
+from digitalpy.core.service_management.domain.model.service_description import ServiceDescription
 
 from digitalpy.core.network.network_sync_interface import NetworkSyncInterface
 from digitalpy.core.domain.domain.network_client import NetworkClient
@@ -44,7 +44,7 @@ class FlaskHTTPNetwork(NetworkSyncInterface):
         self.sub_sockets: Dict[int, zmq.Socket] = {}
         self.service_desc: ServiceDescription = None  # type: ignore
 
-    def intialize_network(self, host: str, port: int, available_endpoints: List[str],  service_desc: ServiceDescription):
+    def initialize_network(self, host: str, port: int, available_endpoints: List[str],  service_desc: ServiceDescription):
         self.service_desc = service_desc
         self.app = Flask(f"{host}:{port}")
         self.app.secret_key = str(uuid.uuid4())
