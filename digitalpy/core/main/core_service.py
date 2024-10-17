@@ -1,6 +1,9 @@
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 import threading
+from digitalpy.core.service_management.domain.model.service_configuration import (
+    ServiceConfiguration,
+)
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.impl.subject_pusher import SubjectPusher
 from digitalpy.core.zmanager.impl.integration_manager_pusher import (
@@ -11,11 +14,13 @@ from digitalpy.core.zmanager.impl.integration_manager_subscriber import (
 )
 from digitalpy.core.zmanager.response import Response
 from digitalpy.core.main.object_factory import ObjectFactory
-from digitalpy.core.zmanager.configuration.zmanager_constants import PUBLISH_DECORATOR
+from digitalpy.core.zmanager.configuration.zmanager_constants import (
+    PUBLISH_DECORATOR,
+    ASYNC_DECORATOR,
+)
 from digitalpy.core.digipy_configuration.configuration.digipy_configuration_constants import (
     ACTION_MAPPING_SECTION,
 )
-
 
 if TYPE_CHECKING:
     from digitalpy.core.digipy_configuration.domain.model.configuration import (
@@ -79,6 +84,16 @@ class CoreService(threading.Thread):
         )
 
     @property
+    def configuration(self) -> "ServiceConfiguration":
+        """Return the configuration object."""
+        return self._service_configuration
+
+    @configuration.setter
+    def configuration(self, configuration: "ServiceConfiguration"):
+        """Set the configuration object."""
+        self._service_configuration = configuration
+
+    @property
     def facade(self):
         """Return the default facade."""
         return self._default_facade
@@ -102,6 +117,7 @@ class CoreService(threading.Thread):
         """allocate all necessary resources for runtime."""
         self.__running.set()
         self.integration_manager_subscriber.setup()
+        self.integration_manager_pusher.setup()
         self.subject_pusher.setup()
         self._subscribe_to_actions()
         self._subscribe_to_flow_actions()
@@ -173,7 +189,12 @@ class CoreService(threading.Thread):
         response.action_key = next_action
         response.id = request.id
 
-        if not self.action_flow_controller.is_end_of_flow(next_action):
+        if (
+            not self.action_flow_controller.is_end_of_flow(next_action)
+            and next_action.decorator != ASYNC_DECORATOR
+        ):
             self.subject_pusher.push_container(response)
+        elif next_action.decorator == ASYNC_DECORATOR:
+            return
         else:
             self.integration_manager_pusher.push_container(response)
