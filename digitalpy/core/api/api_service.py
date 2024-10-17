@@ -18,20 +18,21 @@ The `CONFIGURATION_SECTION` constant is also defined in this module, which is us
 import importlib
 import pathlib
 import traceback
-from typing import List
 import os
 
 from digitalpy.core.serialization.serialization_facade import Serialization
 from digitalpy.core.service_management.domain.model.service_status_enum import (
     ServiceStatusEnum,
 )
-from digitalpy.core.digipy_configuration.domain.model.actionkey import ActionKey
 from digitalpy.core.main.singleton_configuration_factory import (
     SingletonConfigurationFactory,
 )
 from digitalpy.core.main.impl.configuration_factory import ConfigurationFactory
 from digitalpy.core.zmanager.impl.integration_manager_subscriber import (
     IntegrationManagerSubscriber,
+)
+from digitalpy.core.zmanager.impl.integration_manager_pusher import (
+    IntegrationManagerPusher,
 )
 from digitalpy.core.zmanager.impl.subject_pusher import SubjectPusher
 from digitalpy.core.service_management.domain.model.service_configuration import (
@@ -42,7 +43,6 @@ from digitalpy.core.service_management.digitalpy_service import (
     DigitalPyService,
     COMMAND_ACTION,
 )
-from digitalpy.core.zmanager.configuration.zmanager_constants import RESPONSE
 from digitalpy.core.service_management.domain.model.service_status_enum import (
     ServiceStatusEnum,
 )
@@ -81,17 +81,18 @@ class ApiService(DigitalPyService):
         self,
         service: ServiceConfiguration,
         integration_manager_subscriber: IntegrationManagerSubscriber,
-        integration_manager_pusher: SubjectPusher,
+        integration_manager_pusher: IntegrationManagerPusher,
         subject_pusher: SubjectPusher,
         blueprint_path,
         blueprint_import_base: str,
         serialization: Serialization,
     ):
         super().__init__(
-            service_id="digitalpy.api",
+            service_id="digitalpy.core_api",
             service=service,
             subject_pusher=subject_pusher,
             integration_manager_subscriber=integration_manager_subscriber,
+            integration_manager_pusher=integration_manager_pusher,
         )
         self.blueprint_path = blueprint_path
         self.blueprint_import_base = blueprint_import_base
@@ -202,13 +203,6 @@ class ApiService(DigitalPyService):
         self.tracer = tracing_provider.create_tracer(self.service_id)
         self.initialize_controllers()
         self.initialize_connections()
-        # TODO: this probably isn't the best solution but giu is busy and I need to get this working
-        # so I'm going to leave it for now see notes for 8/12/2024
-        response_action = ActionKey(None, None)
-        response_action.config = RESPONSE
-        self._integration_manager_subscriber.subscribe_to_action(response_action)
-
-        self._subscribe_to_commands()
 
         # get all blueprints from the configured blueprint path
         blueprints = self._get_blueprints()
