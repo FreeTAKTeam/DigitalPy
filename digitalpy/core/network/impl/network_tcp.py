@@ -32,7 +32,7 @@ class TCPNetwork(NetworkAsyncInterface):
         self.context: zmq.Context = None  # type: ignore
         self.clients: Dict[str, NetworkClient] = {}
 
-    def intialize_network(self, host: str, port: int):
+    def initialize_network(self, host: str, port: int):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.STREAM)
         self.socket.getsockopt_string(zmq.IDENTITY)

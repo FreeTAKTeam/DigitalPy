@@ -1,6 +1,7 @@
 """This module contains the implementation of the component management controller."""
+
 from pathlib import PurePath
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 from digitalpy.core.serialization.configuration.serialization_constants import Protocols
 from digitalpy.core.component_management.controllers.component_discovery_controller import (
@@ -29,7 +30,9 @@ from .component_management_persistence_controller_impl import (
 )
 
 if TYPE_CHECKING:
-    from digitalpy.core.digipy_configuration.configuration import Configuration
+    from digitalpy.core.digipy_configuration.domain.model.configuration import (
+        Configuration,
+    )
     from digitalpy.core.zmanager.impl.default_action_mapper import DefaultActionMapper
     from digitalpy.core.zmanager.request import Request
     from digitalpy.core.zmanager.response import Response
@@ -39,6 +42,7 @@ if TYPE_CHECKING:
 
 class Component_managementControllerImpl(Component_managementController):
     """This class is responsible for managing the components in the system."""
+
     def __init__(
         self,
         request: "Request",
@@ -131,7 +135,7 @@ class Component_managementControllerImpl(Component_managementController):
     def POSTInstallAllComponents(
         self,
         config_loader,
-        client: Union["NetworkClient", None] = None,
+        client: Optional["NetworkClient"] = None,
         *args,
         **kwargs,
     ):  # pylint: disable=unused-argument

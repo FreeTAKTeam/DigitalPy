@@ -1,8 +1,7 @@
-from digitalpy.core.zmanager.impl.abstract_controller_message import AbstractControllerMessage
 from digitalpy.core.zmanager.response import Response
 from digitalpy.core.zmanager.request import Request
 
-class DefaultResponse(Response, AbstractControllerMessage):
+class DefaultResponse(Response):
     def __init__(self):
         super().__init__()
     

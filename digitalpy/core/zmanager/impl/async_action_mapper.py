@@ -1,8 +1,11 @@
 import time
+from digitalpy.core.zmanager.domain.model.zmanager_configuration import ZManagerConfiguration
+from digitalpy.core.main.singleton_configuration_factory import SingletonConfigurationFactory
 from digitalpy.core.digipy_configuration.action_key import ActionKey
 from digitalpy.core.persistence.application_event import ApplicationEvent
 from digitalpy.core.digipy_configuration.impl.config_action_key_provider import ConfigActionKeyProvider
-from digitalpy.core.digipy_configuration.configuration import Configuration
+
+from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
 from digitalpy.core.main.event_manager import EventManager
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
@@ -28,8 +31,6 @@ class AsyncActionMapper(ActionMapper):
         event_manager: EventManager,
         configuration: Configuration,
         formatter: Formatter,
-        routing_publisher_address: str,
-        routing_subscriber_address: str,
     ):
         """_summary_
 
@@ -43,8 +44,9 @@ class AsyncActionMapper(ActionMapper):
         self.eventManager = event_manager
         self.configuration = configuration
         self.is_finished = False
-        self.routing_publisher_address = routing_publisher_address
-        self.routing_subscriber_address = routing_subscriber_address
+        zmanager_conf: ZManagerConfiguration = SingletonConfigurationFactory.get_configuration_object("ZManagerConfiguration")
+        self.routing_publisher_address = zmanager_conf.subject_pull_address
+        self.routing_subscriber_address = zmanager_conf.integration_manager_pub_address
         self.formatter = formatter
         self.initiate_sockets()
 

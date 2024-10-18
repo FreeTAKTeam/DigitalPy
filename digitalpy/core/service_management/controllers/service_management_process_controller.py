@@ -16,77 +16,80 @@ The file also imports several other modules and classes that are used in the
 ServiceManagementProcessController class, including Request, Response, ActionMapper, Configuration, 
 DigitalPyService, and SERVICE_WAIT_TIME.
 """
-import multiprocessing
 
-from digitalpy.core.digipy_configuration.configuration import Configuration
+from multiprocessing import Process
+from digitalpy.core.service_management.domain.model.service_status_enum import (
+    ServiceStatusEnum,
+)
+from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
 from digitalpy.core.main.controller import Controller
-from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.service_management.digitalpy_service import DigitalPyService
-from digitalpy.core.service_management.domain.service_description import ServiceDescription
 from digitalpy.core.zmanager.action_mapper import ActionMapper
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
+from digitalpy.core.main.object_factory import ObjectFactory
+from digitalpy.core.main.singleton_configuration_factory import (
+    SingletonConfigurationFactory,
+)
 
 from ..configuration.service_management_constants import SERVICE_WAIT_TIME
 
 
 class ServiceManagementProcessController(Controller):
-    """ Service Management Process Controller class. Responsible for handling all operations on
+    """Service Management Process Controller class. Responsible for handling all operations on
     a service's underlying process.
     """
 
-    def __init__(self, request: Request, response: Response, sync_action_mapper: ActionMapper,
-                 configuration: Configuration):
+    def __init__(
+        self,
+        request: Request,
+        response: Response,
+        sync_action_mapper: ActionMapper,
+        configuration: Configuration,
+    ):
         super().__init__(request, response, sync_action_mapper, configuration)
 
-    def start_process(self, service: ServiceDescription, process_class: DigitalPyService):
+    def start_process(self, service: DigitalPyService):
         """
         Starts a new process for the given service using the provided process class.
 
         Args:
-            service (ServiceDescription): The service description object.
-            process_class (DigitalPyService): The process class to be used for starting the service.
+            service (DigitalPyService): The service object instance.
 
         Raises:
             ChildProcessError: If the service fails to start or if post-processing fails.
-
-        Returns:
-            None
         """
-        try:
-            process = multiprocessing.Process(
-                target=process_class.start,
+        if service.process is None:
+            service.process = Process(
+                target=service.start,
                 args=(
                     ObjectFactory.get_instance("factory"),
-                    ObjectFactory.get_instance("tracingprovider"),
-                    service.host,
-                    service.port
-                )
+                    ObjectFactory.get_instance("TracingProvider"),
+                    SingletonConfigurationFactory.get_instance(),
+                ),
             )
-            process.start()
+        try:
+            service.process.start()
         except Exception as e:
+            service.status = ServiceStatusEnum.ERROR.value
             raise ChildProcessError("Service failed to start") from e
         try:
-            service.pid = process.pid
-            if process.is_alive():
-                service.process = process
-            else:
+            if not service.process.is_alive():
+                service.status = ServiceStatusEnum.ERROR.value
                 raise ChildProcessError("Service failed to start")
         except Exception as e:
-            process.terminate()
-            raise ChildProcessError(
-                "Service post-processing failed " + str(e)) from e
+            service.process.terminate()
+            service.status = ServiceStatusEnum.ERROR.value
+            raise ChildProcessError("Service post-processing failed " + str(e)) from e
+        service.status = ServiceStatusEnum.RUNNING.value
+        return service
 
-    def stop_process(self, service: ServiceDescription):
+    def stop_process(self, service: DigitalPyService):
         """
         Stops the specified service process.
 
         Args:
-            service (ServiceDescription): The service to stop.
-
-        Raises:
-            ChildProcessException: If the service fails to stop.
-
+            service (DigitalPyService): The service to stop.
         """
         try:
             service.process.join(SERVICE_WAIT_TIME)
@@ -96,7 +99,9 @@ class ServiceManagementProcessController(Controller):
                 service.process.terminate()
                 service.process.join()
 
-            else:
-                return
+            service.process = None
+
+            service.configuration.status = ServiceStatusEnum.STOPPED.value
         except Exception as e:
+            service.status = ServiceStatusEnum.ERROR.value
             raise ChildProcessError("Service failed to stop") from e

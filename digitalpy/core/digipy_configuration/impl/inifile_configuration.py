@@ -1,11 +1,12 @@
-from io import StringIO, TextIOBase
+import collections.abc
 import os
-from pathlib import PurePath
 import re
+from io import StringIO, TextIOBase
+from pathlib import PurePath
+from threading import Lock, Condition
 from typing import Any, Union
 
-from digitalpy.core.digipy_configuration.configuration import Configuration
-import collections.abc
+from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
 
 
 class InifileConfiguration(Configuration):
@@ -20,6 +21,8 @@ class InifileConfiguration(Configuration):
         self.config_array = {}
         self.contained_files = []
         self.lookup_table = {}
+        self._lock = Lock()
+        self._condition = Condition(lock=self._lock)
 
     # TODO: implement this method
     def get_configuration(self):
@@ -38,34 +41,38 @@ class InifileConfiguration(Configuration):
         @note ini files referenced in section 'config' key 'include' are parsed
         afterwards
         """
-        filename = self.config_path + name
+        with self._lock:
+            filename = self.config_path + name
 
-        num_parsed_files = len(self.__added_files)
+            num_parsed_files = len(self.__added_files)
 
-        if num_parsed_files > 0:
-            last_file = self.__added_files[num_parsed_files - 1]
-        else:
-            last_file = ""
+            if num_parsed_files > 0:
+                last_file = self.__added_files[num_parsed_files - 1]
+            else:
+                last_file = ""
 
-        # if the last file is the same as the current file and the last file is not newer than the serialized data
-        if (
-            num_parsed_files > 0
-            and last_file is filename
-            and not self._check_file_date(
-                self.__added_files, self._get_serialize_filename(self.__added_files)
+            # if the last file is the same as the current file and the last file is not newer than the serialized data
+            if (
+                num_parsed_files > 0
+                and last_file is filename
+                and not self._check_file_date(
+                    self.__added_files, self._get_serialize_filename(self.__added_files)
+                )
+            ):
+                return
+
+            if not os.path.exists(filename):
+                raise ValueError("Could not find configuration file " + str(filename))
+
+            self.__added_files.append(filename)
+            result = self._process_file(
+                filename, self.config_array, self.contained_files
             )
-        ):
-            return
+            self.config_array = result["config"]
+            self.contained_files = sorted(set(result["files"]))
 
-        if not os.path.exists(filename):
-            raise ValueError("Could not find configuration file " + str(filename))
-
-        self.__added_files.append(filename)
-        result = self.process_file(filename, self.config_array, self.contained_files)
-        self.config_array = result["config"]
-        self.contained_files = sorted(set(result["files"]))
-
-        self._build_lookup_table()
+            self._build_lookup_table()
+            self._condition.notify_all()
 
     def _check_file_date(self, file_list, reference_file) -> bool:
         """Check if one file in file_list is newer than the reference_file."""
@@ -79,7 +86,7 @@ class InifileConfiguration(Configuration):
         """Notify configuration change listeners"""
         raise NotImplementedError("this method has not yet been implemented")
 
-    def process_file(
+    def _process_file(
         self,
         filename,
         config_array: Union[dict, None] = None,
@@ -95,10 +102,9 @@ class InifileConfiguration(Configuration):
             # parse the file into a dictionary
             content = self.parse_ini_file(filename)
             # merge the config sections giving the new content precedence over the config array
-            merged = self._merge_dictionaries(config_array, content)
-            return {"config": merged, "files": parsed_files}
-        else:
-            return {"config": config_array, "files": parsed_files}
+            config_array = self._merge_dictionaries(config_array, content)
+        self._condition.notify_all()
+        return {"config": config_array, "files": parsed_files}
 
     def _merge_dictionaries(self, dict_one, dict_two):
         """merge two dictionaries, recursively
@@ -189,7 +195,7 @@ class InifileConfiguration(Configuration):
         Returns:
             bool: True if the section exists, False otherwise
         """
-        return self._lookup(section) != None
+        return self._lookup(section) is not None
 
     def _build_lookup_table(self):
         """Build the internal lookup table"""
@@ -206,18 +212,146 @@ class InifileConfiguration(Configuration):
                 ) from ex
 
     def has_value(self, key, section):
-        return self._lookup(section, key) != None
+        return self._lookup(section, key) is not None
 
-    def get_value(self, key, section):
+    def get_value(self, key: str, section: str) -> Union[str, list[str], list[float], float, bool]:
+        """Get the value of a key in a section.
+        
+        Args:
+            key (str): the name of the key to be retrieved
+            section (str): the name of the section to be retrieved
+        
+        Raises:
+            KeyError: raised if the key is not found
+        
+        Returns:
+            Union[str, list[str], list[float], float, bool]: the value of the key in a type determined by the value
+        """
         lookup_entry = self._lookup(section, key)
         if lookup_entry is None or len(lookup_entry) == 1:
             raise KeyError(f"No key {key} found in section {section}")
         else:
-            return self.config_array[lookup_entry[0]][lookup_entry[1]]
+            raw_value = self.config_array[lookup_entry[0]][lookup_entry[1]]
+            return self._convert_value(raw_value)
+
+    def _convert_value(self, value: str) -> Union[str, list[str], list[float], float, bool]:
+        """Convert the value to its appropriate type.
+        
+        Args:
+            value (str): the value to be converted
+        
+        Returns:
+            Union[str, list[str], list[float], float, bool]: the converted value
+        """
+        converters = [
+            (self._is_boolean, self._convert_to_boolean),
+            (self._is_list, self._convert_to_list),
+            (self._is_float, self._convert_to_float),
+        ]
+
+        for check_func, convert_func in converters:
+            if check_func(value):
+                return convert_func(value)
+        return value
+
+    def _is_boolean(self, value: str) -> bool:
+        """Check if the value is a boolean.
+        
+        Args:
+            value (str): the value to be checked
+        
+        Returns:
+            bool: True if the value is a boolean, False otherwise
+        """
+        return value.lower() in ["true", "false"]
+
+    def _convert_to_boolean(self, value: str) -> bool:
+        """Convert the value to a boolean.
+        
+        Args:
+            value (str): the value to be converted
+        
+        Returns:
+            bool: the converted value
+        """
+        return value.lower() == "true"
+
+    def _is_list(self, value: str) -> bool:
+        """Check if the value is a list.
+        
+        Args:
+            value (str): the value to be checked
+        
+        Returns:
+            bool: True if the value is a list, False otherwise
+        """
+        return value.startswith("[") and value.endswith("]")
+
+    def _convert_to_list(self, value: str) -> list[Union[str, float]]:
+        """Convert the value to a list.
+        
+        Args:
+            value (str): the value to be converted
+        
+        Returns:
+            list[Union[str, float]]: the converted value
+        """
+        value = value[1:-1]  # Remove the square brackets
+        items = value.split(",")
+        if all(self._is_float(item) for item in items):
+            return [self._convert_to_float(item) for item in items]
+        return [item.strip() for item in items]
+
+    def _is_float(self, value: str) -> bool:
+        """Check if the value is a float.
+        
+        Args:
+            value (str): the value to be checked
+        
+        Returns:
+            bool: True if the value is a float, False otherwise
+        """
+        try:
+            float(value)
+            return True
+        except ValueError:
+            return False
+
+    def _convert_to_float(self, value: str) -> float:
+        """Convert the value to a float.
+        
+        Args:
+            value (str): the value to be converted
+        
+        Returns:
+            float: the converted value
+        """
+        return float(value)
+
+    def _is_boolean_value(self, key, section):
+        """Check if a value is a boolean."""
+        value = self.get_value(key, section)
+        return value.lower() in ["true", "false"]
 
     def get_boolean_value(self, key, section):
         value = self.get_value(key, section)
         return bool(value)
+
+    def get_list_value(self, key: str, section: str) -> list[str]:
+        """ Get the value of a key in a section as a list.
+        
+        Args:
+            key (str): the name of the key to be retrieved
+            section (str): the name of the section to be retrieved
+        
+        Raises:
+            KeyError: raised if the key is not found
+        
+        Returns:
+            list[str]: the value of the key as a list
+        """
+        value = self.get_value(key, section)
+        return value.replace(" ", "").replace("[", "").replace("]", "").split(",")
 
     def get_key(self, value, section):
         section_dict = self.get_section(section)
@@ -383,20 +517,22 @@ class InifileConfiguration(Configuration):
         Raises:
             ValueError: raised if the configuration is not found
         """
-        found = False
-        for file in self.__added_files:
-            if PurePath(file) == PurePath(name):
-                found = True
-                self.__added_files.remove(file)
+        with self._lock:
+            found = False
+            for file in self.__added_files:
+                if PurePath(file) == PurePath(name):
+                    found = True
+                    self.__added_files.remove(file)
 
-        if not found:
-            raise ValueError(f"Configuration {name} not found")
+            if not found:
+                raise ValueError(f"Configuration {name} not found")
 
-        # remove the keys defined in the configuration
-        conf = {}
-        self.process_file(name, conf, [])
-        for section in conf.keys():
-            self._remove_modified_section(conf, section)
+            # remove the keys defined in the configuration
+            conf = {}
+            self._process_file(name, conf, [])
+            for section in conf.keys():
+                self._remove_modified_section(conf, section)
+            self._condition.notify_all()
 
     def _remove_modified_section(self, conf: dict, section: str) -> None:
         """Remove a section from the configuration if it has not been modified since the configuration was added.
@@ -478,25 +614,19 @@ class InifileConfiguration(Configuration):
     def get_directory_value(self, key: str, section: str):
         raise NotImplementedError("this method has not yet been implemented")
 
-    # files added to the configuration
-    __addedFiles = []
-    __cachePath = None
-    __comments = []
-    # an assoziate array that holds sections with keys with values
-    __configArray = []
-    __configExtension = "ini"
-    __configPath = None
-    # all included files (also by config include)
-    __containedFiles = []
-    __fileUtil = None
-    # an assoziate array that has lowercased section or section:key keys and [section,
-    # key] values for fast lookup
-    __isModified = False
-    __logger = None
-    # an assoziate array that holds the comments/blank lines in the file (each
-    # comment is attached to the following section/key) the key ';' holds the
-    # comments at the end of the file
-    __lookupTable = []
-
     def __str__(self) -> str:
         return str(self.config_array)
+
+    def __getstate__(self) -> object:
+        tmp_dict = self.__dict__.copy()
+        if "_lock" in tmp_dict:
+            del tmp_dict["_lock"]
+        if "_condition" in tmp_dict:
+            del tmp_dict["_condition"]
+
+        return tmp_dict
+
+    def __setstate__(self, tmp_dict: dict) -> None:
+        self.__dict__.update(tmp_dict)
+        self._lock = Lock()
+        self._condition = Condition(lock=self._lock)

@@ -1,10 +1,12 @@
 """this module is responsible for handling all domain interactions"""
+
 import uuid
-from types import ModuleType
 from typing import Any, List, Optional, Type
 from digitalpy.core.zmanager.action_mapper import ActionMapper
-from digitalpy.core.digipy_configuration.configuration import Configuration
-from digitalpy.core.parsing.load_configuration import ModelConfiguration as LConfiguration
+from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
+from digitalpy.core.parsing.load_configuration import (
+    ModelConfiguration as LConfiguration,
+)
 
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.zmanager.response import Response
@@ -16,7 +18,7 @@ from digitalpy.core.domain import domain
 
 
 class DomainController(Controller):
-    """this is the controller for the domain component, 
+    """this is the controller for the domain component,
     it is responsible for handling all domain interactions"""
 
     def __init__(
@@ -28,12 +30,14 @@ class DomainController(Controller):
         **kwargs,  # pylint: disable=unused-argument
     ):
         super().__init__(request, response, domain_action_mapper, configuration)
-        self.domain = domain
+        self.domain_classes = domain.classes
 
     def execute(self, method=None):
         return getattr(self, method)(**self.request.get_values())
 
-    def add_child(self, node: Node, child: Node, **kwargs) -> None:  # pylint: disable=unused-argument
+    def add_child(
+        self, node: Node, child: Node, **kwargs
+    ) -> None:  # pylint: disable=unused-argument
         """add a child to a node
 
         Args:
@@ -45,7 +49,13 @@ class DomainController(Controller):
         """
         return node.add_child(child)
 
-    def create_node(self, configuration: LConfiguration, object_class_name: str, id: str = None, **kwargs) -> Node:
+    def create_node(
+        self,
+        configuration: LConfiguration,
+        object_class_name: str,
+        id: str = None,
+        **kwargs,
+    ) -> Node:
         """this method creates a new node object
 
         Args:
@@ -57,20 +67,23 @@ class DomainController(Controller):
             id = str(uuid.uuid1())
         # allow the domain to be extended
         domaindict = self._extend_domain(
-            self.domain, kwargs.get('extended_domain', {}))
+            self.domain_classes, kwargs.get("extended_domain", {})
+        )
         # retrieve the original object class
         object_class: type[Node] = domaindict[object_class_name]
         # instantiate an oid for the instance
         oid = ObjectFactory.get_instance(
-            "ObjectId", {"id": id, "type": object_class_name})
+            "ObjectId", {"id": id, "type": object_class_name}
+        )
         # instantiate the object class
         object_class_instance = object_class(
-            model_configuration=configuration, model=domaindict, oid=oid)
+            model_configuration=configuration, model=domaindict, oid=oid
+        )
         # set the module object
         self.response.set_value("model_object", object_class_instance)
         return object_class_instance
 
-    def _extend_domain(self, domain: ModuleType, extended_domain: dict) -> dict:
+    def _extend_domain(self, domaindict: dict, extended_domain: dict) -> dict:
         """this method is responsible for adding domain extensions from a given component
 
         Args:
@@ -80,7 +93,6 @@ class DomainController(Controller):
         Returns:
             ModuleType: an updated domain
         """
-        domaindict = domain.__dict__.copy()
         for key, value in extended_domain.items():
             domaindict[key] = value
         return domaindict
@@ -114,10 +126,16 @@ class DomainController(Controller):
             ),
         )
 
-    def get_first_child(self, node: Node, child_type: Type[Node],  # pylint: disable=unused-argument
-                        values: "dict[str, Any]", properties: "dict[str, Any]",
-                        use_regex: bool = True, **kwargs) -> Optional[Node]:
-        """Returns the first child of the given node that matches the given child type, 
+    def get_first_child(
+        self,
+        node: Node,
+        child_type: Type[Node],  # pylint: disable=unused-argument
+        values: "dict[str, Any]",
+        properties: "dict[str, Any]",
+        use_regex: bool = True,
+        **kwargs,
+    ) -> Optional[Node]:
+        """Returns the first child of the given node that matches the given child type,
         values, and properties.
 
         Args:
@@ -125,16 +143,18 @@ class DomainController(Controller):
             child_type (Type[Node]): The type of the child to find.
             values (dict[str, Any]): The values the child must have.
             properties (dict[str, Any]): The properties the child must have.
-            use_regex (bool, optional): Whether to use regular expressions to match values and 
+            use_regex (bool, optional): Whether to use regular expressions to match values and
                 properties. Defaults to True.
             **kwargs: Additional keyword arguments.
 
         Returns:
-            Optional[Node]: The first child that matches the given child type, values, 
+            Optional[Node]: The first child that matches the given child type, values,
                 and properties, or None if no such child is found.
         """
-        self.response.set_value("first_child", node.get_first_child(
-            child_type, values, properties, use_regex))
+        self.response.set_value(
+            "first_child",
+            node.get_first_child(child_type, values, properties, use_regex),
+        )
 
     def get_next_sibling(self, node: Node, **kwargs) -> Optional[Node]:
         """Returns the next sibling of the given node.
@@ -148,7 +168,9 @@ class DomainController(Controller):
         """
         self.response.set_value("next_sibling", node.get_next_sibling())
 
-    def get_num_children(self, node: Node, children_type: Optional[Type[Node]] = None, **kwargs) -> int:
+    def get_num_children(
+        self, node: Node, children_type: Optional[Type[Node]] = None, **kwargs
+    ) -> int:
         """Returns the number of children the given node has.
 
         Args:
@@ -159,10 +181,11 @@ class DomainController(Controller):
         Returns:
             int: The number of children the given node has.
         """
-        self.response.set_value(
-            "num_children", node.get_num_children(children_type))
+        self.response.set_value("num_children", node.get_num_children(children_type))
 
-    def get_num_parents(self, node: Node, parent_types: Optional[List[Type[Node]]] = None, **kwargs) -> int:
+    def get_num_parents(
+        self, node: Node, parent_types: Optional[List[Type[Node]]] = None, **kwargs
+    ) -> int:
         """Returns the number of parents the given node has.
 
         Args:
@@ -173,8 +196,7 @@ class DomainController(Controller):
         Returns:
             int: The number of parents the given node has.
         """
-        self.response.set_value(
-            "num_parents", node.get_num_parents(parent_types))
+        self.response.set_value("num_parents", node.get_num_parents(parent_types))
 
     def get_previous_sibling(self, node: Node) -> Optional[Node]:
         """Returns the previous sibling of the given node.
@@ -185,8 +207,7 @@ class DomainController(Controller):
         Returns:
             Optional[Node]: The previous sibling of the given node, or None if the node has no previous sibling.
         """
-        self.response.set_value(
-            "previous_sibling", node.get_previous_sibling())
+        self.response.set_value("previous_sibling", node.get_previous_sibling())
 
     def get_parent(self, node: Node) -> Optional[Node]:
         """Returns the parent of the given node.

@@ -10,29 +10,31 @@
 
 import traceback
 from typing import TYPE_CHECKING
-import uuid
 from digitalpy.core.IAM.controllers.iam_filter_controller import IAMFilterController
-from digitalpy.core.IAM.controllers.iam_persistence_controller import IAMPersistenceController
-from digitalpy.core.IAM.persistence.system_group import SystemGroup
-from digitalpy.core.IAM.persistence.system_user_groups import SystemUserGroups
+from digitalpy.core.IAM.controllers.iam_persistence_controller import (
+    IAMPersistenceController,
+)
 
 from digitalpy.core.component_management.impl.default_facade import DefaultFacade
+from digitalpy.core.zmanager.request import Request
+from digitalpy.core.zmanager.response import Response
 
 from .controllers.iam_users_controller import IAMUsersController
 from .configuration.iam_constants import (
     ACTION_MAPPING_PATH,
-    AUTHENTICATED_USERS,
     LOGGING_CONFIGURATION_PATH,
     INTERNAL_ACTION_MAPPING_PATH,
     MANIFEST_PATH,
     CONFIGURATION_PATH_TEMPLATE,
     LOG_FILE_PATH,
-    UNAUTHENTICATED_USERS,
+    COMPONENT_NAME,
 )
 from . import base
 
 if TYPE_CHECKING:
-    from digitalpy.core.IAM.IAM_recipient_filter_strategy import IAMRecipientFilterStrategy
+    from digitalpy.core.IAM.IAM_recipient_filter_strategy import (
+        IAMRecipientFilterStrategy,
+    )
     from digitalpy.core.IAM.IAM_action_filter_strategy import IAMActionFilterStrategy
 
 
@@ -47,8 +49,8 @@ class IAM(DefaultFacade):
         request,
         response,
         configuration,
-        iam_recipient_filter_strategy: 'IAMRecipientFilterStrategy' = None,
-        iam_action_filter_strategy: 'IAMActionFilterStrategy' = None,
+        iam_recipient_filter_strategy: "IAMRecipientFilterStrategy" = None,
+        iam_action_filter_strategy: "IAMActionFilterStrategy" = None,
         log_file_path: str = LOG_FILE_PATH,
     ):
         super().__init__(
@@ -73,20 +75,26 @@ class IAM(DefaultFacade):
             # the path to the manifest file
             manifest_path=MANIFEST_PATH,
             # the path for log files to be stored
-            log_file_path=log_file_path
+            log_file_path=log_file_path,
         )
         # self.persistency_controller = IAMController()
         self.persistency_controller = IAMPersistenceController(
-            request, response, iam_action_mapper, configuration)
+            request, response, iam_action_mapper, configuration
+        )
         self.users_controller = IAMUsersController(
-            request=request, response=response, action_mapper=iam_action_mapper, configuration=configuration)
+            request=request,
+            response=response,
+            action_mapper=iam_action_mapper,
+            configuration=configuration,
+        )
         self.filter_controller = IAMFilterController(
             request=request,
             response=response,
             sync_action_mapper=iam_action_mapper,
             configuration=configuration,
             iam_recipient_filter_strategy=iam_recipient_filter_strategy,
-            iam_action_filter_strategy=iam_action_filter_strategy)
+            iam_action_filter_strategy=iam_action_filter_strategy,
+        )
         # self.persistency_controller = IAMController()
         # self.persistency_controller = IAMController()
         self.functions = {}
@@ -94,7 +102,7 @@ class IAM(DefaultFacade):
         self.group_permissions = {}
         self.system_users = {}
 
-    def initialize(self, request, response):
+    def initialize(self, request: Request, response: Response):
         self.request = request
         self.response = response
         # self.persistency_controller.initialize(request, response)
@@ -107,6 +115,7 @@ class IAM(DefaultFacade):
 
     def setup(self, *args, **kwargs):
         super().setup(*args, **kwargs)
+        self.persistency_controller.intialize_db()
         self.persistency_controller.clear_sessions()
         self.persistency_controller.create_default_permissions()
         self.persistency_controller.create_default_groups()
@@ -138,7 +147,9 @@ class IAM(DefaultFacade):
         return self.persistency_controller.create_function(function)
 
     def update_function(self, function_id, updated_function, **kwargs):
-        return self.persistency_controller.update_function(function_id, updated_function)
+        return self.persistency_controller.update_function(
+            function_id, updated_function
+        )
 
     def delete_function(self, function_id, **kwargs):
         return self.persistency_controller.delete_function(function_id)
@@ -165,13 +176,21 @@ class IAM(DefaultFacade):
         return self.persistency_controller.get_all_group_permissions()
 
     def get_group_permissions_by_id(self, group_permissions_id, **kwargs):
-        return self.persistency_controller.get_group_permissions_by_id(group_permissions_id)
+        return self.persistency_controller.get_group_permissions_by_id(
+            group_permissions_id
+        )
 
-    def update_group_permissions(self, group_permissions_id, updated_group_permissions, **kwargs):
-        return self.persistency_controller.update_group_permissions(group_permissions_id, updated_group_permissions)
+    def update_group_permissions(
+        self, group_permissions_id, updated_group_permissions, **kwargs
+    ):
+        return self.persistency_controller.update_group_permissions(
+            group_permissions_id, updated_group_permissions
+        )
 
     def delete_group_permissions(self, group_permissions_id, **kwargs):
-        return self.persistency_controller.delete_group_permissions(group_permissions_id)
+        return self.persistency_controller.delete_group_permissions(
+            group_permissions_id
+        )
 
     def get_all_system_users(self, **kwargs):
         return self.persistency_controller.get_all_system_users()
@@ -210,36 +229,29 @@ class IAM(DefaultFacade):
         self.users_controller.validate_request(*args, **kwargs)
 
     def create_permission(self, *args, **kwargs):
-        """a wrapper to call the persistence controller
-        """
+        """a wrapper to call the persistence controller"""
         self.persistency_controller.create_permission(*args, **kwargs)
 
     def create_group_permission(self, *args, **kwargs):
-        """a wrapper to call the persistence controller
-        """
+        """a wrapper to call the persistence controller"""
         self.persistency_controller.create_group_permission(*args, **kwargs)
 
     def connection(self, *args, **kwargs):
-        """a wrapper to call the users controller
-        """
+        """a wrapper to call the users controller"""
         self.users_controller.connection(*args, **kwargs)
 
     def disconnection(self, *args, **kwargs):
-        """a wrapper to call the users controller
-        """
+        """a wrapper to call the users controller"""
         self.users_controller.disconnection(*args, **kwargs)
 
     def filter_recipients(self, *args, **kwargs):
-        """filter recipients based on the request
-        """
+        """filter recipients based on the request"""
         self.filter_controller.filter_recipients(*args, **kwargs)
 
     def filter_action(self, *args, **kwargs):
-        """filter actions based on the request
-        """
+        """filter actions based on the request"""
         return self.filter_controller.filter_action(*args, **kwargs)
 
     def authenticate(self, *args, **kwargs):
-        """authenticate the user
-        """
+        """authenticate the user"""
         self.users_controller.authenticate_system_user(*args, **kwargs)

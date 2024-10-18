@@ -2,7 +2,9 @@ import time
 import zmq
 from typing import List, Union, Dict
 import logging
-from digitalpy.core.zmanager.configuration.zmanager_constants import ZMANAGER_MESSAGE_DELIMITER
+from digitalpy.core.zmanager.configuration.zmanager_constants import (
+    ZMANAGER_MESSAGE_DELIMITER,
+)
 
 from digitalpy.core.zmanager.subscriber import Subscriber
 from digitalpy.core.zmanager.response import Response
@@ -31,16 +33,16 @@ class ZmqSubscriber(Subscriber):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.responses: Dict[str, Response] = {}
 
-    def broker_connect(self, integration_manager_address: str, integration_manager_port: int, integration_manager_protocol: str, service_identity: str, application_protocol: str):
-        """Connect or reconnect to broker
-        """
+    def broker_connect(
+        self,
+        integration_manager_address: str,
+        service_identity: str,
+        application_protocol: str,
+    ):
+        """Connect or reconnect to broker"""
 
         if not isinstance(integration_manager_address, str):
             raise TypeError("'integration_manager_address' must be a string")
-        if not isinstance(integration_manager_port, int):
-            raise TypeError("'integration_manager_port' must be an integer")
-        if not isinstance(integration_manager_protocol, str):
-            raise TypeError("'integration_manager_protocol' must be a string")
 
         self.service_identity = service_identity
 
@@ -50,43 +52,43 @@ class ZmqSubscriber(Subscriber):
             self.subscriber_context = zmq.Context()
         if self.subscriber_socket == None:
             self.subscriber_socket = self.subscriber_context.socket(zmq.SUB)
-        self.__subscriber_socket_connections.append(
-            f"{integration_manager_protocol}://{integration_manager_address}:{integration_manager_port}")
+        self.__subscriber_socket_connections.append(integration_manager_address)
         # add the connection to the connections list so it can be reconnected upon serialization
-        self.subscriber_socket.connect(
-            f"{integration_manager_protocol}://{integration_manager_address}:{integration_manager_port}")
+        self.subscriber_socket.connect(integration_manager_address)
         self.subscriber_socket.setsockopt_string(
-            zmq.SUBSCRIBE, f"/messages/{service_identity}/")
+            zmq.SUBSCRIBE, f"/messages/{service_identity}/"
+        )
         # currently nothing is done with the commands endpoint but it will be used in future
         self.subscriber_socket.setsockopt_string(
-            zmq.SUBSCRIBE, f"/commands/{service_identity}/")
+            zmq.SUBSCRIBE, f"/commands/{service_identity}/"
+        )
         # unlimited as trunkating can result in unsent data and broken messages
         # TODO: determine a sane default
         self.subscriber_socket.setsockopt(zmq.RCVHWM, 0)
         self.subscriber_socket.setsockopt(zmq.SNDHWM, 0)
 
     def broker_disconnect(self):
-        """Disconnect from broker
-        """
+        """Disconnect from broker"""
         for connection in self.__subscriber_socket_connections:
             self.subscriber_socket.disconnect(connection)
         self.subscriber_socket.close()
         self.subscriber_context.term()
         self.subscriber_context.destroy()
 
-    def broker_receive_response(self, request_id: str, blocking: bool = True, timeout=1, retry=0) -> Union[Response, None]:
+    def broker_receive_response(
+        self, request_id: str, blocking: bool = True, timeout=1, retry=0
+    ) -> Union[Response, None]:
         """Returns the reply message or None if there was no reply"""
         try:
             s_time = time.time()
             while s_time + timeout > time.time() and retry >= 0:
                 if not blocking:
                     message = self.subscriber_socket.recv_multipart(flags=zmq.NOBLOCK)[
-                        0].split(b" ", 1)
+                        0
+                    ].split(b" ", 1)
                 else:
-                    self.subscriber_socket.setsockopt(
-                        zmq.RCVTIMEO, timeout*1000)
-                    message = self.subscriber_socket.recv_multipart()[
-                        0].split(b" ", 1)
+                    self.subscriber_socket.setsockopt(zmq.RCVTIMEO, timeout * 1000)
+                    message = self.subscriber_socket.recv_multipart()[0].split(b" ", 1)
                 # instantiate the response object
                 response: Response = ObjectFactory.get_new_instance("response")
 
@@ -101,15 +103,18 @@ class ZmqSubscriber(Subscriber):
                 topic = message[0]
                 decoded_topic = topic.decode("utf-8")
                 topic_sections = decoded_topic.split("/")
-                _, _, service_id, protocol, sender, context, action, id, recipients = topic_sections
+                _, _, service_id, protocol, sender, context, action, id, recipients = (
+                    topic_sections
+                )
                 response.set_sender(sender)
                 response.set_context(context)
                 response.set_action(action)
                 response.set_id(id)
 
                 if len(recipients.split(RECIPIENT_DELIMITER)) > 1:
-                    response.set_value("recipients", recipients.split(
-                        RECIPIENT_DELIMITER)[:-1])
+                    response.set_value(
+                        "recipients", recipients.split(RECIPIENT_DELIMITER)[:-1]
+                    )
                 if response.get_id() == request_id:
                     return response
                 else:
@@ -119,7 +124,9 @@ class ZmqSubscriber(Subscriber):
         except zmq.ZMQError as ex:
             return None
 
-    def broker_receive(self, blocking: bool = False, max_messages: int = 100) -> List[Response]:
+    def broker_receive(
+        self, blocking: bool = False, max_messages: int = 100
+    ) -> List[Response]:
         """Returns the reply message or None if there was no reply
         Args:
             blocking (False): whether or not the operation is blocking. Option defaults to False.
@@ -134,10 +141,10 @@ class ZmqSubscriber(Subscriber):
             for _ in range(max_messages):
                 if not blocking:
                     message = self.subscriber_socket.recv_multipart(flags=zmq.NOBLOCK)[
-                        0].split(b" ", 1)
+                        0
+                    ].split(b" ", 1)
                 else:
-                    message = self.subscriber_socket.recv_multipart()[
-                        0].split(b" ", 1)
+                    message = self.subscriber_socket.recv_multipart()[0].split(b" ", 1)
                 # instantiate the response object
                 response: Response = ObjectFactory.get_new_instance("response")
 
@@ -152,15 +159,18 @@ class ZmqSubscriber(Subscriber):
                 topic = message[0]
                 decoded_topic = topic.decode("utf-8")
                 topic_sections = decoded_topic.split("/", 9)
-                _, _, service_id, protocol, sender, context, action, id, recipients = topic_sections
+                _, _, service_id, protocol, sender, context, action, id, recipients = (
+                    topic_sections
+                )
                 response.set_sender(sender)
                 response.set_context(context)
                 response.set_action(action)
                 response.set_id(id)
 
                 if len(recipients.split(RECIPIENT_DELIMITER)) > 1:
-                    response.set_value("recipients", recipients.split(
-                        RECIPIENT_DELIMITER)[:-1])
+                    response.set_value(
+                        "recipients", recipients.split(RECIPIENT_DELIMITER)[:-1]
+                    )
                 else:
                     response.set_value("recipients", "*")
 
@@ -171,8 +181,7 @@ class ZmqSubscriber(Subscriber):
             return responses
 
     def broker_send(self, message):
-        """Send request to broker
-        """
+        """Send request to broker"""
         self.subscriber_socket.send(message)
 
     def __getstate__(self):
@@ -190,6 +199,8 @@ class ZmqSubscriber(Subscriber):
         for connection in self.__subscriber_socket_connections:
             self.subscriber_socket.connect(connection)
             self.subscriber_socket.setsockopt_string(
-                zmq.SUBSCRIBE, f"/messages/{self.service_identity}/")
+                zmq.SUBSCRIBE, f"/messages/{self.service_identity}/"
+            )
             self.subscriber_socket.setsockopt_string(
-                zmq.SUBSCRIBE, f"/commands/{self.service_identity}/")
+                zmq.SUBSCRIBE, f"/commands/{self.service_identity}/"
+            )

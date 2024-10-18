@@ -2,6 +2,7 @@
 """This is the default facade module. It is used to create a facade for a component. It is a simple example of a DigitalPyFacade.
 """
 from types import ModuleType
+from typing import Optional
 from digitalpy.core.main.controller import Controller
 from digitalpy.core.domain.node import Node
 from digitalpy.core.parsing.load_configuration import LoadConfiguration
@@ -14,7 +15,7 @@ from digitalpy.core.zmanager.response import Response
 from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.main.log_manager import LogManager
 from digitalpy.core.main.impl.default_file_logger import DefaultFileLogger
-from digitalpy.core.digipy_configuration.configuration import Configuration
+from digitalpy.core.digipy_configuration.domain.model.configuration import Configuration
 
 from digitalpy.core.telemetry.tracer import Tracer
 
@@ -36,6 +37,8 @@ class DefaultFacade(Controller):
         configuration_path_template=None,
         tracing_provider_instance=None,
         manifest_path=None,
+        action_flow_path: Optional[str] = None,
+        object_configuration_paths: Optional[str] = None,
         **kwargs,
     ):
         """_summary_
@@ -58,6 +61,8 @@ class DefaultFacade(Controller):
             configuration_path_template (string.Template, optional): a template defining the absoloute path to the model object definitions. Defaults to None.
             tracing_provider_instance (TracingProvider, optional): an instance of a digitalpy tracing provider used for logging. Defaults to None.
             manifest_path (str, optional): path to the component manifest file. Defaults to None.
+            action_flow_path (str, optional): path to the action flow configuration file. Defaults to None.
+            object_configuration_paths (str, optional): path to the object configuration file. Defaults to None.
         """
         super().__init__(
             action_mapper=action_mapper,
@@ -68,6 +73,8 @@ class DefaultFacade(Controller):
         self.last_event = ""
         self.base = base
 
+        self.object_configuration_paths = object_configuration_paths
+        self.action_flow_path = action_flow_path
         self.action_mapping_path = action_mapping_path
         self.internal_action_mapping_path = internal_action_mapping_path
         self.type_mapping = type_mapping
@@ -156,24 +163,35 @@ class DefaultFacade(Controller):
         """get all the log files available"""
         return self.log_manager.get_logs()
 
-    def discover(self, **kwargs):
+    def get_action_mapping(self, **kwargs):
         """discover the action mappings from the component"""
-        config = InifileConfiguration(config_path=self.action_mapping_path)
+        config = InifileConfiguration(config_path="")
+        self.action_mapping_path = self.get_configuration_path()
+        config.add_configuration(self.action_mapping_path)
         return config.config_array
 
-    def get_action_mapping_path(self) -> str:
+    def get_configuration_path(self) -> str:
         """get the action mapping path for the component"""
         return self.action_mapping_path
+
+    def get_flow_configuration_path(self) -> str:
+        """get the flow configuration path for the component"""
+        return self.action_flow_path
+    
+    def get_object_configuration_path(self) -> str:
+        """get the object configuration path for the component"""
+        return self.object_configuration_paths
 
     def get_action_mapper(self) -> DefaultActionMapper:
         """get the action mapper for the component"""
         internal_config = InifileConfiguration("")
         internal_config.add_configuration(self.internal_action_mapping_path)
-        return self.base.ActionMapper(  # type: ignore
+        return (
+            self.base.ActionMapper(  # type: ignore
                 ObjectFactory.get_instance("event_manager"),
                 internal_config,
             ),
-
+        )
     def setup(self, **kwargs):
         """setup the component"""
         self.action_mapper = self.get_action_mapper()
