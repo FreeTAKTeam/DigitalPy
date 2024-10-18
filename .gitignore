@@ -134,3 +134,6 @@ digitalpy/core/IAM/persistence/IAMRecords.db
 
 # Databases
 *.db
+
+# conf
+.vscode/
