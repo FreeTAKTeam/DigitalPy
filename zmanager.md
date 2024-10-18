@@ -9,7 +9,10 @@ Its asynchronous I/O model gives DigitalPy a scalable multicore applications, bu
 ## Process
 ![image](https://user-images.githubusercontent.com/60719165/232344598-9337857c-c580-4700-bc3a-cb81a66bb5a0.png)
 
+
+
 the FTS services collect requests and push them to the Subject / ventilator. 
+
 ### The Subject
 The Subject, also known as the Ventilator, is responsible for dispatching events to registered workers or listeners. It acts as a load balancer, distributing the payloads it receives from services to multiple workers.
 
