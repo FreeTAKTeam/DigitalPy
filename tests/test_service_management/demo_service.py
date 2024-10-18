@@ -1,4 +1,5 @@
 import time
+from digitalpy.core.zmanager.impl.integration_manager_pusher import IntegrationManagerPusher
 from digitalpy.core.zmanager.impl.integration_manager_subscriber import IntegrationManagerSubscriber
 from digitalpy.core.zmanager.impl.subject_pusher import SubjectPusher
 from digitalpy.core.service_management.domain.model.service_configuration import ServiceConfiguration
@@ -8,8 +9,8 @@ from multiprocessing import Process
 
 class DemoService(DigitalPyService):
     """Demo service class."""
-    def __init__(self, service: ServiceConfiguration, subject_pusher: SubjectPusher, integration_manager_subscriber: IntegrationManagerSubscriber):
-        super().__init__(service_id="test.test_service", service=service, subject_pusher=subject_pusher, integration_manager_subscriber=integration_manager_subscriber)
+    def __init__(self, service: ServiceConfiguration, subject_pusher: SubjectPusher, integration_manager_subscriber: IntegrationManagerSubscriber, integration_manager_pusher: IntegrationManagerPusher):
+        super().__init__(service_id="test.test_service", service=service, subject_pusher=subject_pusher, integration_manager_subscriber=integration_manager_subscriber, integration_manager_pusher=integration_manager_pusher)
 
     def initialize(self):
         """Initialize the service."""

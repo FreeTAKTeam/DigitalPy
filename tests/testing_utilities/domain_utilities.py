@@ -1,24 +1,19 @@
 import uuid
 
-from digitalpy.core.domain.domain_facade import Domain
-from testing_utilities.domain_objects.simple_enum import SimpleEnum
-from tests.testing_utilities.domain_objects.enum_object import EnumObject
 import tests.testing_utilities.facade_utilities as facade_utilities
 from digitalpy.core.domain.domain.network_client import NetworkClient
+from digitalpy.core.domain.domain_facade import Domain
 from digitalpy.core.domain.object_id import ObjectId
 from digitalpy.core.main.object_factory import ObjectFactory
-from digitalpy.core.parsing.load_configuration import (
-    ConfigurationEntry,
-    ModelConfiguration,
-    Relationship,
-)
-from digitalpy.core.service_management.domain.model.service_description import (
-    ServiceDescription,
-)
-from digitalpy.core.service_management.domain.model.service_status_enum import (
-    ServiceStatusEnum,
-)
+from digitalpy.core.parsing.load_configuration import (ConfigurationEntry,
+                                                       ModelConfiguration,
+                                                       Relationship)
+from digitalpy.core.service_management.domain.model.service_description import \
+    ServiceDescription
+from digitalpy.core.service_management.domain.model.service_status_enum import \
+    ServiceStatusEnum
 from tests.testing_utilities import domain_objects
+from tests.testing_utilities.domain_objects.enum_object import EnumObject
 from tests.testing_utilities.domain_objects.list_object import ListObject
 from tests.testing_utilities.domain_objects.simple_object import SimpleObject
 

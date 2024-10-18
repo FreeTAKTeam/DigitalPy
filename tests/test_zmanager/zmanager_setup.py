@@ -49,7 +49,8 @@ class ZManagerSetup:
     def get_integration_manager(self)->IntegrationManager:
         """get the integration manager"""
         return ObjectFactory.get_instance(
-            "IntegrationManager"
+            "IntegrationManager",
+            dynamic_configuration={"factory": ObjectFactory.get_instance("factory"), "configuration_factory": SingletonConfigurationFactory.get_instance()}
         )
 
     def get_subject(self) -> Subject:

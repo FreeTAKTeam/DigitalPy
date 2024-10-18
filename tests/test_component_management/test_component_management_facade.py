@@ -30,8 +30,8 @@ def component_mgmt_db_mock():
     yield db_mock
 
     db_mock.stop()
-
-    os.remove("tests/test_component_management/test_component_resources/test_data/component_management.db")
+    if os.path.exists("tests/test_component_management/test_component_resources/test_data/component_management.db"):
+        os.remove("tests/test_component_management/test_component_resources/test_data/component_management.db")
 
 @pytest.fixture
 def test_fs(zip_name: str):
@@ -94,7 +94,7 @@ def test_pull_component(mock_get, client_mock, test_fs, test_environment):
     mock_get.return_value.status_code = 200
     mock_get.return_value.iter_content.return_value = [b"examplezipcontent"]
 
-    request.set_value("url", "http://example.com/" + zip_file_name)
+    request.set_value("url", "https://example.com/" + zip_file_name)
     request.set_value("client", client_mock)
 
     component_management_facade.execute("GETPullComponent")

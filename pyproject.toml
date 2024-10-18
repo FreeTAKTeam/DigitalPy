@@ -23,11 +23,10 @@ flask_jwt_extended="*"
 requests="*"
 psutil="*"
 
-[tool.poetry.extras]
-dev = ["pytest"]
-
 [tool.poetry.group.dev.dependencies]
 pytest-cov = "^5.0.0"
+pytest = "^8.3.3"
+tox = "^4.23.0"
 
 [build-system]
 requires = ["poetry-core"]
