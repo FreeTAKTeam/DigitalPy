@@ -6,7 +6,7 @@ from digitalpy.core.network.impl.network_flask_http_blueprints import BlueprintC
 page = Blueprint('Files', __name__)
 
 @page.route('/file/get-or-create', methods=["GET"])
-def GETFileGet-or-create():
+def GETFileGetorcreate():
     """get a file from the filesystem based on the specified path or create a new file if one does not yet exist."""
     try:
         # send data to the NetworkInterface
@@ -20,7 +20,7 @@ def GETFileGet-or-create():
     except Exception as e:
     	return str(e), 500
 @page.route('/folder/get-or-create', methods=["GET"])
-def GETFolderGet-or-create():
+def GETFolderGetorcreate():
     """get a folder from the filesystem based on the specified path or create a new folder if one does not yet exist."""
     try:
         # send data to the NetworkInterface

@@ -65,8 +65,6 @@ class SerializerActionKey:
                 return_val = c.encode() + DEL + return_val
             case (d, c) if c and not return_val:
                 return_val = c.encode()
-            case (_, _):
-                return_val = return_val
         return return_val
 
     def deserialize_from_topic(self, topic: bytes) -> tuple[ActionKey, bytes]:
