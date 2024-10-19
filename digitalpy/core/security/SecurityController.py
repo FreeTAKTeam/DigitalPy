@@ -29,10 +29,10 @@ class SecurityController:
         elif complexity == 2:
             char_list = [chr(i) for i in range(ord('a'), ord('z') + 1)] + [chr(i) for i in range(ord('A'), ord('Z') + 1)] + [str(i) for i in range(10)]
         elif complexity == 3:
-            char_list = [chr(i) for i in range(ord('a'), ord('z') + 1)] + [chr(i) for i in range(ord('A'), ord('Z') + 1)] + [str(i) for i in range
+            char_list = [chr(i) for i in range(ord('a'), ord('z') + 1)] + [chr(i) for i in range(ord('A'), ord('Z') + 1)] + [str(i) for i in range(10)]
 
-            # generate password
-            password = ''.join(random.choices(char_list, k=length))
+        # generate password
+        password = ''.join(random.choices(char_list, k=length))
         
         return password
     
