@@ -22,7 +22,14 @@ jobs:
         run: echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV  # Add current directory to PYTHONPATH
       - name: Run tox
         run: tox -e py
+      - name: Display structure of downloaded files
+        run: |
+          pwd
+          ls -R
+          cat coverage.xml
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
+        with:
+          projectBaseDir: ${{ github.workspace }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
