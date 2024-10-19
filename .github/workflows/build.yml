@@ -28,6 +28,9 @@ jobs:
           ls -R
           cat coverage.xml
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: sonarsource/sonarcloud-github-action@master
+        with:
+          projectBaseDir: ${{ github.workspace }}
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
