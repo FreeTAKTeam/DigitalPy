@@ -27,9 +27,10 @@ class SerializerContainer:
     def to_zmanager_message(self, container: ControllerMessage) -> bytes:
         """Serialize the container to a ZManager message."""
         container.format = ZMANAGER_MESSAGE_FORMAT
+        message_topic: bytes = self.serializer_action_key.to_topic(container.action_key)
         self.formatter.serialize(container)
         message_body: bytes = container.values
-        message_topic: bytes = self.serializer_action_key.to_topic(container.action_key)
+
         return (
             message_topic
             + ZMANAGER_MESSAGE_DELIMITER
