@@ -32,6 +32,8 @@ respectively.
 from abc import abstractmethod
 from datetime import datetime
 from multiprocessing import Process
+import threading
+import time
 import traceback
 from typing import Optional
 
@@ -142,6 +144,8 @@ class DigitalPyService:
         self._process: Optional[Process] = None
 
         self._topics: list[ActionKey] = []
+
+        self.stop_event: threading.Event
 
     def handle_connection(self, message: Request):
         """register a client with the server. This method should be called when a client connects to the server
@@ -297,19 +301,50 @@ class DigitalPyService:
             self.protocol.send_response(response)
 
     def event_loop(self):
-        """used to run the service. Should be overriden by inheriting classes"""
-        if self.protocol:
-            self.handle_network()
-
-        response = (
-            self._integration_manager_subscriber.fetch_integration_manager_response()
+        """Runs the service using threading with graceful shutdown."""
+        # Create threads for handle_network and fetch_integration_manager_response
+        thread_handle_network = threading.Thread(target=self.run_handle_network)
+        thread_fetch_integration_manager_response = threading.Thread(
+            target=self.run_fetch_integration_manager_responses
         )
-        if response:
-            self.response_handler(response)
 
-    def handle_network(self):
+        # Start the threads
+        thread_handle_network.start()
+        thread_fetch_integration_manager_response.start()
+
+        # Keep main thread alive, wait for service to stop
+        try:
+            while self.status == ServiceStatusEnum.RUNNING.value:
+                time.sleep(10)
+        except Exception as e:
+            print("Shutting down..." + str(e))
+        finally:
+            self.stop_event.set()
+            thread_handle_network.join()
+            thread_fetch_integration_manager_response.join()
+
+        if self.status == ServiceStatusEnum.STOPPED.value:
+            self.stop()
+            exit(0)
+
+    def run_handle_network(self):
+        """Continuously handles network requests."""
+        while not self.stop_event.is_set():
+            self.handle_network(blocking=True, timeout=-1)
+
+    def run_fetch_integration_manager_responses(self):
+        """Continuously fetches and processes integration manager responses."""
+        while not self.stop_event.is_set():
+            result = (
+                self._integration_manager_subscriber.fetch_integration_manager_response()
+            )
+            if result:
+                print("Response received")
+                self.response_handler(result)
+
+    def handle_network(self, blocking: bool = False, timeout: int = 0):
         """used to handle the network."""
-        requests = self.protocol.service_connections()
+        requests = self.protocol.service_connections(blocking=blocking, timeout=timeout)
         for request in requests:
             self.handle_inbound_message(request)
 
@@ -495,10 +530,9 @@ class DigitalPyService:
 
     def execute_main_loop(self):
         """used to execute the main loop of the service"""
+        self.stop_event = threading.Event()
         while self.status == ServiceStatusEnum.RUNNING.value:
             try:
                 self.event_loop()
             except Exception as ex:
                 self.handle_exception(ex)
-        if self.status == ServiceStatusEnum.STOPPED.value:
-            exit(0)
