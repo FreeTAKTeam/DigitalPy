@@ -287,30 +287,50 @@ class FlaskHTTPNetworkBlueprints(NetworkSyncInterface):
         """this method starts the flask app"""
         self.app.run(self.host, self.port, use_reloader=False, threaded=True)
 
-    def service_connections(self, max_requests=1000) -> List[Request]:
+    def service_connections(
+        self, max_requests=1000, blocking: bool = False, timeout: int = 0
+    ) -> List[Request]:
         """this method returns the requests from the network
 
         Args:
             max_requests (int, optional): the maximum number of requests to be returned.
             Defaults to 1000.
+            blocking (bool, optional): whether the receive should be blocking. Defaults to False.
+            timeout (int, optional): the timeout for the receive. Defaults to 0.
 
         Returns:
             List[Request]: the list of requests
         """
         requests = []
+        msg = self.service_connection(blocking=blocking, timeout=timeout)
+        requests.append(msg)
         for _ in range(max_requests):
             try:
-                msg = self.receive_message(blocking=False)
-                # get the client connection id
-                dp_conn_id = msg.get_value("digitalpy_connection_id")
-                # get the client based on the connection id
-                msg.set_value("client", self._get_client(dp_conn_id, msg))
+                # get further requests but do not block
+                msg = self.service_connection(blocking=False)
                 requests.append(msg)
             except zmq.Again:
                 return requests
         return requests
 
-    def receive_message(self, blocking: bool = False) -> Request:
+    def service_connection(self, blocking: bool = False, timeout: int = 0) -> Request:
+        """this method services a connection request from the network and returns the request
+
+        Args:
+            blocking (bool, optional): whether the receive should be blocking. Defaults to False.
+            timeout (int, optional): the timeout for the receive. Defaults to 0.
+
+        Returns:
+            Request: the request
+        """
+        msg = self.receive_message(blocking=blocking, timeout=timeout)
+        # get the client connection id
+        dp_conn_id = msg.get_value("digitalpy_connection_id")
+        # get the client based on the connection id
+        msg.set_value("client", self._get_client(dp_conn_id, msg))
+        return msg
+
+    def receive_message(self, blocking: bool = False, timeout=0) -> Request:
         """this method receives a message from the network
 
         Args:
@@ -320,6 +340,7 @@ class FlaskHTTPNetworkBlueprints(NetworkSyncInterface):
             Request: the message received
         """
         if blocking:
+            self.sink.setsockopt(zmq.RCVTIMEO, timeout)
             return self.sink.recv_pyobj()
         else:
             return self.sink.recv_pyobj(zmq.NOBLOCK)
