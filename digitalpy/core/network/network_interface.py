@@ -7,26 +7,30 @@ from digitalpy.core.zmanager.response import Response
 
 
 class NetworkInterface(ABC):
-    """Network  Interface class. Defines the interface for all networking implementations
-    """
+    """Network  Interface class. Defines the interface for all networking implementations"""
 
     @abstractmethod
-    def service_connections(self) -> List[Request]:
+    def service_connections(
+        self, max_requests: int = 1000, blocking: bool = False, timeout: int = 0
+    ) -> List[Request]:
         """service all connections to the server and return a list of Requests
 
+        Args:
+            max_requests (int, optional): the maximum number of requests to service. Defaults to 1000.
+            blocking (bool, optional): whether or not to block until a request is received. Defaults to False.
+            timeout (int, optional): the number of seconds to wait for a request before returning. Defaults to 0.
+
         Returns:
-            List[Request]: _description_
+            List[Request]: a list of requests that were received
         """
 
     @abstractmethod
     def initialize_network(self, host: str, port: int, *args, **kwargs):
-        """initialize the network connection, bind to the port and host.
-        """
+        """initialize the network connection, bind to the port and host."""
 
     @abstractmethod
     def teardown_network(self):
-        """stop listening for messages from the network and release all files and resources
-        """
+        """stop listening for messages from the network and release all files and resources"""
 
     @abstractmethod
     def receive_message(self, blocking: bool = False) -> Request:
