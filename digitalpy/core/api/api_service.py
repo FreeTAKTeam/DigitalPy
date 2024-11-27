@@ -75,7 +75,7 @@ class ApiService(DigitalPyService):
     """
 
     # The path to the blueprints directory in this module
-    base_blueprints = pathlib.Path(pathlib.Path(__file__).parent, "blueprints")
+    base_blueprints = pathlib.Path(__file__).parent / "blueprints"
 
     def __init__(
         self,
@@ -83,7 +83,7 @@ class ApiService(DigitalPyService):
         integration_manager_subscriber: IntegrationManagerSubscriber,
         integration_manager_pusher: IntegrationManagerPusher,
         subject_pusher: SubjectPusher,
-        blueprint_path,
+        blueprint_path: pathlib.Path,
         blueprint_import_base: str,
         serialization: Serialization,
     ):
@@ -180,6 +180,7 @@ class ApiService(DigitalPyService):
 
                 # get the blueprint from the file
                 blueprints.append(blueprint_module.page)
+                
         # iterate through base blueprints
         for filename in os.listdir(ApiService.base_blueprints):
             if filename.endswith(".py") and filename != "__init__.py":

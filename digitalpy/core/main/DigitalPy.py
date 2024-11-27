@@ -10,11 +10,14 @@
 import multiprocessing
 import os
 import pathlib
+import sys
 import threading
 from time import sleep
 from typing import TYPE_CHECKING
 
-from digitalpy.core.service_management.domain.model.service_configuration import ServiceConfiguration
+from digitalpy.core.service_management.domain.model.service_configuration import (
+    ServiceConfiguration,
+)
 from digitalpy.core.digipy_configuration.controllers.action_flow_controller import (
     ActionFlowController,
 )
@@ -119,6 +122,25 @@ class DigitalPy:
             )
         )
 
+    def _initialize_app_configuration(self):
+        app_conf_path = self.get_app_root() / "configuration"
+
+        self.configuration.add_configuration(app_conf_path / "object_configuration.ini")
+
+        base_conf: Configuration = InifileConfiguration("")
+        base_conf.add_configuration(
+            app_conf_path / "application_configuration.ini",
+        )
+
+        SingletonConfigurationFactory.add_configuration(base_conf)
+
+        # set blueprint path
+        self.configuration.set_value(
+            "blueprint_path",
+            str(self.get_app_root() / "blueprints"),
+            "digitalpy.core_api",
+        )
+
     def _initialize_status_factory(self):
         self.status_factory = StatusFactory()
 
@@ -173,7 +195,7 @@ class DigitalPy:
 
         action_flow_controller.create_action_flow(file)
 
-    def register_components(self):
+    def register_core_components(self):
         """register digitalpy core components, these must be registered before any other components
         furthermore, these are registered without the use of component management to avoid circular
         dependencies. This method of registration also assumes that the components are defined in
@@ -214,9 +236,62 @@ class DigitalPy:
 
         register_component(ServiceManagement(None, None, None, None))
 
-    def test_event_loop(self):
-        """the main event loop of the application should be called within a continuous while loop"""
-        sleep(1)
+    def register_app_components(self):
+        """
+        Registers application components and sets up their installation paths.
+        This method performs the following steps:
+        1. Determines the root directory of the application.
+        2. Sets the installation path for components and blueprints in the configuration.
+        3. Retrieves an instance of ComponentManagement.
+        4. Installs all components from the specified directory.
+        5. Clears the request and response values in the component management.
+        Raises:
+            KeyError: If the configuration keys are not found.
+            ImportError: If the ComponentManagement class cannot be imported.
+        """
+        try:
+
+            # Get the application root directory
+            app_root = self.get_app_root()
+
+            # Define the paths for components and blueprints
+            app_components = app_root / "components"
+            app_blueprints = app_root / "blueprints"
+
+            # Set the installation path for components in the configuration
+            self.configuration.set_value(
+                "component_installation_path",
+                str(app_components),
+                "ComponentManagement",
+            )
+
+            # Set the blueprint path for components in the configuration
+            self.configuration.set_value(
+                "component_blueprint_path", str(app_blueprints), "ComponentManagement"
+            )
+
+            # Retrieve an instance of ComponentManagement
+            component_management: ComponentManagement = ObjectFactory.get_instance(
+                "ComponentManagement"
+            )
+
+            # Install all components from the specified directory
+            component_management.POSTInstallAllComponents(
+                Directory=str(app_components),
+            )
+
+            # Clear the request and response values in the component management
+            component_management.request.clear_values()
+            component_management.response.clear_values()
+        except KeyError as ke:
+            raise KeyError("Configuration key not found") from ke
+        except ImportError as ie:
+            raise ImportError("Failed to import ComponentManagement") from ie
+
+    def get_app_root(self) -> pathlib.Path:
+        """Get the root directory of the application."""
+        app_class = sys.modules[self.__class__.__module__]
+        return pathlib.Path(app_class.__file__).parent
 
     def event_loop(self):
         """the main event loop of the application should be called within a continuous while loop"""
@@ -227,7 +302,8 @@ class DigitalPy:
         """Begin the execution of the application, this should be overriden
         by any inheriting classes"""
 
-        self.register_components()
+        self.register_core_components()
+        self.register_app_components()
         self.register_flows()
         self.configure()
 
@@ -323,7 +399,9 @@ class DigitalPy:
         """
         try:
             service_configuration: ServiceConfiguration = (
-                SingletonConfigurationFactory.get_configuration_object("ServiceManagementConfiguration")
+                SingletonConfigurationFactory.get_configuration_object(
+                    "ServiceManagementConfiguration"
+                )
             )
 
             # begin the service_manager
@@ -350,17 +428,20 @@ class DigitalPy:
         try:
 
             self.service_manager.stop()
-            self.service_manager.join()
+            self.service_manager.join(5)
             return True
         except Exception as ex:
             raise ex
 
     def stop(self):
         """End the execution of the application"""
-        self.stop_core_services()
-        self.stop_zmanager()
-
-        exit(0)
+        try:
+            self.stop_core_services()
+            self.stop_zmanager()
+        except Exception as e:
+            print("error stopping with exception ", str(e))
+        finally:
+            exit(0)
 
     def stop_core_services(self):
         """Stop the core services of the application"""

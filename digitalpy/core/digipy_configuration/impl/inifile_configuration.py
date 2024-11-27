@@ -29,7 +29,7 @@ class InifileConfiguration(Configuration):
         raise NotImplementedError("get_configuration is not yet implemented")
 
     def add_configuration(
-        self, name: Union[str, StringIO], process_values=True
+        self, name: Union[str, StringIO, PurePath], process_values=True
     ) -> None:
         """
         Args:
@@ -42,6 +42,8 @@ class InifileConfiguration(Configuration):
         afterwards
         """
         with self._lock:
+            if isinstance(name, PurePath):
+                name = str(name)
             filename = self.config_path + name
 
             num_parsed_files = len(self.__added_files)
