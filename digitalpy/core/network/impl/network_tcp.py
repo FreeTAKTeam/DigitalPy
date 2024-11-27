@@ -74,33 +74,27 @@ class TCPNetwork(NetworkAsyncInterface):
             request.set_value("action", "disconnection")
             return self.handle_client_disconnection(client)
 
-    def service_connections(self, max_requests=1000) -> List[Request]:
+    def service_connections(
+        self, max_requests=1000, blocking: bool = False, timeout: int = 0
+    ) -> List[Request]:
         """service all connections to the server and return a list of requests
+
+        Args:
+            max_requests (int, optional): the maximum number of requests to service. Defaults to 1000.
+            blocking (bool, optional): whether or not to block until a request is received. Defaults to False.
+            timeout (int, optional): the number of seconds to wait for a request before returning. Defaults to 0.
 
         Returns:
             List[request]: a list of requests from the clients
         """
         requests = []
         try:
-
-            # avoid blocking indefinitely
+            # wait for first message
+            req = self.service_connection(blocking=blocking, timeout=timeout)
+            requests.append(req)
+            # receive messages until the max_requests is reached or there are no more messages
             while len(requests) < max_requests:
-
-                # receive the identity of the client and it's message contents
-                identity = self.receive_message()
-                msg = self.receive_message()
-
-                # construct a request
-                req: Request = ObjectFactory.get_new_instance("Request")
-                req.set_value("data", msg)
-
-                if msg == b'':
-                    client = self.handle_empty_msg(identity, req)
-
-                else:
-                    client = self.clients.get(str(identity))
-
-                req.set_value("client", client)
+                req = self.service_connection(blocking=False)
                 requests.append(req)
 
         # receive messages should throw an exception when there are no messages to receive
@@ -109,29 +103,63 @@ class TCPNetwork(NetworkAsyncInterface):
 
         return requests
 
+    def service_connection(self, blocking: bool = False, timeout: int = 0) -> Request:
+        """service a single connection to the server and return a request
+
+        Args:
+            blocking (bool, optional): whether or not to block until a request is received. Defaults to False.
+            timeout (int, optional): the number of seconds to wait for a request before returning. Defaults to 0.
+
+        Returns:
+            Request: a request from the client
+
+        Raises:
+            zmq.Again: if there are no messages to receive
+        """
+        # receive the identity of the client and it's message contents
+        identity = self.receive_message(blocking=blocking, timeout=timeout)
+        msg = self.receive_message(blocking=False)
+
+        # construct a request
+        req: Request = ObjectFactory.get_new_instance("Request")
+        req.set_value("data", msg)
+
+        if msg == b"":
+            client = self.handle_empty_msg(identity, req)
+
+        else:
+            client = self.clients.get(str(identity))
+
+        req.set_value("client", client)
+
+        return req
+
     def teardown_network(self):
         if self.socket:
             self.socket.close()
 
-    def receive_message(self, blocking: bool = False) -> bytes:
+    def receive_message(self, blocking: bool = False, timeout: int = 0) -> bytes:
         # Implement logic to receive a message from any client
         if not blocking:
             msg = self.socket.recv(zmq.NOBLOCK)
         else:
+            self.socket.setsockopt(zmq.RCVTIMEO, timeout)
             msg = self.socket.recv()
         return msg
 
     def handle_client_connection(self, network_id: bytes) -> NetworkClient:
-        """handle a client connection
-        """
+        """handle a client connection"""
         oid = ObjectId("network_client", id=str(network_id))
         client: NetworkClient = ObjectFactory.get_new_instance(
-            "DefaultClient", dynamic_configuration={"oid": oid})
+            "DefaultClient", dynamic_configuration={"oid": oid}
+        )
         client.id = network_id
         client.status = ClientStatus.CONNECTED
         return client
 
-    def receive_message_from_client(self, client: NetworkClient, blocking: bool = False) -> Request:
+    def receive_message_from_client(
+        self, client: NetworkClient, blocking: bool = False
+    ) -> Request:
         # Implement logic to receive a message from a specific client
         return None  # type: ignore
 
@@ -139,19 +167,18 @@ class TCPNetwork(NetworkAsyncInterface):
         if response.get_value("client") is None or response.get_value("client") == "*":
             self.send_message_to_all_clients(response)
         else:
-            self.send_message_to_clients(
-                response, response.get_value("client"))
+            self.send_message_to_clients(response, response.get_value("client"))
 
     def send_message_to_client(self, message: Response, client: NetworkClient):
         try:
             for message_data in message.get_value("message"):
-                self.socket.send_multipart(
-                    [client.id, message_data])
+                self.socket.send_multipart([client.id, message_data])
         except Exception as e:
-            raise IOError(
-                f"Failed to send message to client {client}: {str(e)}") from e
+            raise IOError(f"Failed to send message to client {client}: {str(e)}") from e
 
-    def send_message_to_clients(self, message: Response, clients: Union[List[NetworkClient], List[str]]):
+    def send_message_to_clients(
+        self, message: Response, clients: Union[List[NetworkClient], List[str]]
+    ):
         for client in clients:
             if isinstance(client, str):
                 oid = ObjectId.parse(client)
@@ -162,11 +189,14 @@ class TCPNetwork(NetworkAsyncInterface):
                     raise ValueError(f"Client not found: {client}")
             self.send_message_to_client(message, client)
 
-    def send_message_to_all_clients(self, message: Response, suppress_failed_sending: bool = False):
+    def send_message_to_all_clients(
+        self, message: Response, suppress_failed_sending: bool = False
+    ):
         for client in self.clients.values():
             try:
                 self.send_message_to_client(message, client)
             except IOError as e:
                 if not suppress_failed_sending:
                     raise IOError(
-                        f"Failed to send message to client {client}: {str(e)}")
+                        f"Failed to send message to client {client}: {str(e)}"
+                    )
