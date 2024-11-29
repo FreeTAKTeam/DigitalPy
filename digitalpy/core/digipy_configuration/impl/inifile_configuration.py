@@ -163,22 +163,42 @@ class InifileConfiguration(Configuration):
             config_array (dict): the configuration array to be populated
             stream (TextIOBase): the stream to be parsed
         """
-        lines = stream.readlines()
+        lines = iter(stream.readlines())
+        section_name = None
+        key = None
+        value = None
         for line in lines:
             line = line.strip()
             # ignore comments and empty lines
             if line == "" or line[0] == ";":
                 continue
-                # check for section
+            # check for section
             if line.startswith("[") and line.endswith("]"):
-                section_name = line[1 : len(line) - 1]
+                section_name = line[1:-1]
                 config_array[section_name] = {}
-                # check for key value pair
-            else:
+                key = None
+                value = None
+            # check for key value pair
+            elif "=" in line:
                 parts = line.split("=", 1)
                 key = parts[0].strip()
                 value = parts[1].strip()
-                config_array[section_name][key] = value
+                # support for multi-line values e.g.:
+                # key = [
+                #   value1,
+                #   value2
+                # ]
+                if value.startswith("[") and not value.endswith("]"):
+                    while True:
+                        line = next(lines).strip()
+                        if line.endswith("]"):
+                            value+=line
+                            break
+                        value += line.strip()
+                    config_array[section_name][key] = value
+                else:
+                    config_array[section_name][key] = value
+
 
     def get_config_path(self):
         """Get the file system path to the configuration files."""
