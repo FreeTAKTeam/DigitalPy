@@ -11,7 +11,7 @@ from digitalpy.core.main.object_factory import ObjectFactory
 from digitalpy.core.zmanager.integration_manager import IntegrationManager
 from digitalpy.core.zmanager.subject import Subject
 from digitalpy.core.zmanager.domain.model.zmanager_configuration import ZManagerConfiguration
-from tests.testing_utilities.facade_utilities import \
+from digitalpy.testing.facade_utilities import \
     initialize_test_environment
 
 class ZManagerSetup:

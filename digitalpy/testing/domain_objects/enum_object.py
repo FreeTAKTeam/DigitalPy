@@ -1,5 +1,5 @@
 from digitalpy.core.domain.node import Node
-from tests.testing_utilities.domain_objects.simple_enum import SimpleEnum
+from digitalpy.testing.domain_objects.simple_enum import SimpleEnum
 
 class EnumObject(Node):
     def __init__(self, model_configuration, model, oid=None, node_type="Contact") -> None:

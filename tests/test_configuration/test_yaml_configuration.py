@@ -5,7 +5,7 @@ import pathlib
 from digitalpy.core.digipy_configuration.impl.yaml_configuration import (
     YamlConfiguration,
 )
-from tests.testing_utilities.facade_utilities import test_environment
+from digitalpy.testing.facade_utilities import test_environment
 
 
 def test_load_single_section_configuration(test_environment):

@@ -4,7 +4,7 @@ from digitalpy.core.serialization.controllers.serializer_container import (
     SerializerContainer,
 )
 from digitalpy.core.main.object_factory import ObjectFactory
-from tests.testing_utilities.facade_utilities import (
+from digitalpy.testing.facade_utilities import (
     test_environment,
 )
 

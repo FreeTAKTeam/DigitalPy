@@ -16,7 +16,7 @@ from digitalpy.core.service_management.service_management_facade import (
     ServiceManagement,
 )
 from pathlib import PurePath
-from tests.testing_utilities.facade_utilities import (
+from digitalpy.testinge_utilities import (
     initialize_facade,
     test_environment,
 )

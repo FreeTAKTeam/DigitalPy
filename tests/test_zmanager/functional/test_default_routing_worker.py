@@ -22,7 +22,7 @@ from digitalpy.core.zmanager.configuration.zmanager_constants import (
 from digitalpy.core.zmanager.impl.default_routing_worker import DefaultRoutingWorker
 from digitalpy.core.zmanager.request import Request
 from tests.test_zmanager.zmanager_setup import ZmanagerSingleThreadSetup
-from tests.testing_utilities.facade_utilities import (
+from digitalpy.testing.facade_utilities import (
     initialize_facade,
     test_environment,
 )

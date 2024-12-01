@@ -2,7 +2,7 @@ from pathlib import Path, PurePath
 import pytest
 from digitalpy.core.zmanager.request import Request
 from digitalpy.core.main.object_factory import ObjectFactory
-from tests.testing_utilities.facade_utilities import (
+from digitalpy.testing.facade_utilities import (
     test_environment,
     initialize_facade,
 )

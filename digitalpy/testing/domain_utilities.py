@@ -1,6 +1,6 @@
 import uuid
 
-import tests.testing_utilities.facade_utilities as facade_utilities
+import digitalpy.testing.facade_utilities as facade_utilities
 from digitalpy.core.domain.domain.network_client import NetworkClient
 from digitalpy.core.domain.domain_facade import Domain
 from digitalpy.core.domain.object_id import ObjectId
@@ -12,10 +12,10 @@ from digitalpy.core.service_management.domain.model.service_description import \
     ServiceDescription
 from digitalpy.core.service_management.domain.model.service_status_enum import \
     ServiceStatusEnum
-from tests.testing_utilities import domain_objects
-from tests.testing_utilities.domain_objects.enum_object import EnumObject
-from tests.testing_utilities.domain_objects.list_object import ListObject
-from tests.testing_utilities.domain_objects.simple_object import SimpleObject
+from digitalpy.testing import domain_objects
+from digitalpy.testing.domain_objects.enum_object import EnumObject
+from digitalpy.testing.domain_objects.list_object import ListObject
+from digitalpy.testing.domain_objects.simple_object import SimpleObject
 
 
 def initialize_simple_object(request, response) -> SimpleObject:

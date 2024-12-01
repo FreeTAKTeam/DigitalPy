@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from digitalpy.core.files.files_facade import Files
-from tests.testing_utilities.facade_utilities import (
+from digitalpy.testing.facade_utilities import (
     initialize_facade,
     test_environment
 )

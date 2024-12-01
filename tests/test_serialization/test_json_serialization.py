@@ -1,6 +1,6 @@
 import pytest
-from tests.testing_utilities.facade_utilities import test_environment, initialize_facade
-from tests.testing_utilities.domain_utilities import (
+from digitalpy.testing.facade_utilities import test_environment, initialize_facade
+from digitalpy.testing.domain_utilities import (
     initialize_enum_object,
     initialize_simple_object,
     initialize_list_object,
@@ -9,7 +9,7 @@ from tests.testing_utilities.domain_utilities import (
     initialize_nested_object_required,
     initialize_simple_list
 )
-from tests.testing_utilities.domain_objects import SimpleObject, ListObject, NestedObject, SimpleList, EnumObject, SimpleEnum
+from digitalpy.testing.domain_objects import SimpleObject, ListObject, NestedObject, SimpleList, EnumObject, SimpleEnum
 from digitalpy.core.serialization.configuration.serialization_constants import Protocols
 import json
 from enum import Enum

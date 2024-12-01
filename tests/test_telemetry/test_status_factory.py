@@ -12,7 +12,7 @@ from digitalpy.core.main.impl.status_factory import StatusFactory
 from digitalpy.core.service_management.domain.model.system_event import SystemEvent
 from digitalpy.core.service_management.domain.model.system_health import SystemHealth
 from digitalpy.core.service_management.domain.model.system_log import SystemLog
-from tests.testing_utilities.facade_utilities import \
+from digitalpy.testinge_utilities import \
     test_environment
 
 

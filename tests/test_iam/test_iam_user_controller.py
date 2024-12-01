@@ -1,7 +1,7 @@
 from digitalpy.core.IAM.persistence.user import User
 from digitalpy.core.IAM.persistence.session import Session
-from tests.testing_utilities.domain_utilities import initialize_test_network_client
-from tests.testing_utilities.facade_utilities import test_environment, initialize_facade
+from digitalpy.testing.domain_utilities import initialize_test_network_client
+from digitalpy.testing.facade_utilities import test_environment, initialize_facade
 from digitalpy.core.IAM.configuration import iam_constants
 
 iam_constants.DB_PATH = "sqlite+pysqlite:///:memory:"

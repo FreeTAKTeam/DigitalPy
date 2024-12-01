@@ -1,13 +1,13 @@
 import pytest
-from tests.testing_utilities.facade_utilities import test_environment, initialize_facade
-from tests.testing_utilities.domain_utilities import (
+from digitalpy.testing.facade_utilities import test_environment, initialize_facade
+from digitalpy.testing.domain_utilities import (
     initialize_simple_object,
     initialize_list_object,
     initialize_list_object_with_min,
     initialize_nested_object,
     initialize_nested_object_required
 )
-from tests.testing_utilities.domain_objects import SimpleObject, ListObject, NestedObject
+from digitalpy.testing.domain_objects import SimpleObject, ListObject, NestedObject
 from digitalpy.core.serialization.configuration.serialization_constants import Protocols
 import lxml
 

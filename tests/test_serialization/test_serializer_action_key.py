@@ -1,6 +1,6 @@
 from digitalpy.core.serialization.controllers.serializer_action_key import SerializerActionKey
 from digitalpy.core.digipy_configuration.domain.model.actionkey import ActionKey
-from tests.testing_utilities.facade_utilities import test_environment
+from digitalpy.testing.facade_utilities import test_environment
 
 def test_to_topic(test_environment):
     _, _, _ = test_environment
