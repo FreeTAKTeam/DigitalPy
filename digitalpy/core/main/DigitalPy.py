@@ -15,6 +15,7 @@ import threading
 from time import sleep
 from typing import TYPE_CHECKING
 
+from digitalpy.core.component_management.domain.model.component_management_configuration import ComponentManagementConfiguration
 from digitalpy.core.service_management.domain.model.service_configuration import (
     ServiceConfiguration,
 )
@@ -259,16 +260,15 @@ class DigitalPy:
             app_blueprints = app_root / "blueprints"
 
             # Set the installation path for components in the configuration
-            self.configuration.set_value(
-                "component_installation_path",
-                str(app_components),
-                "ComponentManagement",
-            )
+            component_management_conf: ComponentManagementConfiguration = SingletonConfigurationFactory.get_configuration_object("ComponentManagementConfiguration")
 
-            # Set the blueprint path for components in the configuration
-            self.configuration.set_value(
-                "component_blueprint_path", str(app_blueprints), "ComponentManagement"
-            )
+            # Set the component installation path if it is not already set
+            if component_management_conf.component_installation_path is None:
+                component_management_conf.component_installation_path = app_components
+
+            # Set the blueprint path for components in the configuration if it is not already set
+            if component_management_conf.component_blueprint_path is None:
+                component_management_conf.component_blueprint_path = app_blueprints
 
             # Retrieve an instance of ComponentManagement
             component_management: ComponentManagement = ObjectFactory.get_instance(

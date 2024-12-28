@@ -8,7 +8,7 @@ import zipfile
 import pytest
 
 from digitalpy.core.domain.domain.network_client import NetworkClient
-from tests.testing_utilities.facade_utilities import (
+from digitalpy.testing.facade_utilities import (
     initialize_facade,
     test_environment,
 )

@@ -53,9 +53,8 @@ def GETComponent():
     """TODO"""
     try:
         # send data to the NetworkInterface
-        response = BlueprintCommunicator().send_message_sync(
-        	"GETComponent",
-        	"^Component",
+        response = BlueprintCommunicator().send_flow_sync(
+        	"ComponentManagement_GetComponent",
         	{
         }) # type: ignore
         return response.get_value("message"), 200
@@ -95,9 +94,8 @@ def GETComponentStatus():
     """returns the status of the component or the last error"""
     try:
         # send data to the NetworkInterface
-        BlueprintCommunicator().send_message_async(
-        	"GETComponentStatus",
-        	"^ComponentStatus",
+        BlueprintCommunicator().send_flow_sync(
+        	"ComponentManagement_GetComponentStatus",
         	{
         "ID": request.args.get('ID'),
         }) # type: ignore

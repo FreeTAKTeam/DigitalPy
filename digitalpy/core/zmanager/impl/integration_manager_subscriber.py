@@ -95,9 +95,6 @@ class IntegrationManagerSubscriber:
         self.subscriber_socket.setsockopt(zmq.SNDHWM, 0)
         self.subscriber_socket.setsockopt(zmq.LINGER, 0)
 
-        self.set_blocking(True)
-        self.set_timeout(self.timeout)
-
     def _get_topics(self) -> list[ActionKey]:
         topics = []
         return topics
@@ -172,18 +169,6 @@ class IntegrationManagerSubscriber:
         request: Request = ObjectFactory.get_new_instance("Request")
         request = self.serializer_container.from_zmanager_message(message)
         return request
-
-    def set_blocking(self, blocking: bool):
-        """Set the blocking mode of the socket"""
-        if blocking:
-            self.subscriber_socket.setsockopt(zmq.RCVTIMEO, -1)
-        else:
-            self.subscriber_socket.setsockopt(zmq.RCVTIMEO, self.timeout)
-
-    def set_timeout(self, timeout: int):
-        """Set the timeout for the socket"""
-        self.timeout = timeout
-        self.subscriber_socket.setsockopt(zmq.RCVTIMEO, self.timeout)
 
     def __getstate__(self):
         state = self.__dict__

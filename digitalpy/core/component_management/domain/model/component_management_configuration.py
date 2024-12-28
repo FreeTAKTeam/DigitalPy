@@ -1,5 +1,7 @@
 # pylint: disable=invalid-name
 
+from pathlib import Path
+from typing import Union
 from digitalpy.core.domain.node import Node
 
 # iterating associations
@@ -17,10 +19,12 @@ class ComponentManagementConfiguration(Node):
         return self._component_installation_path
     
     @component_installation_path.setter
-    def component_installation_path(self, component_installation_path: 'str'):
-        component_installation_path = str(component_installation_path)
+    def component_installation_path(self, component_installation_path: Union['str', 'Path']):
+        if isinstance(component_installation_path, Path):
+            component_installation_path = str(component_installation_path)
+
         if not isinstance(component_installation_path, str):
-            raise TypeError("'component_installation_path' must be of type str")
+            raise TypeError("'component_installation_path' must be of type str or Path")
         self._component_installation_path = component_installation_path
 
     @property
