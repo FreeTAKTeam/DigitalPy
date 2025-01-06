@@ -165,6 +165,13 @@ This enables component developpers to quickly add exposed functionality without 
 ## Topic system
 DigitalPy also supports a Pub-Sub protocol.  
 
+## Factory Container
+In DigitalPy, Factory Containers serve as centralized, singleton structures that facilitate communication and synchronization among the architecture's independent components. These containers are primarily responsible for maintaining configurations, such as routing  and serializing information, ensuring that all parts of the system operate cohesively.
+
+Operating within a multi-threaded and multi-processor environment, DigitalPy employs thread locks within these factory containers to maintain data consistency and prevent race conditions. To disseminate updates efficiently, the framework utilizes a ZeroMQ publish-subscribe (pub/sub) mechanism. In this setup, the factory owner (e.g., Configuration Management) publishes updates, and all relevant components and services, subscribed to the factory, receive these updates in real-time, ensuring system-wide alignment.
+
+This design promotes a modular and scalable architecture, allowing for seamless integration and coordination across various components of a DigitalPy application.
+
 # DigitalPy components
 
 ![image](https://github.com/FreeTAKTeam/DigitalPy/assets/60719165/fc7a6ca4-9b87-42bb-8608-f76e646715ce)
