@@ -1,0 +1,85 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"id": "http://iec.ch/TC57/HealthClasses#",
+	"type": "object",
+	"definitions":
+	{
+		"Date":
+		{
+			"type": "object",
+			"properties": {
+				"year":
+				{
+					"type": "string"
+				},
+				"DateAggregationMovie":
+					{
+						"type": "array",
+						"items": {
+							"$ref": "#/definitions/Movie"
+						}
+					}
+			}
+		}
+		,"Movie":
+		{
+			"type": "object",
+			"properties": {
+				"alias":
+				{
+					"type": "string"
+				},
+				"color":
+				{
+					"type": "string"
+				},
+				"country":
+				{
+					"type": "string"
+				},
+				"URL":
+				{
+					"type": "string"
+				},
+				"plot":
+				{
+					"type": "string"
+				},
+				"runtime":
+				{
+					"type": "string"
+				},
+				"date":
+				{
+					"type": "string"
+				},
+				"CompositionPosterPrimary":
+					{
+						"$ref": "#/definitions/Poster"
+					},,,
+				"Date":
+					{
+						"$ref": "#/definitions/Date"
+					}
+			}
+		}
+		,"Actor":
+		{
+			"type": "object",
+			"properties": {
+			}
+		}
+		,"Poster":
+		{
+			"type": "object",
+			"properties": {
+			}
+		}
+		,"Director":
+		{
+			"type": "object",
+			"properties": {
+			}
+		}
+	}
+}

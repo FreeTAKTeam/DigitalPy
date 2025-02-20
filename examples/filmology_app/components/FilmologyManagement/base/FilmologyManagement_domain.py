@@ -1,0 +1,2 @@
+class FilmologyManagementDomain():
+    pass

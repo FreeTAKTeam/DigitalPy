@@ -1,0 +1,18 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"id": "http://iec.ch/TC57/HealthClasses#",
+	"type": "object",
+	"definitions":
+	{
+		"Language":
+		{
+			"type": "object",
+			"properties": {
+				"shortForm":
+				{
+					"type": "string"
+				}
+			}
+		}
+	}
+}
