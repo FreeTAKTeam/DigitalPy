@@ -16,7 +16,7 @@ class Date(FilmologyManagementBase):
     year: Mapped[str]
     name: Mapped[str]
 
-    DateAggregationMovie: Mapped[List["Movie"]] = relationship("Movie")
+    DateAggregationMovie: Mapped[List["Movie"]] = relationship("Movie", lazy="joined")
 
     @validates('DateAggregationMovie_oid')
     def validate_DateAggregationMovie_oid(self, key, DateAggregationMovie_oid):
