@@ -111,3 +111,8 @@ def test_multi_line_list_values():
     configuration.add_configuration(os.sep+"multi_line_list_values.ini")
     assert configuration.get_value("key_int_list_multi", "Section1") == [1.1, 2.0, 3.0]
     assert configuration.get_value("key_str_list_multi", "Section1") == ["a", "b", "c"]
+
+def test_section_comment():
+    configuration = InifileConfiguration(str(PurePath(__file__).parent / "test_configuration_resources"))
+    configuration.add_configuration(os.sep+"test_section_comment.ini")
+    assert configuration.get_value("list", "section_a") == ["item1","item2","item3"]
