@@ -31,9 +31,9 @@ class Movie(FilmologyManagementBase):
     modified: Mapped[str]
 
     CompositionPosterPrimary_oid: Mapped[str] = mapped_column(ForeignKey("Poster.oid"))
-    CompositionPosterPrimary: Mapped["Poster"] = relationship("Poster")
+    CompositionPosterPrimary: Mapped["Poster"] = relationship("Poster", lazy="joined")
     Date_oid: Mapped[str] = mapped_column(ForeignKey("Date.oid"))
-    Date: Mapped["Date"] = relationship("Date")
+    Date: Mapped["Date"] = relationship("Date", lazy="joined")
     CompositionActor_oid: Mapped[Optional[str]] = mapped_column(ForeignKey("Actor.oid"))
     Director_oid: Mapped[Optional[str]] = mapped_column(ForeignKey("Director.oid"))
 

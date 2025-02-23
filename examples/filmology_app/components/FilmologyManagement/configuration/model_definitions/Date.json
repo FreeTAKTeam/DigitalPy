@@ -56,7 +56,7 @@
 				"CompositionPosterPrimary":
 					{
 						"$ref": "#/definitions/Poster"
-					},,,
+					},
 				"Date":
 					{
 						"$ref": "#/definitions/Date"

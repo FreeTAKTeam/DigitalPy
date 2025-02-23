@@ -191,6 +191,11 @@ class InifileConfiguration(Configuration):
                 if value.startswith("[") and not value.endswith("]"):
                     while True:
                         line = next(lines).strip()
+
+                        # ignore comments and empty lines
+                        if line == "" or line[0] == ";":
+                            continue
+                        
                         if line.endswith("]"):
                             value+=line
                             break

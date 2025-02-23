@@ -50,7 +50,7 @@ class DateDirector(Controller):
             self.Movie_builder.build_empty_object(config_loader=config_loader)
             self.Movie_builder.add_object_data(mapped_object=DateAggregationMovie, protocol=None)
             DateAggregationMovie_completed = self.Movie_builder.get_result()
-            Date_completed.DateAggregationMovie.append(Movie_completed.oid)
+            Date_completed.DateAggregationMovie.append(DateAggregationMovie_completed.oid)
 
         return Date_completed
 
