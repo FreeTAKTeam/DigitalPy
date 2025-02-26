@@ -1,0 +1,48 @@
+# FilmologyManagement Digital Component
+
+## Description
+"Filmology is a test API that describes all the possible variant of a DAF + API model and his implementation as a DigitalPy application"
+
+## Configuration
+1. copy the file FilmologyManagement_blueprint.py into your application blueprints folder
+2. add the following to your configured core api flows in the configuration/object_configuration.ini file.
+```ini
+[
+; FilmologyManagement component flows
+,FilmologyManagement__POSTMovie
+,FilmologyManagement__DELETEMovie
+,FilmologyManagement__GETMovie
+,FilmologyManagement__PATCHMovie
+,FilmologyManagement__GETDirectorId
+,FilmologyManagement__POSTPoster
+,FilmologyManagement__DELETEPoster
+,FilmologyManagement__GETPoster
+,FilmologyManagement__PATCHPoster
+,FilmologyManagement__GETGenreId
+,FilmologyManagement__POSTDate
+,FilmologyManagement__DELETEDate
+,FilmologyManagement__GETDate
+,FilmologyManagement__PATCHDate
+,FilmologyManagement__GETLanguageId
+,FilmologyManagement__POSTDirector
+,FilmologyManagement__DELETEDirector
+,FilmologyManagement__GETDirector
+,FilmologyManagement__PATCHDirector
+,FilmologyManagement__GETDateId
+,FilmologyManagement__POSTActor
+,FilmologyManagement__DELETEActor
+,FilmologyManagement__GETActor
+,FilmologyManagement__PATCHActor
+,FilmologyManagement__GETMovieId
+,FilmologyManagement__POSTLanguage
+,FilmologyManagement__DELETELanguage
+,FilmologyManagement__GETLanguage
+,FilmologyManagement__PATCHLanguage
+,FilmologyManagement__GETPosterId
+,FilmologyManagement__GETActorId
+,FilmologyManagement__POSTGenre
+,FilmologyManagement__DELETEGenre
+,FilmologyManagement__GETGenre
+,FilmologyManagement__PATCHGenre
+]
+```
