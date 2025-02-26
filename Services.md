@@ -20,11 +20,11 @@ In your configuration ini file you will add the following section:
 ```ini
 [application_name.service_id]
 __class = digitalpy.core.service_management.domain.model.service_configuration.ServiceConfiguration
-status = STOPPED
+status = [RUNNING|STOPPED]
 name = MyNewService
 port = 8443
 host = 0.0.0.0
-protocol = TCP
+protocol = [FlaskHTTPNetworkBlueprints|TCPNetwork|Reticulum]
 ```
 
 Next you will add or update the ServiceManagementConfiguration section as follows:
