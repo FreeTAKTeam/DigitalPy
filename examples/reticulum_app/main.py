@@ -6,6 +6,9 @@ which serves as the entry point for the application.
 """
 
 from digitalpy.core.main.DigitalPy import DigitalPy
+from digitalpy.core.main.singleton_configuration_factory import (
+    SingletonConfigurationFactory,
+)
 
 
 class DigitalPyApp(DigitalPy):
@@ -25,6 +28,23 @@ class DigitalPyApp(DigitalPy):
         """
         super().__init__()
         self._initialize_app_configuration()
+
+    def _initialize_app_configuration(self):
+        """Load the application specific configuration."""
+        super()._initialize_app_configuration()
+
+        self.configuration.set_value(
+            "blueprint_import_base",
+            "reticulum_app.blueprints",
+            "digitalpy.core_api",
+        )
+
+        component_management_conf = (
+            SingletonConfigurationFactory.get_configuration_object(
+                "ComponentManagementConfiguration"
+            )
+        )
+        component_management_conf.component_import_root = "reticulum_app.components"
 
 if __name__ == "__main__":
     # Entry point for the DigitalPy application.

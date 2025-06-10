@@ -179,7 +179,11 @@ class DefaultFactory(Factory):
                         if getattr(instance, setter_name, None) != None:
                             getattr(instance, setter_name)(value)
                         else:
-                            setattr(instance, key, value)
+                            try:
+                                setattr(instance, key, value)
+                            except AttributeError:
+                                # attribute might be a read-only property
+                                pass
         else:
             # TODO: figure out the cases for a mapping being called and how to implement
             interface = self.get_interface(name)
