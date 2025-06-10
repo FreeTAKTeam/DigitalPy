@@ -120,7 +120,8 @@ class Subject:
             except Exception as ex:
                 self.logger.fatal("exception thrown in subject %s", ex, exc_info=True)
         self.cleanup()
-        sys.exit(0)
+        # exit gracefully without terminating the whole interpreter
+        return
 
     def _forward_message(self, message: list[bytes]):
         """Forward the message to the appropriate destination. This involves determining

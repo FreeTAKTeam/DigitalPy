@@ -103,8 +103,8 @@ def test_integration_manager_subscription(
 
         time.sleep(2)
 
-        # check that the worker received processed the message correctly
-        assert mock_process_integration_manager_message.called_once
+        # check that the worker processed the message exactly once
+        assert mock_process_integration_manager_message.call_count == 1
     except Exception as e:
         assert False, f"Exception occurred: {e}"
 
