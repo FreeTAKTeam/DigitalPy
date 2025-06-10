@@ -5,16 +5,15 @@ class TracingProvider(ABC):
     
     @abstractmethod
     def initialize_tracing(self):
-        """initialize the tracing provider
-        """
+        """Initialize the tracing provider."""
 
     @abstractmethod
     def create_tracer(self, tracer_name: str) -> Tracer:
-        """create a new tracer instance from the current tracer provider
+        """Create a new tracer instance from the current tracer provider.
 
         Args:
-            tracer_name (str): the name to associate with the tracer instance
+            tracer_name (str): The name to associate with the tracer instance.
 
         Returns:
-            Tracer: a new tracer instance with the given name
-        """        
+            Tracer: A new tracer instance with the given name.
+        """
