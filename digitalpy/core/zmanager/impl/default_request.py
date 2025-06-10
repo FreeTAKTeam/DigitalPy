@@ -48,4 +48,13 @@ class DefaultRequest(Request):
         return self.method
 
     def set_format(self, format_: str):
+        """Set the serialization format for this request.
+
+        Args:
+            format_ (str): The format name to assign.
+
+        Returns:
+            None
+        """
         self.format = format_
+        return None
