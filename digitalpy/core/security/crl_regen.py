@@ -1,57 +1,127 @@
-from OpenSSL import crypto
-import argparse
+#!/usr/bin/env python3
+"""
+Module: digitalpy.core.security.crl_regen
+Description: Regenerate a Certificate Revocation List (CRL) and optionally append it to the CA bundle.
+Version: 1.1.1
+"""
 
-class CertficateRevocationListController:
-    def __init__(self, ca_pem_path: str, ca_key_path: str, crl_file_path: str):
-        """CertficateRevocationListController constructor
+import argparse
+import json
+import sys
+from datetime import datetime, timedelta
+
+from cryptography import x509
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.serialization import load_pem_private_key
+
+
+class CertificateRevocationListController:
+    def __init__(self, ca_pem_path: str, ca_key_path: str, crl_path: str, validity_days: int):
+        """
+        Controller for regenerating a Certificate Revocation List (CRL).
 
         Args:
-            ca_pem_path (str): path to the ca pem file of the crl
-            ca_key_path (str): path to the ca key file of the crl
-            crl_file_path (str): path to the crl file
+            ca_pem_path: Path to the CA certificate PEM file
+            ca_key_path: Path to the CA private key PEM file
+            crl_path: Output path for the CRL (PEM or JSON)
+            validity_days: Number of days until the next CRL update
         """
         self.ca_pem_path = ca_pem_path
         self.ca_key_path = ca_key_path
-        self.ca_key = crypto.load_privatekey(crypto.FILETYPE_PEM, open(ca_key_path).read())
-        self.ca_pem = crypto.load_certificate(crypto.FILETYPE_PEM, open(ca_pem_path, 'rb').read())
-        self.crl_file_path = crl_file_path
+        self.crl_path = crl_path
+        self.validity_days = validity_days
+
+        # Load CA certificate
+        with open(ca_pem_path, "rb") as f:
+            self.ca_cert = x509.load_pem_x509_certificate(f.read())
+
+        # Load CA private key (unencrypted PEM)
+        with open(ca_key_path, "rb") as f:
+            self.ca_key = load_pem_private_key(f.read(), password=None)
 
     def regenerate_crl(self):
-        """regenerate the configured crl"""
+        now = datetime.utcnow()
+        next_update = now + timedelta(days=self.validity_days)
 
-        # instantiate CRL object
-        crl = crypto.CRL()
-        crl.sign(self.ca_pem, self.ca_key, b"sha256")
+        # Build an empty CRL (add revoked certs here if needed)
+        builder = (
+            x509.CertificateRevocationListBuilder()
+            .issuer_name(self.ca_cert.subject)
+            .last_update(now)
+            .next_update(next_update)
+        )
+        crl_obj = builder.sign(private_key=self.ca_key, algorithm=hashes.SHA256())
 
-        # open CRL file and write CRL contents
-        with open(self.crl_file_path, 'wb') as f:
-            f.write(crl.export(cert=self.ca_pem, key=self.ca_key, digest=b"sha256"))
+        # If JSON output requested
+        if self.crl_path.lower().endswith(".json"):
+            out = {
+                "issuer": self.ca_cert.subject.rfc4514_string(),
+                "last_update": now.isoformat() + "Z",
+                "next_update": next_update.isoformat() + "Z",
+                "revoked": [
+                    {
+                        "serial_number": rc.serial_number,
+                        "revocation_date": rc.revocation_date.isoformat() + "Z",
+                    }
+                    for rc in crl_obj
+                ],
+            }
+            with open(self.crl_path, "w") as f:
+                json.dump(out, f, indent=2)
+        else:
+            # PEM output
+            data = crl_obj.public_bytes(serialization.Encoding.PEM)
+            with open(self.crl_path, "wb") as f:
+                f.write(data)
+            # Append to CA bundle
+            with open(self.ca_pem_path, "ab") as f:
+                f.write(data)
+
+        # Print results
+        print(f"✅ CRL regenerated: {self.crl_path}")
+        print(f"  Last Update : {now.isoformat()}Z")
+        print(f"  Next Update : {next_update.isoformat()}Z")
 
 
-        delete = 0
-        # read the contents of the ca pem
-        with open(self.ca_pem_path, "r") as f:
-            lines = f.readlines()
-        # re-write the contents of the ca pem until x509 crl is reached
-        with open(self.ca_pem_path, "w") as f:
-            for line in lines:
-                if delete:
-                    continue
-                elif line.strip("\n") != "-----BEGIN X509 CRL-----":
-                    f.write(line)
-                else:
-                    delete = 1
-        
-        # add the updated x509 crl to the end of the ca pem
-        with open(self.ca_pem_path, "ab") as f:
-            f.write(crl.export(cert=self.ca_pem, key=self.ca_key, digest=b"sha256"))
+def main():
+    # Header output
+    print("digitalpy.core.security.crl_regen v1.1.0 - Regenerate a CRL and optionally append to the CA bundle.")
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='command line arguments')
-    parser.add_argument('--ca-pem-path', dest='ca_pem_path', type=str, help='path to the certificate authority pem')
-    parser.add_argument('--ca-key-path', dest='ca_key_path', type=str, help='path to the certificate authority key')
-    parser.add_argument('--crl-path', dest='crl_path', type=str, help='Path to the CRL')
+    parser = argparse.ArgumentParser(
+        description="Regenerate a CRL and optionally append to your CA bundle."
+    )
+    parser.add_argument(
+        "--ca-pem-path", required=True,
+        help="Path to the CA certificate PEM file"
+    )
+    parser.add_argument(
+        "--ca-key-path", required=True,
+        help="Path to the CA private key PEM file"
+    )
+    parser.add_argument(
+        "--crl-path", required=True,
+        help="Output path for the CRL (supports .pem or .json extensions)"
+    )
+    parser.add_argument(
+        "--validity-days", "--validity_days", type=int, default=365,
+        dest="validity_days",
+        help="Days until next_update (default: 365)"
+    )
 
     args = parser.parse_args()
-    
-    CertficateRevocationListController(args.ca_pem_path, args.ca_key_path, args.crl_path).regenerate_crl()
+
+    try:
+        ctl = CertificateRevocationListController(
+            args.ca_pem_path,
+            args.ca_key_path,
+            args.crl_path,
+            args.validity_days,
+        )
+        ctl.regenerate_crl()
+    except Exception as e:
+        print(f"❌ Error generating CRL: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
