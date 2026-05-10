@@ -24,14 +24,18 @@ While DigitalPy is well suited for Digital Enginering, there are no dependencies
 
 ## Aphrodite principles
 ### KISS Keep It Simple Stupid
+
 This is not about “how easy the Hello World example is” rather “How long you need to understand enough to use it”. 
 Design simplicity is a key principle and unnecessary complexity is avoided to the user. DigitalPy  hides the complexity behind a clear defined, simple API.  
+zz
 
 ### Convention vs Configuration
+
 A lesson learned from “Ruby on rails” in positive and the typical old J2EE application in negative sense.
 DigitalPy runs with minimal or no configuration. Even if a configurable entity was not configured, there should be some proper default to attach it with.
 
 ### (Good) Object Orientation
+
 DigitalPy follows 
 * Abstraction: Alpha abstraction, supports the KISS principle, by hiding internal implementation and showing only the required features or set of services that are offered. 
 * Encapsulation: Alpha  binds data and attributes or methods and data members in classes, also implements the Facade structural pattern (see below)
@@ -41,9 +45,11 @@ DigitalPy follows
 provides a  way to describes concepts like “Domain Object”, Services , View . See also the MVC point below.
 
 ## Model-View-Controller
+
  is an architectural pattern used in software engineering. Successful use of the pattern isolates business logic from user interface considerations, resulting in an application where it is easier to modify either the visual appearance of the application or the underlying business rules without affecting the other.
  
  ### Model
+ 
 An application is usually based on a domain model that represents the real-world concepts of the domain of interest. In object oriented programming this model is implemented using classes. Depending on the application requirements the instances of some of these classes have to be persisted in a storage to keep the contained data. These classes represent the data model. The classes that provide the infrastructure for storing data form the persistence layer.
 
 ![image](https://user-images.githubusercontent.com/60719165/201990851-634ce6ed-f980-426d-95be-4367dc24c0c2.png)
