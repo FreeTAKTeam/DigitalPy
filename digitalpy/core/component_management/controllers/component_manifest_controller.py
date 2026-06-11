@@ -1,7 +1,7 @@
 from io import TextIOBase
 from typing import TYPE_CHECKING
 
-import pkg_resources
+from importlib.metadata import version as _get_version
 
 from digitalpy.core.component_management.configuration.component_management_constants import (
     DIGITALPY,
@@ -116,7 +116,7 @@ class ComponentManifestController(Controller):
             bool: True if the version is valid, False otherwise
         """
         # retrieve the current digitalpy version based on the setup.py
-        digitalpy_version = pkg_resources.require(DIGITALPY)[0].version
+        digitalpy_version = _get_version(DIGITALPY)
         required_version_sections = required_version.split(VERSION_DELIMITER)
         # iterate the delimited version number and compare it to the digitalpy version
         for i, _ in enumerate(required_version_sections):
