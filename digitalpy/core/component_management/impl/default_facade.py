@@ -22,24 +22,24 @@ from digitalpy.core.telemetry.tracer import Tracer
 
 class DefaultFacade(Controller):
     def __init__(
-        self,
-        action_mapping_path: str,
-        internal_action_mapping_path,
-        logger_configuration,
-        log_file_path,
-        component_name=None,
-        type_mapping=None,
-        action_mapper: DefaultActionMapper = None,  # type: ignore
-        base=ModuleType,
-        request: Request = None,  # type: ignore
-        response: Response = None,  # type: ignore
-        configuration: Configuration = None,  # type: ignore
-        configuration_path_template=None,
-        tracing_provider_instance=None,
-        manifest_path=None,
-        action_flow_path: Optional[str] = None,
-        object_configuration_paths: Optional[str] = None,
-        **kwargs,
+            self,
+            action_mapping_path: str,
+            internal_action_mapping_path,
+            logger_configuration,
+            log_file_path,
+            component_name=None,
+            type_mapping=None,
+            action_mapper: DefaultActionMapper = None,  # type: ignore
+            base=ModuleType,
+            request: Request = None,  # type: ignore
+            response: Response = None,  # type: ignore
+            configuration: Configuration = None,  # type: ignore
+            configuration_path_template=None,
+            tracing_provider_instance=None,
+            manifest_path=None,
+            action_flow_path: Optional[str] = None,
+            object_configuration_paths: Optional[str] = None,
+            **kwargs,
     ):
         """_summary_
 
@@ -177,7 +177,7 @@ class DefaultFacade(Controller):
     def get_flow_configuration_path(self) -> str:
         """get the flow configuration path for the component"""
         return self.action_flow_path
-    
+
     def get_object_configuration_path(self) -> str:
         """get the object configuration path for the component"""
         return self.object_configuration_paths
@@ -192,10 +192,16 @@ class DefaultFacade(Controller):
                 internal_config,
             ),
         )
+
     def setup(self, **kwargs):
         """setup the component"""
         self.action_mapper = self.get_action_mapper()
         self._register_type_mapping()
+
+    def register(self, config: InifileConfiguration, **kwargs):
+        """register the component with the system"""
+        config.add_configuration(self.action_mapping_path)
+        self.setup(**kwargs)
 
     def unregister(self, config: InifileConfiguration, **kwargs):
         """unregister the component from the system"""
@@ -207,27 +213,39 @@ class DefaultFacade(Controller):
         return self.manifest
 
     def _register_type_mapping(self):
-        """any component may or may not have a type mapping defined,
-        if it does then it should be registered"""
-        if self.type_mapping:
+        """Register optional type mappings.
+
+        Some legacy FTS components define type_mapping before the Type component
+        action mapper is available. That must not abort component registration.
+        """
+
+        if not self.type_mapping:
+            return
+
+        actionmapper = ObjectFactory.get_instance("SyncActionMapper")
+
+        try:
             request = ObjectFactory.get_new_instance("request")
             request.set_action("RegisterMachineToHumanMapping")
             request.set_value("machine_to_human_mapping", self.type_mapping)
 
-            actionmapper = ObjectFactory.get_instance("SyncActionMapper")
             response = ObjectFactory.get_new_instance("response")
             actionmapper.process_action(request, response)
 
             request = ObjectFactory.get_new_instance("request")
             request.set_action("RegisterHumanToMachineMapping")
-            # reverse the mapping and save the reversed mapping
             request.set_value(
-                "human_to_machine_mapping", {k: v for v, k in self.type_mapping.items()}
+                "human_to_machine_mapping",
+                {k: v for v, k in self.type_mapping.items()},
             )
 
-            actionmapper = ObjectFactory.get_instance("SyncActionMapper")
             response = ObjectFactory.get_new_instance("response")
             actionmapper.process_action(request, response)
+
+        except ValueError as exc:
+            if "No action key found" in str(exc):
+                return
+            raise
 
     def accept_visitor(self, node: Node, visitor, **kwargs):
         return node.accept_visitor(visitor)
