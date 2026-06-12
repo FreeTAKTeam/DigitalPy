@@ -101,13 +101,14 @@ class DigitalPyService:
     # with the service information
 
     def __init__(
-        self,
-        service_id: str,
-        service: ServiceConfiguration,
-        integration_manager_subscriber: IntegrationManagerSubscriber,
-        subject_pusher: SubjectPusher,
-        integration_manager_pusher: IntegrationManagerPusher,
-        error_threshold: float = 0.1,
+            self,
+            service_id: str,
+            service: ServiceConfiguration | str,
+            integration_manager_subscriber: IntegrationManagerSubscriber | int | None = None,
+            subject_pusher: SubjectPusher | str | None = None,
+            integration_manager_pusher: IntegrationManagerPusher | str | None = None,
+            error_threshold: float | int | str | None = 0.1,
+            *legacy_args,
     ):
         """the constructor for the digitalpy service class
 
@@ -116,36 +117,107 @@ class DigitalPyService:
             formatter (Formatter): the formatter used by the service to serialize the request values to and from messages, (should be injected by object factory)
             protocol (NetworkInterface): the network interface used by the service to send and receive messages, (should be injected by object factory through the services' constructor)
         """
-        self._integration_manager_subscriber = integration_manager_subscriber
-        self._subject_pusher = subject_pusher
-        self._integration_manager_pusher = integration_manager_pusher
-        self._service_conf = service
+        if isinstance(service, ServiceConfiguration):
+            service_conf = service
+            ims = integration_manager_subscriber
+            sp = subject_pusher
+            imp = integration_manager_pusher
+            threshold = error_threshold if error_threshold is not None else 0.1
+
+        else:
+            # Legacy FreeTAKServer signature:
+            # service_id,
+            # subject_address,
+            # subject_port,
+            # subject_protocol,
+            # integration_manager_address,
+            # integration_manager_port,
+            # integration_manager_protocol,
+            # formatter
+            formatter = legacy_args[-1] if legacy_args else None
+
+            service_conf = ServiceConfiguration()
+            service_conf.name = service_id
+            service_conf.host = str(service)
+            service_conf.port = (
+                int(integration_manager_subscriber)
+                if integration_manager_subscriber is not None
+                else None
+            )
+            service_conf.protocol = (
+                str(subject_pusher)
+                if subject_pusher is not None
+                else None
+            )
+            service_conf.status = ServiceStatusEnum.STOPPED.value
+            service_conf.flows = []
+
+            zconf = SingletonConfigurationFactory.get_configuration_object(
+                "ZManagerConfiguration"
+            )
+
+            timeout = getattr(zconf, "integration_manager_pull_timeout", None) or 0
+
+            ims = IntegrationManagerSubscriber(
+                formatter=formatter,
+                timeout=timeout,
+                service_id=service_id,
+                application_protocol=service_conf.protocol,
+            )
+
+            sp = SubjectPusher(
+                formatter=formatter,
+                service_id=service_id,
+            )
+
+            imp = IntegrationManagerPusher(
+                formatter=formatter,
+            )
+
+            threshold = 0.1
+
+        self._integration_manager_subscriber = ims
+        self._subject_pusher = sp
+        self._integration_manager_pusher = imp
+        self._service_conf = service_conf
+
         self._zmanager_configuration: ZManagerConfiguration = (
             SingletonConfigurationFactory.get_configuration_object(
                 "ZManagerConfiguration"
             )
         )
+
         self.subject_address = self._zmanager_configuration.subject_pull_address
         self.integration_manager_address = (
             self._zmanager_configuration.integration_manager_pub_address
         )
 
         self._tracer = None
-        self.protocol: NetworkInterface = ObjectFactory.get_instance(
-            self.configuration.protocol
-        )
-        self.iam_facade: IAM = ObjectFactory.get_instance("IAM")
+
+        self.protocol = None
+        if self.configuration.protocol:
+            try:
+                self.protocol = ObjectFactory.get_instance(self.configuration.protocol)
+            except Exception:
+                self.protocol = None
+
+        try:
+            self.iam_facade: IAM = ObjectFactory.get_instance("IAM")
+        except Exception:
+            self.iam_facade = None
+
         self.service_id = service_id
         self.total_requests = 0
         self.total_errors = 0
         self.total_request_processing_time = 0
-        self.error_threshold = error_threshold
+        self.error_threshold = threshold
 
         self._process: Optional[Process] = None
-
         self._topics: list[ActionKey] = []
+        self.stop_event: threading.Event = threading.Event()
 
-        self.stop_event: threading.Event
+        # Legacy FTS compatibility. FTS accesses these directly.
+        self.subscriber_socket = None
 
     def handle_connection(self, message: Request):
         """register a client with the server. This method should be called when a client connects to the server
@@ -276,13 +348,23 @@ class DigitalPyService:
         by inheriting classes
         """
 
-    def initialize_connections(self):
-        """initialize connections to the subject and the integration manager within the
-        zmanager architecture.
+    def initialize_connections(self, application_protocol: str | None = None):
+        """Initialize zmanager connections.
+
+        The optional application_protocol argument is kept for legacy FTS services,
+        which call initialize_connections(APPLICATION_PROTOCOL).
         """
+
+        if application_protocol is not None:
+            self._integration_manager_subscriber.application_protocol = application_protocol
+
         self._integration_manager_subscriber.setup()
         self._subject_pusher.setup()
         self._integration_manager_pusher.setup()
+
+        # Legacy FTS code accesses self.subscriber_socket directly.
+        self.subscriber_socket = self._integration_manager_subscriber.subscriber_socket
+
         self._subscribe_to_commands()
         self._subscribe_to_flows()
 
@@ -502,28 +584,38 @@ class DigitalPyService:
             self.total_errors += 1
 
     def start(
-        self,
-        object_factory: DefaultFactory,
-        tracing_provider: TracingProvider,
-        conf_factory: ConfigurationFactory,
+            self,
+            object_factory: DefaultFactory | None = None,
+            tracing_provider: TracingProvider | None = None,
+            conf_factory: ConfigurationFactory | None = None,
     ):
-        """used to start the service and initialize the network if provided
+        """Start the service.
 
-        Args:
-            object_factory (DefaultFactory): the object factory used to create instances of objects
-            tracing_provider (TracingProvider): the tracing provider used to create a tracer
+        Supports:
+        - current DigitalPy start(factory, tracing_provider, conf_factory)
+        - legacy FTS super().start()
         """
+
+        # Legacy FTS services call super().start() and then manually call
+        # initialize_connections(APPLICATION_PROTOCOL).
+        if object_factory is None and tracing_provider is None and conf_factory is None:
+            self.status = ServiceStatusEnum.RUNNING.value
+            return
+
         SingletonConfigurationFactory.configure(conf_factory)
         ObjectFactory.configure(object_factory)
+
         self.tracer = tracing_provider.create_tracer(self.service_id)
+
         self.initialize_controllers()
         self.initialize_connections()
 
-        self.protocol.initialize_network(
-            self.configuration.host,
-            self.configuration.port,
-            service_desc=self._service_conf,
-        )
+        if self.protocol is not None:
+            self.protocol.initialize_network(
+                self.configuration.host,
+                self.configuration.port,
+                service_desc=self._service_conf,
+            )
 
         self.status = ServiceStatusEnum.RUNNING.value
         self.execute_main_loop()
@@ -536,3 +628,31 @@ class DigitalPyService:
                 self.event_loop()
             except Exception as ex:
                 self.handle_exception(ex)
+
+    def subject_send_request(
+            self,
+            request: Request,
+            application_protocol: str | None = None,
+            service_id: str | None = None,
+    ):
+        """Legacy FTS compatibility wrapper for sending requests to the subject."""
+
+        if application_protocol is not None:
+            request.set_format(application_protocol)
+
+        target_service_id = service_id if service_id is not None else self.service_id
+
+        self._subject_pusher.push_container(
+            request,
+            service_id=target_service_id,
+        )
+
+    def broker_receive(self, blocking: bool = False):
+        """Legacy FTS compatibility wrapper for receiving broker responses."""
+
+        response = self._integration_manager_subscriber.fetch_integration_manager_response()
+
+        if response is None:
+            return []
+
+        return [response]

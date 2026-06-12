@@ -35,26 +35,36 @@ class ComponentRegistrationHandler(RegistrationHandler):
 
     @staticmethod
     def discover_components(component_folder_path: PurePath) -> List[str]:
-        """this method is used to discover all available components
+        """Discover valid components.
 
-        Args:
-            component_folder_path (str): the path in which to search for components. the searchable folder should be in the following format:\n
-                component_folder_path \n
-                |-- some_component \n
-                |   `-- some_component_facade.py\n
-                `-- another_component\n
-                    `-- another_component_facade.py\n
-        Returns:
-            List[str]: a list of available components in the given path
+        A valid component must have:
+        - <component>/<component>_facade.py
+        - <component>/configuration/manifest.ini
+
+        This avoids trying to register legacy/helper folders that look like
+        components but are not installable DigitalPy components.
         """
         potential_components = os.scandir(component_folder_path)
         components = []
+
         for potential_component in potential_components:
+            if not potential_component.is_dir():
+                continue
+
             facade_path = PurePath(
-                potential_component.path, potential_component.name + "_facade.py"
+                potential_component.path,
+                potential_component.name + "_facade.py",
             )
-            if os.path.exists(facade_path):
+
+            manifest_path = PurePath(
+                potential_component.path,
+                "configuration",
+                "manifest.ini",
+            )
+
+            if os.path.exists(facade_path) and os.path.exists(manifest_path):
                 components.append(PurePath(potential_component.path))
+
         return components
 
     @staticmethod
