@@ -2,7 +2,7 @@ import importlib
 import os
 from pathlib import PurePath
 from typing import List
-import pkg_resources
+from importlib.metadata import version as _get_version
 
 from digitalpy.core.main.registration_handler import RegistrationHandler
 from digitalpy.core.component_management.impl.default_facade import DefaultFacade
@@ -118,7 +118,7 @@ class ServiceRegistrationHandler(RegistrationHandler):
             bool: whether the service is compatible with the current digitalpy installation
         """
         # retrieve the current digitalpy version based on the setup.py
-        digitalpy_version = pkg_resources.require(DIGITALPY)[0].version
+        digitalpy_version = _get_version(DIGITALPY)
 
         try:
             # get the manifest section from the configuration

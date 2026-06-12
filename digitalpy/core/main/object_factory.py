@@ -5,7 +5,7 @@ from typing import Any
 class ObjectFactory:
     """ObjectFactory class to create and retrieve instances."""
     
-    __factory: Factory
+    __factory: Factory = None
 
     @staticmethod
     def configure(factory: Factory):
